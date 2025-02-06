@@ -4,10 +4,17 @@ import httpStatus from "http-status";
 import { ChatService } from "./chat.service";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
+import { handleSendMessage } from "../../socket/userMessage/message";
 
 // Create a new chat message
 const createChat = catchAsync(async (req: Request, res: Response) => {
-  const { senderId, receiverId, message } = req.body;
+  const { friendId: receiverId } = req.params;
+  const { userId: senderId } = req.user;
+
+  const { message } = req.body;
+
+  handleSendMessage({ senderId, receiverId, message });
+
   const result = await ChatService.createChat({
     senderId,
     receiverId,

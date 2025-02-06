@@ -28,6 +28,12 @@ router.delete("/:id", auth("ADMIN"), MealController.deleteMeal);
 
 router.get("/", auth("ADMIN", "USER"), MealController.getAllMeals);
 
+router.get(
+  "/user-food-list",
+  auth("ADMIN", "USER"),
+  MealController.getAllUserMeals
+);
+
 router.get("/:id", auth("ADMIN", "USER"), MealController.getSingleMeal);
 
 export const MealRoute = router;

@@ -9,5 +9,6 @@ router.get(
   auth("USER"),
   ChatController.getChatsBetweenUsers
 );
+router.post("/:friendId", auth("USER"), ChatController.createChat);
 
 export const ChatRouter = router;

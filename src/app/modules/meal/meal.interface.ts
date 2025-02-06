@@ -1,3 +1,5 @@
+import { DietType } from "../user/user.interface";
+
 export interface INutritionalInfo {
   calories: number;
   carbs: number;
@@ -11,4 +13,6 @@ export interface IMeal {
   category: string;
   nutritionalInfo: INutritionalInfo;
   isDeleted: boolean;
+  suitableFor: DietType[];
+  mealTime: "Breakfast" | "Lunch" | "Dinner" | "Snacks";
 }

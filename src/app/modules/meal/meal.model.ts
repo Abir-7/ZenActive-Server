@@ -1,5 +1,6 @@
 import { model, Mongoose, Schema } from "mongoose";
 import { IMeal, INutritionalInfo } from "./meal.interface";
+import { DietType } from "../user/user.interface";
 
 const NutritionalInfoSchema: Schema = new Schema<INutritionalInfo>(
   {
@@ -15,6 +16,7 @@ const MealSchema: Schema = new Schema<IMeal>({
   mealName: { type: String, required: true },
   image: { type: String, required: true },
   category: { type: String, required: true },
+  suitableFor: Object.values(DietType),
   nutritionalInfo: { type: NutritionalInfoSchema, required: true },
   isDeleted: { type: Boolean, default: false },
 });

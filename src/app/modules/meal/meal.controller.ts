@@ -73,6 +73,20 @@ const getAllMeals = catchAsync(async (req, res) => {
   });
 });
 
+const getAllUserMeals = catchAsync(async (req, res) => {
+  const filter = req.query; // You can pass filters here if needed (e.g., { category: 'vegan' })
+
+  const { userId } = req.user;
+
+  const result = await MealService.getAlluserMeals(filter, userId);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Meals retrieved successfully.",
+  });
+});
+
 const getSingleMeal = catchAsync(async (req, res) => {
   const { id } = req.params;
 
@@ -91,4 +105,5 @@ export const MealController = {
   deleteMeal,
   getAllMeals,
   getSingleMeal,
+  getAllUserMeals,
 };

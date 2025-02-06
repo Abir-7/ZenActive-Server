@@ -1,5 +1,6 @@
 import AppError from "../../errors/AppError";
 import unlinkFile from "../../utils/unlinkFiles";
+import { User } from "../user/user.model";
 import { IMeal } from "./meal.interface";
 import Meal from "./meal.model";
 import httpStatus from "http-status";
@@ -72,10 +73,24 @@ const deleteMeal = async (mealId: string) => {
   return { message: "Meal deleted." };
 };
 
+const getAlluserMeals = async (filter = {}, userId: string) => {
+  const userData = await User.findOne({ _id: userId });
+  console.log(userData);
+  if (!userData) {
+  }
+  const meals = await Meal.find({
+    ...filter,
+    isDeleted: { $ne: true },
+    suitableFor: { $in: [userData?.diet] },
+  });
+  return meals;
+};
+
 export const MealService = {
   updateMeal,
   createMeal,
   getAllMeals,
   getSingleMeal,
   deleteMeal,
+  getAlluserMeals,
 };
