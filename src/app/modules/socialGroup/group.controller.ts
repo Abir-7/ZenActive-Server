@@ -30,7 +30,7 @@ const updateGroup = catchAsync(async (req, res) => {
   } else {
     value = req.body;
   }
-  console.log(image);
+
   const { groupId } = req.params;
 
   const { userId } = req.user;

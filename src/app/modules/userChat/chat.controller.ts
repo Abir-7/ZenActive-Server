@@ -23,8 +23,9 @@ const createChat = catchAsync(async (req: Request, res: Response) => {
 
 // Get all chat messages between two users
 const getChatsBetweenUsers = catchAsync(async (req: Request, res: Response) => {
-  const { senderId, receiverId } = req.params;
-  const result = await ChatService.getChatsBetweenUsers(senderId, receiverId);
+  const { userId } = req.user;
+  const { friendId } = req.params;
+  const result = await ChatService.getChatsBetweenUsers(userId, friendId);
   sendResponse(res, {
     data: result,
     success: true,

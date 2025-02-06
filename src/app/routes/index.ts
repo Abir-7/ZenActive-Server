@@ -14,7 +14,7 @@ import { CommentRoute } from "../modules/blog/comments/comment.route";
 import { LikeRoute } from "../modules/blog/likes/like.router";
 import { GroupRoute } from "../modules/socialGroup/group.route";
 import { AppDataRoute } from "../modules/userAppData/appdata.route";
-import { PackageRoute } from "../modules/package/package.route";
+
 import { ChatRouter } from "../modules/userChat/chat.route";
 
 import { WorkoutPlanRoute } from "../modules/workout&exercise/workoutPlan/workoutPlan.route";
@@ -22,6 +22,8 @@ import { UserWorkoutPlanRoute } from "../modules/userWorkoutPlan/userWorkoutPlan
 import { ExerciseRoute } from "../modules/workout&exercise/exercise/exercise.route";
 import { WorkoutRoute } from "../modules/workout&exercise/workout/workout.route";
 import { FeedbackRoute } from "../modules/userFeedback/feedback.route";
+import { UserBadgeRoute } from "../modules/usersBadge/userBadge.route";
+import { PackageRoute } from "../modules/payment/package/package.route";
 
 const router = Router();
 
@@ -46,6 +48,7 @@ const apiRoutes = [
   { path: "/exercise", route: ExerciseRoute },
   { path: "/workout", route: WorkoutRoute },
   { path: "/feedback", route: FeedbackRoute },
+  { path: "/user-badge", route: UserBadgeRoute },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

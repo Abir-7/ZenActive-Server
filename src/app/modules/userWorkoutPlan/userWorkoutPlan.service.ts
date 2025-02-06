@@ -9,7 +9,6 @@ import { UserAppData } from "../userAppData/appdata.model";
 import status from "http-status";
 
 const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
-  console.log(workoutPlanId, userId);
   const workoutPlan = await WorkoutPlan.findOne({
     _id: workoutPlanId,
   }).populate({
@@ -22,7 +21,6 @@ const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
   if (!workoutPlan) {
     throw new AppError(404, "Workout plan not found.");
   }
-  console.log(workoutPlan);
 
   const plans = {
     userId,
@@ -112,7 +110,6 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
     appData.points = (appData.points ? appData.points : 0) + workout.points;
 
     await appData.save();
-    console.log(appData.points, "1", workout.points);
 
     if (currentWorkoutIndex + 1 < plan.workouts.length) {
       progress.currentWorkoutIndex += 1;
@@ -122,7 +119,7 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
 
       appData.points = (appData?.points ? appData.points : 0) + plan?.points;
       await appData.save();
-      console.log(appData.points, "2", plan?.points);
+
       progress.isCompleted = "Completed";
       progress.endAt = new Date(Date.now());
     }

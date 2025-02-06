@@ -42,7 +42,7 @@ const loginUser = async (userData: {
       { new: true }
     );
   }
-
+  console.log("hit");
   const jwtPayload = {
     userEmail: isUserExist.email,
     userId: isUserExist._id,
@@ -80,14 +80,14 @@ const verifyUser = async (userData: { email: string; code: number }) => {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  if (!userData.code) {
+  if (!Number(userData.code)) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       "Please give the otp, check your email."
     );
   }
 
-  if (user?.authentication?.oneTimeCode !== userData.code) {
+  if (user?.authentication?.oneTimeCode !== Number(userData.code)) {
     throw new AppError(httpStatus.BAD_REQUEST, "Code not matched.");
   }
 
@@ -232,9 +232,32 @@ const resetPassword = async (
   return "Password changed.";
 };
 
+const reSendOtp = async (userEmail: string) => {
+  const OTP = generateOTP();
+
+  const updateUser = await User.findOneAndUpdate(
+    { email: userEmail },
+    {
+      $set: {
+        "authentication.oneTimeCode": OTP,
+        "authentication.expireAt": new Date(Date.now() + 10 * 60 * 1000), //10min
+      },
+    },
+    { new: true }
+  );
+
+  if (!updateUser) {
+    throw new AppError(500, "Failed to Send. Try Again!");
+  }
+
+  await sendEmail(userEmail, "Verification Code", `CODE: ${OTP}`);
+  return { message: "Verification Send" };
+};
+
 export const AuthService = {
   loginUser,
   forgotPass,
   verifyUser,
   resetPassword,
+  reSendOtp,
 };

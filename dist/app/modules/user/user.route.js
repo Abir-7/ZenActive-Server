@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserRoute = void 0;
+const express_1 = require("express");
+const user_controller_1 = require("./user.controller");
+const validator_1 = __importDefault(require("../../middleware/validator"));
+const user_validation_1 = require("./user.validation");
+const auth_1 = __importDefault(require("../../middleware/auth/auth"));
+const fileUploadHandler_1 = __importDefault(require("../../middleware/fileUploadHandler"));
+const parseDataMiddleware_1 = require("../../middleware/parseDataMiddleware");
+const router = (0, express_1.Router)();
+router.get("/", (0, auth_1.default)("ADMIN", "USER"), user_controller_1.UserController.getAllUsers);
+router.get("/me", (0, auth_1.default)("ADMIN", "USER"), user_controller_1.UserController.getMydata);
+router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), user_controller_1.UserController.getSingleUser);
+router.post("/create-user", (0, validator_1.default)(user_validation_1.zodCreateUserSchema), user_controller_1.UserController.createUser);
+router.patch("/update-user", (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(user_validation_1.zodUserUpdateSchema), (0, auth_1.default)("USER"), user_controller_1.UserController.updateUserInfo);
+router.patch("/block/:id", (0, auth_1.default)("ADMIN"), user_controller_1.UserController.blockUser);
+router.delete("/delete/:id", (0, auth_1.default)("ADMIN"), user_controller_1.UserController.deleteUser);
+exports.UserRoute = router;

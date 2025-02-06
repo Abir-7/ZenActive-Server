@@ -4,6 +4,7 @@ import validateRequest from "../../middleware/validator";
 import {
   zodForgotPassSchema,
   zodLoginSchema,
+  zodResendCodeSchema,
   zodResetPassSchema,
 } from "./auth.validation";
 import { zodVerifyEmailSchema } from "../user/user.validation";
@@ -29,6 +30,12 @@ router.post(
   "/reset-pass",
   validateRequest(zodResetPassSchema),
   AuthController.resetPassword
+);
+
+router.post(
+  "/resend-code",
+  validateRequest(zodResendCodeSchema),
+  AuthController.reSendOtp
 );
 
 export const AuthRoute = router;

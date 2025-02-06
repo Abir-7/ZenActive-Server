@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BadgeRoute = void 0;
+const express_1 = require("express");
+const fileUploadHandler_1 = __importDefault(require("../../middleware/fileUploadHandler"));
+const badge_controller_1 = require("./badge.controller");
+const parseDataMiddleware_1 = require("../../middleware/parseDataMiddleware");
+const auth_1 = __importDefault(require("../../middleware/auth/auth"));
+const validator_1 = __importDefault(require("../../middleware/validator"));
+const badge_validation_1 = require("./badge.validation");
+const router = (0, express_1.Router)();
+router.post("/create-badge", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(badge_validation_1.zodBadgeSchema), badge_controller_1.BadgeController.createBadge);
+router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(badge_validation_1.zodUpdateBadgeSchema), badge_controller_1.BadgeController.editBadge);
+router.get("/", (0, auth_1.default)("ADMIN", "USER"), badge_controller_1.BadgeController.getAllBadge);
+router.get("/:id", badge_controller_1.BadgeController.getSingleBadge);
+router.delete("/:id", (0, auth_1.default)("ADMIN", "USER"), badge_controller_1.BadgeController.deleteBadge);
+exports.BadgeRoute = router;

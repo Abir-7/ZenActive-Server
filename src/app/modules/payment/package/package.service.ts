@@ -1,10 +1,9 @@
-import AppError from "../../errors/AppError";
-
 import { IPackage, TInterval } from "./package.interface";
 import httpStatus from "http-status";
 import { Package } from "./package.model";
 import { mapInterval } from "./package.const";
-import { stripe } from "../../utils/stripe/stripe";
+import AppError from "../../../errors/AppError";
+import { stripe } from "../../../utils/stripe/stripe";
 
 const createPackage = async (payload: Partial<IPackage>) => {
   if (

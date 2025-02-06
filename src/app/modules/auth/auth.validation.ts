@@ -22,3 +22,11 @@ export const zodResetPassSchema = z.object({
       .min(6, "Confirm Password must be at least 6 characters long."),
   }),
 });
+
+export const zodResendCodeSchema = z.object({
+  body: z.object({
+    email: z
+      .string({ required_error: "Email is required" })
+      .email({ message: "Give original Email." }),
+  }),
+});

@@ -80,7 +80,6 @@ const fileUploadHandler = () => {
         cb(new AppError(500, "Only pdf supported"));
       }
     } else if (file.fieldname === "gifImage") {
-      console.log(file.mimetype);
       if (file.mimetype === "image/gif") {
         cb(null, true);
       } else {

@@ -5,7 +5,6 @@ import Exercise from "./exercise.model";
 
 // Create a new exercise
 const createExercise = async (exerciseData: IExercise) => {
-  console.log(exerciseData);
   const exercise = await Exercise.create(exerciseData);
   return exercise;
 };

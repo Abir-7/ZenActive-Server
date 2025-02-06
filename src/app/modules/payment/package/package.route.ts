@@ -1,9 +1,9 @@
 import { Router } from "express";
-import auth from "../../middleware/auth/auth";
 
-import validateRequest from "../../middleware/validator";
 import { zodPackageSchema } from "./package.validation";
 import { PackageController } from "./package.controller";
+import validateRequest from "../../../middleware/validator";
+import auth from "../../../middleware/auth/auth";
 
 const router = Router();
 

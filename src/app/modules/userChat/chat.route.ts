@@ -5,7 +5,7 @@ import { ChatController } from "./chat.controller";
 const router = Router();
 
 router.get(
-  "/get-user-chat/:senderId/:receiverId",
+  "/get-user-chat/:friendId",
   auth("USER"),
   ChatController.getChatsBetweenUsers
 );

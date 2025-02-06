@@ -28,11 +28,7 @@ const getAllWorkoutPlanWithFeedback = async () => {
       },
     },
   ]);
-  const gg = await UserWorkoutPlanFeedback.findOne({
-    planId: workoutPlans[0]._id,
-  });
 
-  console.log(workoutPlans, gg);
   return workoutPlans;
 };
 

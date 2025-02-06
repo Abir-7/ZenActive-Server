@@ -14,11 +14,11 @@ const editBadge = async (id: string, data: Partial<IBadge>) => {
   return badge;
 };
 const getAllBadge = async () => {
-  return await Badge.find();
+  return await Badge.find({ isDeleted: false });
 };
 
 const getSingleBadge = async (id: string) => {
-  return await Badge.findById(id);
+  return await Badge.findOne({ _id: id, isDeleted: false });
 };
 const deleteBadge = async (id: string) => {
   const badge = await Badge.findByIdAndDelete(id);

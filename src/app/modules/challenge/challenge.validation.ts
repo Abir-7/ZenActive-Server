@@ -33,5 +33,3 @@ export const zodUpdateChallengeSchema = z.object({
       .optional(),
   }),
 });
-
-// Export the schemas

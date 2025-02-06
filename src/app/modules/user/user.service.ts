@@ -1,10 +1,13 @@
+import mongoose from "mongoose";
 import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../errors/AppError";
 import { calculateTDEE } from "../../utils/calculateTDEE";
 import generateOTP from "../../utils/generateOtp";
 import { sendEmail } from "../../utils/sendEmail";
 import unlinkFile from "../../utils/unlinkFiles";
+import Badge from "../badge/badge.model";
 import { UserAppData } from "../userAppData/appdata.model";
+import { UserBadge } from "../usersBadge/userBadge.model";
 import { IUpdateUser } from "./user.interface";
 import { User } from "./user.model";
 import httpStatus from "http-status";
@@ -127,15 +130,55 @@ const getAllUsers = async (query: Record<string, unknown>) => {
 };
 
 const getSingleUser = async (userId: string) => {
-  const user = await User.findOne({ _id: userId }).populate("appData");
+  const user = await User.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+    {
+      $lookup: {
+        from: "userbadges",
+        localField: "_id",
+        foreignField: "userId",
+        as: "badges",
+      },
+    },
+    {
+      $lookup: {
+        from: "badges",
+        localField: "badges.badgeId",
+        foreignField: "_id",
+        as: "badges",
+      },
+    },
+    {
+      $lookup: {
+        from: "userappdatas",
+        localField: "appData",
+        foreignField: "_id",
+        as: "appData",
+      },
+    },
+    { $unwind: { path: "$appData", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: "$badges", preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        password: 0,
+        authentication: 0,
+      },
+    },
+  ]);
 
-  if (user?.isBlocked) {
+  if (!user || user.length === 0) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user[0].isBlocked) {
     throw new AppError(httpStatus.BAD_REQUEST, "User is Blocked");
   }
-  if (user?.isDeleted) {
+
+  if (user[0].isDeleted) {
     throw new AppError(httpStatus.BAD_REQUEST, "User is Deleted");
   }
-  return user;
+
+  return user[0];
 };
 
 const deleteUser = async (userId: string) => {

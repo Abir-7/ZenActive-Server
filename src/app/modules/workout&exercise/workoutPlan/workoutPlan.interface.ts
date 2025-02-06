@@ -5,7 +5,7 @@ export interface IWorkoutPlan {
   description?: string;
   duration: number;
   workouts: [Types.ObjectId];
-  rewardPoints: number;
+  points: number;
   isDeleted: boolean;
   image: string;
 }
