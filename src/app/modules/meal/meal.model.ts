@@ -1,5 +1,5 @@
 import { model, Mongoose, Schema } from "mongoose";
-import { IMeal, INutritionalInfo } from "./meal.interface";
+import { IMeal, INutritionalInfo, Time } from "./meal.interface";
 import { DietType } from "../user/user.interface";
 
 const NutritionalInfoSchema: Schema = new Schema<INutritionalInfo>(
@@ -19,6 +19,11 @@ const MealSchema: Schema = new Schema<IMeal>({
   suitableFor: Object.values(DietType),
   nutritionalInfo: { type: NutritionalInfoSchema, required: true },
   isDeleted: { type: Boolean, default: false },
+  mealTime: {
+    type: String,
+    enum: Time, // Use the constant here
+    required: true,
+  },
 });
 
 const Meal = model<IMeal>("Meal", MealSchema);

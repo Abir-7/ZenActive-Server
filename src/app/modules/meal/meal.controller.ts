@@ -13,6 +13,8 @@ const createMeal = catchAsync(async (req, res) => {
     ...req.body,
     image,
   };
+
+  console.log(value);
   const result = await MealService.createMeal(value);
   sendResponse(res, {
     data: result,

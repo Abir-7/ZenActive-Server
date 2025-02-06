@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Time } from "./meal.interface";
 
 // Reusable schema for required nutritional information
 const NutritionalInfoSchema = z.object({
@@ -23,6 +24,11 @@ const BaseMealSchema = z.object({
   category: z
     .string({ required_error: "Category is required" })
     .min(1, { message: "Category cannot be empty" }),
+  mealTime: z
+    .enum(Time, { required_error: "Meal time is required" })
+    .refine((val) => ["Breakfast", "Lunch", "Dinner", "Snacks"].includes(val), {
+      message: "Invalid meal time",
+    }),
 });
 
 export const zodMealSchema = z.object({

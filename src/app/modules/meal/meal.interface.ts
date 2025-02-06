@@ -14,5 +14,8 @@ export interface IMeal {
   nutritionalInfo: INutritionalInfo;
   isDeleted: boolean;
   suitableFor: DietType[];
-  mealTime: "Breakfast" | "Lunch" | "Dinner" | "Snacks";
+  mealTime: TTime;
 }
+
+export const Time = ["Breakfast", "Lunch", "Dinner", "Snacks"] as const;
+type TTime = (typeof Time)[number];
