@@ -25,7 +25,23 @@ export const createWorkoutPlan = catchAsync(async (req, res) => {
 
 const updateWorkoutPlan = catchAsync(async (req, res) => {
   const id = req.params.id;
-  const result = await WorkoutPlanService.updateWorkout(id, req.body);
+
+  let image = null;
+  let value = null;
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
+  }
+
+  if (image) {
+    value = {
+      ...req.body,
+      image,
+    };
+  } else {
+    value = req.body;
+  }
+
+  const result = await WorkoutPlanService.updateWorkout(id, value);
   sendResponse(res, {
     data: result,
     success: true,

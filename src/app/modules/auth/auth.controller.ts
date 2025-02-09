@@ -62,10 +62,22 @@ const reSendOtp = catchAsync(async (req, res) => {
   });
 });
 
+const updatePassword = catchAsync(async (req, res) => {
+  const { userId } = req.user;
+  const result = await AuthService.updatePassword(userId, req.body);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: HttpStatus.OK,
+    message: "Password updated successfully",
+  });
+});
+
 export const AuthController = {
   loginUser,
   forgotPass,
   resetPassword,
   verifyUser,
   reSendOtp,
+  updatePassword,
 };

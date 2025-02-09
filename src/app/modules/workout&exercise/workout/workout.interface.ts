@@ -5,6 +5,7 @@ interface IWorkout {
   description?: string;
   exercises: Types.ObjectId[];
   points: number;
+  image: string;
 }
 
 export default IWorkout;

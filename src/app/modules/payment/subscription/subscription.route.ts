@@ -12,5 +12,17 @@ router.post(
   auth("USER"),
   SubscriptionController.createSubscription
 );
+router.get(
+  "/earn",
+  //validateRequest(zodSubscriptionSchema),
+  auth("ADMIN"),
+  SubscriptionController.getSubscriptionData
+);
+router.get(
+  "/",
+  //validateRequest(zodSubscriptionSchema),
+  auth("ADMIN"),
+  SubscriptionController.getAllTransection
+);
 
 export const SubscriptionRoute = router;

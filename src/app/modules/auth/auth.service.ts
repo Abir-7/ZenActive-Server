@@ -254,10 +254,63 @@ const reSendOtp = async (userEmail: string) => {
   return { message: "Verification Send" };
 };
 
+const updatePassword = async (
+  userId: string,
+  passData: {
+    old_password: string;
+    new_password: string;
+    confirm_password: string;
+  }
+) => {
+  console.log(userId);
+  const isUserExist = await User.findOne({ _id: userId })
+    .select("+password")
+    .populate("appData");
+
+  if (!isUserExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found.");
+  }
+  if (isUserExist?.isBlocked) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User Blocked");
+  }
+  if (isUserExist?.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User Deleted");
+  }
+
+  if (
+    !(await User.passwordMatch(isUserExist.password, passData.old_password))
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Password not matched.");
+  }
+
+  if (passData.new_password !== passData.confirm_password) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Password not matched.");
+  }
+
+  const hashPassword = await bcrypt.hash(
+    passData.new_password,
+    Number(config.security.bcryptSaltRounds)
+  );
+
+  const udpatePass = await User.findOneAndUpdate(
+    { _id: userId },
+    {
+      password: hashPassword,
+    },
+    { new: true }
+  );
+  if (!udpatePass) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Failed to update password.");
+  }
+
+  return { message: "Password changed." };
+};
+
 export const AuthService = {
   loginUser,
   forgotPass,
   verifyUser,
   resetPassword,
   reSendOtp,
+  updatePassword,
 };

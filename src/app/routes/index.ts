@@ -23,8 +23,9 @@ import { ExerciseRoute } from "../modules/workout&exercise/exercise/exercise.rou
 import { WorkoutRoute } from "../modules/workout&exercise/workout/workout.route";
 import { FeedbackRoute } from "../modules/userFeedback/feedback.route";
 import { UserBadgeRoute } from "../modules/usersBadge/userBadge.route";
-import { PackageRoute } from "../modules/payment/package/package.route";
+//import { PackageRoute } from "../modules/payment/package/package.route";
 import { SubscriptionRoute } from "../modules/payment/subscription/subscription.route";
+import { PrivacyTermsAboutUsRoute } from "../modules/privacy & terms & about us/privacy_terms_aboutus.route";
 
 const router = Router();
 
@@ -51,6 +52,7 @@ const apiRoutes = [
   { path: "/feedback", route: FeedbackRoute },
   { path: "/user-badge", route: UserBadgeRoute },
   { path: "/subscription", route: SubscriptionRoute },
+  { path: "/privacy&terms", route: PrivacyTermsAboutUsRoute },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

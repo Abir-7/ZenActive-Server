@@ -5,4 +5,6 @@ interface ISubscription {
   purchaseDate: Date;
   packageName: string;
   purchaseToken: string;
+  packagePrice: number;
+  userId: string;
 }

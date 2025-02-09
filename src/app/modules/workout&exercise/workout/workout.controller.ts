@@ -6,8 +6,17 @@ import { WorkoutService } from "./workout.service";
 import catchAsync from "../../../utils/catchAsync";
 
 const createWorkout = catchAsync(async (req: Request, res: Response) => {
-  const workoutData = req.body;
-  const result = await WorkoutService.createWorkout(workoutData);
+  let image = null;
+
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
+  }
+  const value = {
+    ...req.body,
+    image,
+  };
+
+  const result = await WorkoutService.createWorkout(value);
   sendResponse(res, {
     data: result,
     success: true,
@@ -39,10 +48,23 @@ const getWorkoutById = catchAsync(async (req: Request, res: Response) => {
 
 const updateWorkout = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const updateData = req.body;
+  let image = null;
+  let value = null;
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
+  }
+
+  if (image) {
+    value = {
+      ...req.body,
+      image,
+    };
+  } else {
+    value = req.body;
+  }
   const result = await WorkoutService.updateWorkout(
     new Types.ObjectId(id),
-    updateData
+    value
   );
   sendResponse(res, {
     data: result,

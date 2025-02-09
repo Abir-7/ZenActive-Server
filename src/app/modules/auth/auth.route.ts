@@ -6,8 +6,10 @@ import {
   zodLoginSchema,
   zodResendCodeSchema,
   zodResetPassSchema,
+  zodUpdatePasswordSchema,
 } from "./auth.validation";
 import { zodVerifyEmailSchema } from "../user/user.validation";
+import auth from "../../middleware/auth/auth";
 
 const router = Router();
 
@@ -36,6 +38,13 @@ router.post(
   "/resend-code",
   validateRequest(zodResendCodeSchema),
   AuthController.reSendOtp
+);
+
+router.patch(
+  "/update-password",
+  auth("ADMIN", "USER"),
+  validateRequest(zodUpdatePasswordSchema),
+  AuthController.updatePassword
 );
 
 export const AuthRoute = router;

@@ -23,6 +23,8 @@ router.post(
 router.patch(
   "/:id",
   auth("ADMIN"),
+  fileUploadHandler(),
+  parseField("data"),
   validateRequest(zodUpdateWorkoutPlanSchema.unwrap()),
   WorkoutPlanController.updateWorkoutPlan
 );
