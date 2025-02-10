@@ -119,14 +119,16 @@ const updateUser = async (userId: string, userData: IUpdateUser) => {
 };
 
 const getAllUsers = async (query: Record<string, unknown>) => {
-  const users = new QueryBuilder(
-    User.find({ isDeleted: false, role: "USER" }).populate("appData"),
-    query
-  )
+  query.isDeleted = false;
+  query.isBlocked = false;
+  const users = new QueryBuilder(User.find().populate("appData"), query)
     .search(["name.firstName", "name.lastName", "email"])
+    .filter()
     .paginate();
   const result = await users.modelQuery;
-  return result;
+  const meta = await users.countTotal();
+  console.log(meta);
+  return { result, meta };
 };
 
 const getSingleUser = async (userId: string) => {

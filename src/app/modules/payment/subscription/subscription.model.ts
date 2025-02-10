@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import { ISubscription } from "./subscription.interface";
 
 const SubscriptionSchema: Schema = new Schema<ISubscription>({
   productId: { type: String, required: true },
@@ -8,7 +9,7 @@ const SubscriptionSchema: Schema = new Schema<ISubscription>({
   packageName: { type: String, required: true },
   purchaseToken: { type: String, required: true },
   packagePrice: { type: Number, required: true },
-  userId: { type: String, required: true, ref: "User" },
+  userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
 });
 
 const Subscription = model<ISubscription>("Subscription", SubscriptionSchema);

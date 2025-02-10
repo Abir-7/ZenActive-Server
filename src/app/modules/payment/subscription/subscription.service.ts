@@ -1,4 +1,5 @@
 import QueryBuilder from "../../../builder/QueryBuilder";
+import { ISubscription } from "./subscription.interface";
 import Subscription from "./subscription.model";
 
 const createSubscription = async (
@@ -82,10 +83,16 @@ const getAllTransection = async (query: Record<string, unknown>) => {
     Subscription.find().populate("userId"),
     query
   )
+    .search(["packageName", "purchaseId"])
+    .filter()
     .paginate()
     .sort();
 
-  return await allData.modelQuery;
+  const data = await allData.modelQuery;
+
+  const meta = await allData.countTotal();
+
+  return { data, meta };
 };
 
 const getTotalEarnings = async () => {

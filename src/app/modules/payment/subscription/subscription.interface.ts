@@ -1,4 +1,6 @@
-interface ISubscription {
+import { Types } from "mongoose";
+
+export interface ISubscription {
   productId: string;
   purchaseId: string;
   expiryData: string; // Assuming expiryDate is a string in a specific format
@@ -6,5 +8,5 @@ interface ISubscription {
   packageName: string;
   purchaseToken: string;
   packagePrice: number;
-  userId: string;
+  userId: Types.ObjectId;
 }

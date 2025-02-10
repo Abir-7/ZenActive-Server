@@ -1,12 +1,13 @@
 import { handleNewSubscription } from "../../../socket/notification/subscriptionNotification";
 import catchAsync from "../../../utils/catchAsync";
 import sendResponse from "../../../utils/sendResponse";
+
 import { SubscriptionService } from "./subscription.service";
 import httpStatus from "http-status";
 
 const createSubscription = catchAsync(async (req, res) => {
   const { userId } = req.user;
-  const subscriptionData = req.body as ISubscription;
+  const subscriptionData = req.body;
 
   const result = await SubscriptionService.createSubscription(
     subscriptionData,
@@ -40,7 +41,8 @@ const getSubscriptionData = catchAsync(async (req, res) => {
 const getAllTransection = catchAsync(async (req, res) => {
   const result = await SubscriptionService.getAllTransection(req.query);
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.CREATED,
     message: "Subscription data are fetched successfully.",

@@ -46,7 +46,8 @@ const updateUserInfo = catchAsync(async (req, res) => {
 const getAllUsers = catchAsync(async (req, res) => {
   const users = await UserService.getAllUsers(req.query);
   sendResponse(res, {
-    data: users,
+    data: users.result,
+    meta: users.meta,
     success: true,
     statusCode: HttpStatus.OK,
     message: "Users retrieved successfully.",
