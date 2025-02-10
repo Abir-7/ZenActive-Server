@@ -70,7 +70,6 @@ const getSubscriptionData = async (timePeriod: "weekly" | "monthly") => {
       currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
     }
 
-    console.log(`Daily earnings for the last ${timePeriod}:`, finalResult);
     return finalResult;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -79,9 +78,13 @@ const getSubscriptionData = async (timePeriod: "weekly" | "monthly") => {
 };
 
 const getAllTransection = async (query: Record<string, unknown>) => {
-  const allData = new QueryBuilder(Subscription.find(), query)
+  const allData = new QueryBuilder(
+    Subscription.find().populate("userId"),
+    query
+  )
     .paginate()
     .sort();
+
   return await allData.modelQuery;
 };
 

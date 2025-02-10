@@ -8,7 +8,7 @@ const SubscriptionSchema: Schema = new Schema<ISubscription>({
   packageName: { type: String, required: true },
   purchaseToken: { type: String, required: true },
   packagePrice: { type: Number, required: true },
-  userId: { type: String, required: true },
+  userId: { type: String, required: true, ref: "User" },
 });
 
 const Subscription = model<ISubscription>("Subscription", SubscriptionSchema);

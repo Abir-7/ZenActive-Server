@@ -72,7 +72,7 @@ const updateWorkout = catchAsync(async (req: Request, res: Response) => {
   } else {
     value = req.body;
   }
-  console.log(video);
+
   const result = await ExerciseService.updateExercise(id, value);
   sendResponse(res, {
     data: result,

@@ -104,7 +104,7 @@ const getAlluserMeals = async (
   userId: string
 ) => {
   const userData = await User.findOne({ _id: userId });
-  console.log(userData);
+
   if (!userData) {
     throw new AppError(404, "User not found");
   }

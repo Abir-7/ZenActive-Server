@@ -42,7 +42,7 @@ const loginUser = async (userData: {
       { new: true }
     );
   }
-  console.log("hit");
+
   const jwtPayload = {
     userEmail: isUserExist.email,
     userId: isUserExist._id,
@@ -262,7 +262,6 @@ const updatePassword = async (
     confirm_password: string;
   }
 ) => {
-  console.log(userId);
   const isUserExist = await User.findOne({ _id: userId })
     .select("+password")
     .populate("appData");

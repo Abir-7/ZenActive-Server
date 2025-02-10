@@ -35,7 +35,7 @@ export interface IUser {
   isProfileUpdated: boolean;
   isDeleted: boolean;
   isBlocked: boolean;
-
+  mobile: string;
   fcmToken: string;
 }
 
