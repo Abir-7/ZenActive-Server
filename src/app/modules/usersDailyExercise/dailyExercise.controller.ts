@@ -2,16 +2,17 @@ import { Request, Response } from "express";
 
 import httpStatus from "http-status";
 
-import { Types } from "mongoose";
 import { DailyExerciseService } from "./dailyExercise.service";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 
 // Create a new daily exercise record
 const createDailyExercise = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
   const dailyExerciseData = req.body;
   const result = await DailyExerciseService.createDailyExercise({
     ...dailyExerciseData,
+    userId,
     completedDate: new Date(Date.now()),
   });
   sendResponse(res, {

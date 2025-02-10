@@ -10,6 +10,7 @@ const router = Router();
 
 router.get("/", auth("ADMIN", "USER"), UserController.getAllUsers);
 router.get("/me", auth("ADMIN", "USER"), UserController.getMydata);
+router.get("/total-user", auth("ADMIN"), UserController.getTotalUserCount);
 router.get("/:id", auth("ADMIN", "USER"), UserController.getSingleUser);
 router.post(
   "/create-user",

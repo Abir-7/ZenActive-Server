@@ -1,10 +1,14 @@
 import { Types } from "mongoose";
 import IWorkout from "./workout.interface";
 import Workout from "./workout.model";
+import unlinkFile from "../../../utils/unlinkFiles";
 
 // Create a new workout
 const createWorkout = async (workoutData: IWorkout) => {
   const workout = new Workout(workoutData);
+  if (!workout && workoutData.image) {
+    unlinkFile(workoutData.image);
+  }
   return await workout.save();
 };
 
@@ -23,14 +27,25 @@ const updateWorkout = async (
   workoutId: Types.ObjectId,
   updateData: Partial<IWorkout>
 ) => {
+  const workoutData = await Workout.findById(workoutId);
+
+  if (workoutData && updateData.image) {
+    unlinkFile(workoutData.image);
+  }
+
   return await Workout.findByIdAndUpdate(workoutId, updateData, { new: true })
+
     .populate("exercises")
     .exec();
 };
 
 // Delete a workout by ID
 const deleteWorkout = async (workoutId: Types.ObjectId) => {
-  await Workout.findByIdAndDelete(workoutId).exec();
+  await Workout.findByIdAndUpdate(
+    workoutId,
+    { isDeleted: true },
+    { new: true }
+  ).exec();
 };
 
 // Add an exercise to a workout

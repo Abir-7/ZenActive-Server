@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import IWorkout from "./workout.interface";
 
-const workoutSchema = new Schema(
+const workoutSchema = new Schema<IWorkout>(
   {
     name: {
       type: String,
@@ -15,6 +15,7 @@ const workoutSchema = new Schema(
       type: Number,
       required: true,
     },
+    isDeleted: { type: Boolean, default: false },
     exercises: [
       { type: Schema.Types.ObjectId, ref: "Exercise", required: true },
     ],

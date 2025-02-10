@@ -6,6 +6,7 @@ interface IWorkout {
   exercises: Types.ObjectId[];
   points: number;
   image: string;
+  isDeleted: boolean;
 }
 
 export default IWorkout;

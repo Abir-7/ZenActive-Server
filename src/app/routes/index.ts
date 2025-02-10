@@ -3,7 +3,7 @@ import { UserRoute } from "../modules/user/user.route";
 import { AuthRoute } from "../modules/auth/auth.route";
 import { MealRoute } from "../modules/meal/meal.route";
 
-import { ChallengeRoute } from "../modules/challenge/challenge.route";
+import { ChallengeRoute } from "../modules/challenge( maybe not needed)/challenge.route";
 import { BadgeRoute } from "../modules/badge/badge.route";
 
 import { BlockRoute } from "../modules/userConnection/blocklist/blocklist.route";
@@ -26,6 +26,7 @@ import { UserBadgeRoute } from "../modules/usersBadge/userBadge.route";
 //import { PackageRoute } from "../modules/payment/package/package.route";
 import { SubscriptionRoute } from "../modules/payment/subscription/subscription.route";
 import { PrivacyTermsAboutUsRoute } from "../modules/privacy & terms & about us/privacy_terms_aboutus.route";
+import { DailyExerciseRoutes } from "../modules/usersDailyExercise/dailyExercise.route";
 
 const router = Router();
 
@@ -53,6 +54,7 @@ const apiRoutes = [
   { path: "/user-badge", route: UserBadgeRoute },
   { path: "/subscription", route: SubscriptionRoute },
   { path: "/privacy&terms", route: PrivacyTermsAboutUsRoute },
+  { path: "/daily-exercise", route: DailyExerciseRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

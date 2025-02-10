@@ -12,6 +12,10 @@ const createOrUpdatePrivacy = async (privacyData: IPrivacy) => {
   }
 };
 
+const getPrivacy = async (): Promise<IPrivacy | null> => {
+  return await Privacy.findOne().exec();
+};
+
 const createOrUpdateTerms = async (termsData: ITerms) => {
   let terms = await Terms.findOne().exec();
   if (terms) {
@@ -21,6 +25,10 @@ const createOrUpdateTerms = async (termsData: ITerms) => {
     terms = new Terms(termsData);
     return await terms.save();
   }
+};
+
+const getTerms = async (): Promise<ITerms | null> => {
+  return await Terms.findOne().exec();
 };
 
 const createOrUpdateAboutUs = async (aboutUsData: IAboutUs) => {
@@ -34,8 +42,15 @@ const createOrUpdateAboutUs = async (aboutUsData: IAboutUs) => {
   }
 };
 
+const getAboutUs = async (): Promise<IAboutUs | null> => {
+  return await AboutUs.findOne().exec();
+};
+
 export const PrivacyTermsAboutUsService = {
   createOrUpdatePrivacy,
   createOrUpdateTerms,
   createOrUpdateAboutUs,
+  getPrivacy,
+  getTerms,
+  getAboutUs,
 };

@@ -217,6 +217,14 @@ const blockUser = async (userId: string) => {
   return { message: "User deleted successfully." };
 };
 
+const getTotalUserCount = async () => {
+  const totalUsers = await User.countDocuments({
+    isDeleted: false,
+    isBlocked: false,
+  });
+  return { totalUsers };
+};
+
 export const UserService = {
   createUser,
   deleteUser,
@@ -224,4 +232,5 @@ export const UserService = {
   getSingleUser,
   updateUser,
   blockUser,
+  getTotalUserCount,
 };

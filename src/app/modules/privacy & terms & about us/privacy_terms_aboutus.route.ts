@@ -7,15 +7,18 @@ router.post(
   "/privacy",
   auth("ADMIN"),
   PrivacyTermsAboutUsController.createOrUpdatePrivacy
-); // Create or update Privacy
+);
+router.get("/privacy", PrivacyTermsAboutUsController.getPrivacy);
 router.post(
   "/terms",
   auth("ADMIN"),
   PrivacyTermsAboutUsController.createOrUpdateTerms
-); // Create or update Terms
+);
+router.get("/terms", PrivacyTermsAboutUsController.getTerms);
 router.post(
   "/about-us",
   auth("ADMIN"),
   PrivacyTermsAboutUsController.createOrUpdateAboutUs
-); // Create or update AboutUs
+);
+router.get("/about-us", PrivacyTermsAboutUsController.getAboutUs);
 export const PrivacyTermsAboutUsRoute = router;

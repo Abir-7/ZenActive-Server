@@ -21,6 +21,16 @@ const createOrUpdatePrivacy = catchAsync(
   }
 );
 
+const getPrivacy = catchAsync(async (req: Request, res: Response) => {
+  const result = await PrivacyTermsAboutUsService.getPrivacy();
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Privacy fetched successfully.",
+  });
+});
+
 // Create or update Terms
 const createOrUpdateTerms = catchAsync(async (req: Request, res: Response) => {
   const termsData = req.body;
@@ -32,6 +42,16 @@ const createOrUpdateTerms = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: httpStatus.OK,
     message: "Terms created/updated successfully.",
+  });
+});
+
+const getTerms = catchAsync(async (req: Request, res: Response) => {
+  const result = await PrivacyTermsAboutUsService.getTerms();
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Terms fetched successfully.",
   });
 });
 
@@ -51,8 +71,21 @@ const createOrUpdateAboutUs = catchAsync(
   }
 );
 
+const getAboutUs = catchAsync(async (req: Request, res: Response) => {
+  const result = await PrivacyTermsAboutUsService.getAboutUs();
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "AboutUs fetched successfully.",
+  });
+});
+
 export const PrivacyTermsAboutUsController = {
   createOrUpdatePrivacy,
   createOrUpdateTerms,
   createOrUpdateAboutUs,
+  getPrivacy,
+  getTerms,
+  getAboutUs,
 };

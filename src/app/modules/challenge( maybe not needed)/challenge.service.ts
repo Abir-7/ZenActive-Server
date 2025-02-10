@@ -1,9 +1,15 @@
 import AppError from "../../errors/AppError";
+import unlinkFile from "../../utils/unlinkFiles";
 import { IChallenge } from "./challenge.interface";
 import { Challenge } from "./challenge.model";
 import httpStatus from "http-status";
 const createChallenge = async (data: IChallenge) => {
   const result = await Challenge.create(data);
+
+  if (!result && data.image) {
+    unlinkFile(data.image);
+  }
+
   return result;
 };
 const updateChallenge = async (id: string, data: Partial<IChallenge>) => {
@@ -11,10 +17,18 @@ const updateChallenge = async (id: string, data: Partial<IChallenge>) => {
   if (!isExist) {
     throw new AppError(httpStatus.NOT_FOUND, "Challange not found.");
   }
+
+  if (isExist && data.image) {
+    unlinkFile(isExist.image);
+  }
+
   const updatedData = await Challenge.findOneAndUpdate({ _id: id }, data, {
     new: true,
   });
   if (!updatedData) {
+    if (data.image) {
+      unlinkFile(data.image as string);
+    }
     throw new AppError(httpStatus.BAD_REQUEST, "Failed to update.");
   }
   return updatedData;

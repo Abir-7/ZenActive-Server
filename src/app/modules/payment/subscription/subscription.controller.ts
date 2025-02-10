@@ -47,8 +47,19 @@ const getAllTransection = catchAsync(async (req, res) => {
   });
 });
 
+const getTotalEarnings = catchAsync(async (req, res) => {
+  const result = await SubscriptionService.getTotalEarnings();
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "TotalEarning  data are fetched successfully.",
+  });
+});
+
 export const SubscriptionController = {
   createSubscription,
   getSubscriptionData,
   getAllTransection,
+  getTotalEarnings,
 };

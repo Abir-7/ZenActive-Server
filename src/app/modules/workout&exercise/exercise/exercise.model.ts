@@ -1,5 +1,6 @@
 import { model, Schema } from "mongoose";
 import { IExercise } from "./exercise.interface";
+import { boolean } from "zod";
 
 const exerciseSchema = new Schema<IExercise>({
   name: { type: String, required: true, unique: true },
@@ -11,6 +12,9 @@ const exerciseSchema = new Schema<IExercise>({
 
   description: { type: String, required: true },
   image: { type: String, required: true },
+  goal: { type: String, required: true },
+  duration: { type: Number, required: true },
+  isDeleted: { type: Boolean, default: false },
 });
 const Exercise = model<IExercise>("Exercise", exerciseSchema);
 

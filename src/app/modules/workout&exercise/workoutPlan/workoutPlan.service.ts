@@ -3,6 +3,7 @@ import AppError from "../../../errors/AppError";
 import { IWorkoutPlan } from "./workoutPlan.interface";
 import httpStatus from "http-status";
 import { WorkoutPlan } from "./workoutPlan.model";
+import unlinkFile from "../../../utils/unlinkFiles";
 
 const createWorkout = async (workoutData: IWorkoutPlan) => {
   if (workoutData.duration * 7 !== workoutData.workouts.length) {
@@ -15,6 +16,11 @@ const createWorkout = async (workoutData: IWorkoutPlan) => {
   }
 
   const workout = await WorkoutPlan.create(workoutData);
+
+  if (!workout) {
+    unlinkFile(workoutData.image);
+  }
+
   return workout;
 };
 
@@ -44,6 +50,15 @@ export const updateWorkout = async (
       new: true,
     }
   );
+
+  if (!updatedWorkout) {
+    unlinkFile(isWorkoutExist.image);
+    throw new AppError(httpStatus.BAD_REQUEST, "Failed to update. ");
+  } else {
+    if (workoutData.image) {
+      unlinkFile(isWorkoutExist.image);
+    }
+  }
   return updatedWorkout;
 };
 

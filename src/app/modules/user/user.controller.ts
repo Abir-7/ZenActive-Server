@@ -96,8 +96,18 @@ const blockUser = catchAsync(async (req, res) => {
   sendResponse(res, {
     data: result,
     success: true,
-    statusCode: HttpStatus.NO_CONTENT,
+    statusCode: HttpStatus.OK,
     message: "User deleted successfully.",
+  });
+});
+const getTotalUserCount = catchAsync(async (req, res) => {
+  const result = await UserService.getTotalUserCount();
+
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: HttpStatus.OK,
+    message: "Total user number fetched successfully.",
   });
 });
 
@@ -109,4 +119,5 @@ export const UserController = {
   getSingleUser,
   updateUserInfo,
   getMydata,
+  getTotalUserCount,
 };

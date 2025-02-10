@@ -7,4 +7,7 @@ export interface IExercise {
   points: number;
   description: string;
   image: string;
+  goal: string;
+  duration: number;
+  isDeleted: boolean;
 }

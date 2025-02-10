@@ -5,13 +5,9 @@ import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import noRouteError from "./app/middleware/noRoute";
 import router from "./app/routes";
 import http from "http";
-import { Server } from "socket.io";
-import { Chat } from "./app/modules/userChat/chat.model";
-import { ChatService } from "./app/modules/userChat/chat.service";
-import { IChat } from "./app/modules/userChat/chat.interface";
 
 const corsOption = {
-  origin: ["http://localhost:3000", "*"],
+  origin: ["http://localhost:3000", "http://192.168.10.32:5174"],
   credentials: true,
   methods: ["GET", "PATCH", "POST", "DELETE", "PUT"],
 };

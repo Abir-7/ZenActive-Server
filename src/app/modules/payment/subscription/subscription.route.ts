@@ -25,4 +25,11 @@ router.get(
   SubscriptionController.getAllTransection
 );
 
+router.get(
+  "/total-earn",
+
+  auth("ADMIN"),
+  SubscriptionController.getTotalEarnings
+);
+
 export const SubscriptionRoute = router;

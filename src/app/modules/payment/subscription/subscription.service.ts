@@ -85,8 +85,22 @@ const getAllTransection = async (query: Record<string, unknown>) => {
   return await allData.modelQuery;
 };
 
+const getTotalEarnings = async () => {
+  const result = await Subscription.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalEarnings: { $sum: "$packagePrice" },
+      },
+    },
+  ]);
+
+  return { totalEarn: result.length > 0 ? result[0].totalEarnings : 0 };
+};
+
 export const SubscriptionService = {
   createSubscription,
   getSubscriptionData,
   getAllTransection,
+  getTotalEarnings,
 };
