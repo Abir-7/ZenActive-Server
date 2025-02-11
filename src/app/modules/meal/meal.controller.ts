@@ -67,7 +67,8 @@ const getAllMeals = catchAsync(async (req, res) => {
 
   const result = await MealService.getAllMeals(filter);
   sendResponse(res, {
-    data: result,
+    data: result.allMeals,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Meals retrieved successfully.",

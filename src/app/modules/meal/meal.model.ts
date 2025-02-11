@@ -24,6 +24,7 @@ const MealSchema: Schema = new Schema<IMeal>({
     enum: Time, // Use the constant here
     required: true,
   },
+  amount: { type: Number, required: true },
 });
 
 const Meal = model<IMeal>("Meal", MealSchema);

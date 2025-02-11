@@ -9,7 +9,7 @@ export const zodWorkoutPlanSchema = z.object({
     workouts: z.array(
       z.string().min(1, { message: "Exercise name is required" })
     ),
-    rewardPoints: z
+    points: z
       .number()
       .positive({ message: "Reward points must be a positive number" }),
 
@@ -28,7 +28,7 @@ export const zodUpdateWorkoutPlanSchema = z
       workouts: z
         .array(z.string().min(1, { message: "Exercise name is required" }))
         .optional(),
-      rewardPoints: z
+      points: z
         .number()
         .positive({ message: "Reward points must be a positive number" })
         .optional(),

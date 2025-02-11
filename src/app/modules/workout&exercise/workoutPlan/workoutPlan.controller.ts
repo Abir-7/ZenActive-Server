@@ -11,7 +11,7 @@ export const createWorkoutPlan = catchAsync(async (req, res) => {
   }
   const value = {
     ...req.body,
-    image,
+    // image,
   };
 
   const result = await WorkoutPlanService.createWorkout(value);

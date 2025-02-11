@@ -74,7 +74,8 @@ export const userSchema = new Schema<IUser, IUserModel>(
       default:
         "https://imgv3.fotor.com/images/blog-cover-image/10-profile-picture-ideas-to-make-you-stand-out.jpg",
     },
-    appData: { type: Schema.Types.ObjectId, ref: "UserAppData", default: null },
+    mobile: { type: String },
+
     authentication: {
       type: {
         isResetPassword: {
@@ -97,7 +98,6 @@ export const userSchema = new Schema<IUser, IUserModel>(
     isDeleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
     fcmToken: { type: String },
-    mobile: { type: String },
   },
   {
     timestamps: true,

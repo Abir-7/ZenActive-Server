@@ -118,22 +118,151 @@ const updateUser = async (userId: string, userData: IUpdateUser) => {
   return updatedUser;
 };
 
-const getAllUsers = async (query: Record<string, unknown>) => {
+// const getAllUsers = async (query: Record<string, unknown>) => {
+//   query.isDeleted = false;
+//   query.isBlocked = false;
+
+//   const users = new QueryBuilder(User.find(), query)
+//     .search(["name.firstName", "name.lastName", "email"])
+//     .filter()
+//     .paginate();
+
+//   const result1 = await users.modelQuery;
+//   const meta = await users.countTotal();
+
+//   const result = await Promise.all(
+//     result1.map(async (user) => {
+//       const appData = await UserAppData.find({ userId: user._id }).exec();
+//       return {
+//         ...user.toObject(), // Convert Mongoose document to plain object
+//         appData, // Attach appData to the user
+//       };
+//     })
+//   );
+
+//   console.log(meta);
+//   return { result, meta };
+// };
+
+// const getSingleUser = async (userId: string) => {
+//   const [user, badges, appData] = await Promise.all([
+//     User.findOne({ _id: userId }), // User data
+//     UserBadge.findOne({ userId }).populate("badgeId"), // Badges
+//     UserAppData.findOne({ userId }), // App data
+//   ]);
+
+//   if (!user) {
+//     throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//   }
+
+//   if (user.isBlocked) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "User is Blocked");
+//   }
+
+//   if (user.isDeleted) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "User is Deleted");
+//   }
+
+//   return {
+//     user,
+//     appData,
+//     badges,
+//   };
+// };
+
+const getAllUsers = async (query: {
+  searchTerm?: string;
+  page?: number;
+  limit?: number;
+  [key: string]: unknown;
+}) => {
   query.isDeleted = false;
   query.isBlocked = false;
-  const users = new QueryBuilder(User.find().populate("appData"), query)
-    .search(["name.firstName", "name.lastName", "email"])
-    .filter()
-    .paginate();
-  const result = await users.modelQuery;
-  const meta = await users.countTotal();
-  console.log(meta);
-  return { result, meta };
+
+  const { searchTerm, page = 1, limit = 10, ...filterQuery } = query;
+
+  const searchFilter = searchTerm
+    ? {
+        $or: [
+          { "name.firstName": { $regex: searchTerm, $options: "i" } },
+          { "name.lastName": { $regex: searchTerm, $options: "i" } },
+          { email: { $regex: searchTerm, $options: "i" } },
+        ],
+      }
+    : {};
+
+  const combinedQuery = {
+    ...filterQuery,
+    ...searchFilter,
+    isDeleted: false,
+    isBlocked: false,
+  };
+
+  const users = await User.aggregate([
+    { $match: combinedQuery },
+
+    {
+      $lookup: {
+        from: "userappdatas",
+        localField: "_id",
+        foreignField: "userId",
+        as: "appData",
+      },
+    },
+    {
+      $unwind: {
+        path: "$appData",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    { $skip: (page - 1) * limit },
+    { $limit: limit },
+
+    {
+      $project: {
+        isVerified: 1,
+        authentication: 1,
+        _id: 1,
+        isProfileUpdated: 1,
+        role: 1,
+        isDeleted: 1,
+        isBlocked: 1,
+        name: 1,
+        image: 1,
+        email: 1,
+        appData: 1,
+
+        dateOfBirth: 1,
+        diet: 1,
+        gender: 1,
+        height: 1,
+        weight: 1,
+        primaryGoal: 1,
+        movementDifficulty: 1,
+        medicalCondition: 1,
+        injury: 1,
+        activityLevel: 1,
+      },
+    },
+  ]);
+
+  const totalUsers = await User.countDocuments(combinedQuery);
+
+  return {
+    meta: {
+      total: totalUsers,
+      totalPage: Math.ceil(totalUsers / limit),
+      page,
+      limit,
+    },
+    result: users,
+  };
 };
 
 const getSingleUser = async (userId: string) => {
-  const user = await User.aggregate([
+  const result = await User.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+
     {
       $lookup: {
         from: "userbadges",
@@ -142,6 +271,7 @@ const getSingleUser = async (userId: string) => {
         as: "badges",
       },
     },
+
     {
       $lookup: {
         from: "badges",
@@ -150,37 +280,56 @@ const getSingleUser = async (userId: string) => {
         as: "badges",
       },
     },
+
     {
       $lookup: {
         from: "userappdatas",
-        localField: "appData",
-        foreignField: "_id",
+        localField: "_id",
+        foreignField: "userId",
         as: "appData",
       },
     },
-    { $unwind: { path: "$appData", preserveNullAndEmptyArrays: true } },
-    { $unwind: { path: "$badges", preserveNullAndEmptyArrays: true } },
+
+    {
+      $addFields: {
+        badges: { $arrayElemAt: ["$badges", 0] },
+        appData: { $arrayElemAt: ["$appData", 0] },
+      },
+    },
+
     {
       $project: {
-        password: 0,
-        authentication: 0,
+        _id: 1,
+        name: 1,
+        email: 1,
+        image: 1,
+        role: 1,
+        isBlocked: 1,
+        isDeleted: 1,
+        badges: 1, // This is now an object
+        appData: 1, // This is now an object
       },
     },
   ]);
 
-  if (!user || user.length === 0) {
+  // Check if the user exists
+  if (result.length === 0) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  if (user[0].isBlocked) {
+  const user = result[0];
+
+  // Check for user status
+  if (user.isBlocked) {
     throw new AppError(httpStatus.BAD_REQUEST, "User is Blocked");
   }
 
-  if (user[0].isDeleted) {
+  if (user.isDeleted) {
     throw new AppError(httpStatus.BAD_REQUEST, "User is Deleted");
   }
 
-  return user[0];
+  // Return the populated user with badge and app data
+  return user;
 };
 
 const deleteUser = async (userId: string) => {

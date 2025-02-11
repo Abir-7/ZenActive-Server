@@ -1,8 +1,10 @@
 import { Types } from "mongoose";
 
+import { IWorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.interface";
+
 export interface IUserWorkoutPlan {
   userId: Types.ObjectId;
-  workoutPlanId: Types.ObjectId;
+  workoutPlanId: Types.ObjectId | IWorkoutPlan;
 
   currentWorkoutIndex: number;
   currentExerciseIndex: number;

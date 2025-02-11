@@ -13,7 +13,21 @@ const createUserMealPlan = async (userId: string, mealId: string) => {
 };
 
 const getUserMealPlans = async (userId: string) => {
-  return await UserMealPlan.find({ userId }).populate("mealId");
+  const data = await UserMealPlan.find({ userId }).populate("mealId").lean();
+
+  const mainData = data
+    .map((meal) => {
+      if (!meal.mealId) return null;
+      const mealData = meal.mealId;
+
+      return {
+        ...mealData,
+        isComplete: meal.isCompleted,
+      };
+    })
+    .filter(Boolean);
+
+  return mainData;
 };
 
 // export const getUserMealPlanById = async (userid: string) => {
@@ -21,12 +35,14 @@ const getUserMealPlans = async (userId: string) => {
 // };
 
 const updateUserMealPlan = async (userId: string, id: string) => {
+  console.log(userId, id);
+
   const updatedUserMealPlan = await UserMealPlan.findOneAndUpdate(
-    { _id: id, userId },
+    { mealId: id, userId },
     { isCompleted: true },
     { new: true }
   ).populate("mealId");
-
+  console.log(updatedUserMealPlan);
   if (!updatedUserMealPlan) {
     throw new AppError(httpStatus.NOT_FOUND, "UserMealPlan not found");
   }
@@ -35,13 +51,17 @@ const updateUserMealPlan = async (userId: string, id: string) => {
   if (!userAppData) {
     throw new AppError(httpStatus.NOT_FOUND, "User App data not found");
   }
+
   await UserAppData.findOneAndUpdate(
     { userId },
     {
-      gainedCalories:
-        (updatedUserMealPlan as any).mealId?.nutritionalInfo?.calories +
-        userAppData?.gainedCalories,
-    }
+      $set: {
+        gainedCalories:
+          (updatedUserMealPlan as any).mealId?.nutritionalInfo?.calories +
+          userAppData.gainedCalories,
+      },
+    },
+    { new: true, upsert: true }
   );
   return updatedUserMealPlan;
 };

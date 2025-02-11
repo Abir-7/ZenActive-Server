@@ -2,11 +2,13 @@ import UserWorkoutPlan from "./userWorkoutPlan.model";
 
 import AppError from "../../errors/AppError";
 import { WorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.model";
-import path from "path";
-import { populate } from "dotenv";
+
 import Workout from "../workout&exercise/workout/workout.model";
 import { UserAppData } from "../userAppData/appdata.model";
 import status from "http-status";
+import IWorkout from "../workout&exercise/workout/workout.interface";
+import { IWorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.interface";
+import { IUserWorkoutPlan } from "./userWorkoutPlan.interface";
 
 const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
   const workoutPlan = await WorkoutPlan.findOne({
@@ -132,7 +134,8 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
 
 // Get a user's active workout plan
 const getActiveWorkoutPlan = async (userId: string, planId: string) => {
-  return await UserWorkoutPlan.findOne({
+  console.log(userId, planId);
+  const data = await UserWorkoutPlan.findOne({
     workoutPlanId: planId,
     userId,
     isCompleted: "InProgress",
@@ -148,8 +151,24 @@ const getActiveWorkoutPlan = async (userId: string, planId: string) => {
         },
       },
     })
+    .lean();
 
-    .exec();
+  // console.log(
+  //   (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
+  //     data?.currentWorkoutIndex as number,
+  //     (data?.currentWorkoutIndex as number) + 1
+  //   ),
+  //   "gg"
+  // );
+  return data;
+
+  // return {
+  //   ...data,
+  //   workoutPlanId: (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
+  //     data?.currentWorkoutIndex as number,
+  //     (data?.currentWorkoutIndex as number) + 1
+  //   ),
+  // };
 };
 
 const giveFeedback = async (data: {

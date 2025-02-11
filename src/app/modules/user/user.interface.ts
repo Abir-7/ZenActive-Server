@@ -25,7 +25,7 @@ export interface IUser {
   occupation?: string;
   additionalDetails?: string;
   image: string;
-  appData: Types.ObjectId;
+
   authentication?: {
     isResetPassword: boolean;
     oneTimeCode: number;

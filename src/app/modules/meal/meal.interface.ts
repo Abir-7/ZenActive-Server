@@ -15,6 +15,7 @@ export interface IMeal {
   isDeleted: boolean;
   suitableFor: DietType[];
   mealTime: TTime;
+  amount: number;
 }
 
 export const Time = ["Breakfast", "Lunch", "Dinner", "Snacks"] as const;

@@ -13,9 +13,9 @@ const loginUser = async (userData: {
   password: string;
   fcmToken: string;
 }) => {
-  const isUserExist = await User.findOne({ email: userData.email })
-    .select("+password")
-    .populate("appData");
+  const isUserExist = await User.findOne({ email: userData.email }).select(
+    "+password"
+  );
 
   if (isUserExist?.isBlocked) {
     throw new AppError(httpStatus.BAD_REQUEST, "User Blocked");
@@ -63,11 +63,7 @@ const loginUser = async (userData: {
   return {
     accessToken,
     refreshToken,
-    user: {
-      email: isUserExist.email,
-      role: isUserExist.role,
-      _id: isUserExist._id,
-    },
+    user: isUserExist,
   };
 };
 
@@ -262,9 +258,7 @@ const updatePassword = async (
     confirm_password: string;
   }
 ) => {
-  const isUserExist = await User.findOne({ _id: userId })
-    .select("+password")
-    .populate("appData");
+  const isUserExist = await User.findOne({ _id: userId }).select("+password");
 
   if (!isUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found.");

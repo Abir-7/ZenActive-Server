@@ -1,10 +1,11 @@
-import { FilterQuery } from "mongoose";
+import { FilterQuery, Query } from "mongoose";
 import AppError from "../../errors/AppError";
 import unlinkFile from "../../utils/unlinkFiles";
 import { User } from "../user/user.model";
 import { IMeal } from "./meal.interface";
 import Meal from "./meal.model";
 import httpStatus from "http-status";
+import QueryBuilder from "../../builder/QueryBuilder";
 const createMeal = async (mealData: IMeal) => {
   const newMeal = await Meal.create(mealData);
 
@@ -50,25 +51,18 @@ export const updateMeal = async (
   return updatedMeal;
 };
 
-const getAllMeals = async (filters: {
-  suitableFor?: string;
-  category?: string;
-  mealTime?: string;
-  nutritionalInfo?: Record<string, any>;
-}) => {
-  const query: FilterQuery<IMeal> = { isDeleted: false };
+const getAllMeals = async (query: Record<string, unknown>) => {
+  query.isDeleted = false;
 
-  if (filters.suitableFor) query.suitableFor = { $in: [filters.suitableFor] };
-  if (filters.category) query.category = filters.category;
-  if (filters.mealTime) query.mealTime = filters.mealTime;
+  const meals = new QueryBuilder(Meal.find(), query)
+    .search(["mealName"])
+    .filter()
+    .paginate()
+    .sort();
 
-  if (filters.nutritionalInfo) {
-    for (const key in filters.nutritionalInfo) {
-      query[`nutritionalInfo.${key}`] = filters.nutritionalInfo[key];
-    }
-  }
-
-  return Meal.find(query);
+  const allMeals = await meals.modelQuery;
+  const meta = await meals.countTotal();
+  return { allMeals, meta };
 };
 
 const getSingleMeal = async (mealId: string) => {

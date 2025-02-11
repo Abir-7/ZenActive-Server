@@ -15,18 +15,18 @@ router.post(
   fileUploadHandler(),
   parseField("data"),
   validateRequest(zodExerciseSchema),
-  WorkoutController.createWorkout
+  WorkoutController.createExercise
 );
-router.get("/", auth("ADMIN", "USER"), WorkoutController.getAllWorkouts); //
-router.get("/:id", auth("ADMIN", "USER"), WorkoutController.getWorkoutById);
+router.get("/", auth("ADMIN", "USER"), WorkoutController.getAllExercise); //
+router.get("/:id", auth("ADMIN", "USER"), WorkoutController.getExerciseById);
 router.patch(
   "/:id",
   auth("ADMIN"),
   fileUploadHandler(),
   parseField("data"),
-  WorkoutController.updateWorkout
+  WorkoutController.updateExercise
 );
-router.delete("/:id", auth("ADMIN"), WorkoutController.deleteWorkout);
+router.delete("/:id", auth("ADMIN"), WorkoutController.deleteExercise);
 
 export default router;
 

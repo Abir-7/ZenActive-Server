@@ -19,7 +19,6 @@ const userAppDataSchema = new Schema<IUserAppData>(
   }
 );
 
-// Create the model
 export const UserAppData = model<IUserAppData>(
   "UserAppData",
   userAppDataSchema
