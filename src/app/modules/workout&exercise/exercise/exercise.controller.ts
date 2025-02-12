@@ -32,7 +32,9 @@ const createExercise = catchAsync(async (req: Request, res: Response) => {
 
 // Get all exercises
 const getAllExercise = catchAsync(async (req: Request, res: Response) => {
-  const result = await ExerciseService.getAllExercise();
+  const { userRole, userId } = req.user;
+
+  const result = await ExerciseService.getAllExercise(userRole, userId);
   sendResponse(res, {
     data: result,
     success: true,

@@ -1,5 +1,7 @@
+import mongoose, { Types } from "mongoose";
 import AppError from "../../../errors/AppError";
 import unlinkFile from "../../../utils/unlinkFiles";
+import { User } from "../../user/user.model";
 import DailyExercise from "../../usersDailyExercise/dailyExercise.model";
 import { IExercise } from "./exercise.interface";
 import Exercise from "./exercise.model";
@@ -16,9 +18,56 @@ const createExercise = async (exerciseData: IExercise) => {
   return exercise;
 };
 
-// Get all exercises
-const getAllExercise = async () => {
-  return await Exercise.find().exec();
+const getAllExercise = async (userRole: string, userId: string) => {
+  if (userRole === "ADMIN") {
+    // For admin, return all active exercises.
+    return await Exercise.find({ isDeleted: false }).exec();
+  } else {
+    // Calculate today's boundaries.
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    return await Exercise.aggregate([
+      // Only include active (not deleted) exercises.
+      { $match: { isDeleted: false } },
+      // Lookup daily exercise records for the current user and only for today.
+      {
+        $lookup: {
+          from: "dailyexercises", // Use your actual DailyExercise collection name.
+          let: { exerciseId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$exerciseId", "$$exerciseId"] },
+                    { $eq: ["$userId", new mongoose.Types.ObjectId(userId)] },
+                    { $gte: ["$completedDate", startOfToday] },
+                    { $lte: ["$completedDate", endOfToday] },
+                  ],
+                },
+              },
+            },
+            // Optionally, project only the fields you need.
+            { $project: { _id: 1 } },
+          ],
+          as: "dailyExercise",
+        },
+      },
+      // Add the isCompleted field: true if there's at least one matching daily exercise.
+      {
+        $addFields: {
+          isCompleted: { $gt: [{ $size: "$dailyExercise" }, 0] },
+        },
+      },
+      // Optionally, remove the dailyExercise field from the output.
+      {
+        $project: { dailyExercise: 0 },
+      },
+    ]);
+  }
 };
 
 // Get an exercise by ID

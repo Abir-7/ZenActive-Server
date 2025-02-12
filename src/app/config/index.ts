@@ -39,4 +39,17 @@ export const config = {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,
   },
+  firebase: {
+    serviceType: process.env.SERVICE_TYPE,
+    projectId: process.env.PROJECT_ID,
+    privateKeyId: process.env.PRIVET_KEY_ID,
+    privateKey: process.env.PRIVET_KEY,
+    clientEmail: process.env.CLIENT_EMAIL,
+    clientId: process.env.CLIENT_ID,
+    authUri: process.env.AUTH_URI,
+    tokenUri: process.env.TOKEN_URI,
+    authProviderCertUrl: process.env.AUTH_PROVIDER_CERT_URL,
+    clientCertUrl: process.env.CLIENT_CERT_URL,
+    universeDomain: process.env.UNIVERSE_DOMAIN,
+  },
 };

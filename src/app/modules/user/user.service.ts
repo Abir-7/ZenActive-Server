@@ -221,9 +221,9 @@ const getAllUsers = async (query: {
     {
       $project: {
         isVerified: 1,
-        authentication: 1,
+
         _id: 1,
-        isProfileUpdated: 1,
+
         role: 1,
         isDeleted: 1,
         isBlocked: 1,
@@ -231,7 +231,8 @@ const getAllUsers = async (query: {
         image: 1,
         email: 1,
         appData: 1,
-
+        isProfileUpdated: 1,
+        authentication: 1,
         dateOfBirth: 1,
         diet: 1,
         gender: 1,
@@ -299,15 +300,31 @@ const getSingleUser = async (userId: string) => {
 
     {
       $project: {
+        isVerified: 1,
+
         _id: 1,
-        name: 1,
-        email: 1,
-        image: 1,
+
         role: 1,
-        isBlocked: 1,
         isDeleted: 1,
-        badges: 1, // This is now an object
-        appData: 1, // This is now an object
+        isBlocked: 1,
+        name: 1,
+        image: 1,
+        email: 1,
+
+        isProfileUpdated: 1,
+        authentication: 1,
+        dateOfBirth: 1,
+        diet: 1,
+        gender: 1,
+        height: 1,
+        weight: 1,
+        primaryGoal: 1,
+        movementDifficulty: 1,
+        medicalCondition: 1,
+        injury: 1,
+        activityLevel: 1,
+        badges: 1,
+        appData: 1,
       },
     },
   ]);

@@ -54,6 +54,10 @@ export const updateMeal = async (
 const getAllMeals = async (query: Record<string, unknown>) => {
   query.isDeleted = false;
 
+  if (query.suitableFor == "No Preference") {
+    delete query.suitableFor;
+  }
+
   const meals = new QueryBuilder(Meal.find(), query)
     .search(["mealName"])
     .filter()

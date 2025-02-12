@@ -32,33 +32,38 @@ export const zodCreateUserSchema = z
 export const zodUserUpdateSchema = z
   .object({
     body: z.object({
-      medicalCondition: z.enum(
-        Object.values(MedicalCondition) as [string, ...string[]]
-      ),
-      movementDifficulty: z.enum(
-        Object.values(MovementDifficulty) as [string, ...string[]]
-      ),
-      injury: z.enum(Object.values(Injury) as [string, ...string[]]),
-      activityLevel: z.enum(
-        Object.values(ActivityLevel) as [string, ...string[]]
-      ),
-      diet: z.enum(Object.values(DietType) as [string, ...string[]]),
-      primaryGoal: z.enum(Object.values(PrimaryGoals) as [string, ...string[]]),
-      weight: z.number().min(1, "Weight must be a positive number"),
-      height: z.number().min(1, "Height must be a positive number"),
-      gender: z.enum(Object.values(Gender) as [string, ...string[]]),
+      medicalCondition: z
+        .enum(Object.values(MedicalCondition) as [string, ...string[]])
+        .optional(),
+      movementDifficulty: z
+        .enum(Object.values(MovementDifficulty) as [string, ...string[]])
+        .optional(),
+      injury: z.enum(Object.values(Injury) as [string, ...string[]]).optional(),
+      activityLevel: z
+        .enum(Object.values(ActivityLevel) as [string, ...string[]])
+        .optional(),
+      diet: z.enum(Object.values(DietType) as [string, ...string[]]).optional(),
+      primaryGoal: z
+        .enum(Object.values(PrimaryGoals) as [string, ...string[]])
+        .optional(),
+      weight: z.number().min(1, "Weight must be a positive number").optional(),
+      height: z.number().min(1, "Height must be a positive number").optional(),
+      gender: z.enum(Object.values(Gender) as [string, ...string[]]).optional(),
 
       dateOfBirth: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
           message: "Invalid date format",
         })
-        .transform((val) => new Date(val)), // Converts the string to a Date
+        .transform((val) => new Date(val))
+        .optional(), // Converts the string to a Date
 
-      name: z.object({
-        firstName: z.string().min(1, "First name is required"),
-        lastName: z.string().min(1, "Last name is required"),
-      }),
+      name: z
+        .object({
+          firstName: z.string().min(1, "First name is required"),
+          lastName: z.string().min(1, "Last name is required"),
+        })
+        .optional(),
     }),
   })
   .strict();

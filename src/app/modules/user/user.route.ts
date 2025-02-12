@@ -23,7 +23,7 @@ router.patch(
   parseField("data"),
   validateRequest(zodUserUpdateSchema),
 
-  auth("USER"),
+  auth("USER", "ADMIN"),
   UserController.updateUserInfo
 );
 router.patch("/block/:id", auth("ADMIN"), UserController.blockUser);
