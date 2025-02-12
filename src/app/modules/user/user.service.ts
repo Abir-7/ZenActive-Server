@@ -51,71 +51,119 @@ const createUser = async (userData: {
 };
 
 const updateUser = async (userId: string, userData: IUpdateUser) => {
-  // Check if the user exists
-  const isUserExist = await User.findById(userId);
-  if (!isUserExist) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Failed to update. User not found."
+  // Start a Mongoose session and begin a transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Fetch the user record within the transaction
+    const existingUser = await User.findById(userId).session(session);
+    if (!existingUser) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        "Failed to update. User not found."
+      );
+    }
+
+    // Destructure userData for easier access
+    const {
+      medicalCondition,
+      movementDifficulty,
+      injury,
+      activityLevel,
+      diet,
+      primaryGoal,
+      weight,
+      height,
+      gender,
+      dateOfBirth,
+      name,
+    } = userData;
+
+    // Determine if the profile is complete (and not already updated)
+    const isProfileComplete =
+      medicalCondition &&
+      movementDifficulty &&
+      injury &&
+      activityLevel &&
+      diet &&
+      primaryGoal &&
+      typeof weight === "number" &&
+      typeof height === "number" &&
+      gender &&
+      dateOfBirth &&
+      name?.firstName &&
+      name?.lastName &&
+      !existingUser.isProfileUpdated;
+
+    let appData;
+
+    if (isProfileComplete && existingUser.role === "USER") {
+      const tdee = calculateTDEE(userData).toFixed(2);
+      appData = await UserAppData.findOneAndUpdate(
+        { userId },
+        { tdee },
+        { upsert: true, new: true, session }
+      );
+    }
+
+    if (
+      !isProfileComplete &&
+      existingUser.role === "USER" &&
+      (weight != null ||
+        height != null ||
+        dateOfBirth != null ||
+        gender != null ||
+        activityLevel != null ||
+        primaryGoal != null)
+    ) {
+      // Use the provided values if available; otherwise, fall back to existingUser data.
+      const updatedProfile = {
+        weight: weight ?? existingUser.weight,
+        height: height ?? existingUser.height,
+        dateOfBirth: dateOfBirth ?? existingUser.dateOfBirth,
+        gender: gender ?? existingUser.gender,
+        activityLevel: activityLevel ?? existingUser.activityLevel,
+        primaryGoal: primaryGoal ?? existingUser.primaryGoal,
+      };
+
+      // Calculate TDEE using the updated profile data.
+      const tdee = calculateTDEE(updatedProfile).toFixed(2);
+
+      // Update the user's application data.
+      appData = await UserAppData.findOneAndUpdate(
+        { userId },
+        { tdee },
+        { upsert: true, new: true, session }
+      );
+    }
+
+    // Remove the user's previous image file (consider if this should happen post-transaction)
+    if (userData.image) {
+      unlinkFile(existingUser.image);
+    }
+
+    // Update the user document with the provided data and new appData reference
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        ...userData,
+        isProfileUpdated: isProfileComplete || existingUser.isProfileUpdated,
+        appData: appData?._id,
+      },
+      { new: true, session }
     );
+
+    // Commit the transaction if all operations were successful
+    await session.commitTransaction();
+    return updatedUser;
+  } catch (error) {
+    // Abort the transaction on error
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  // Destructure userData for easier access
-  const {
-    medicalCondition,
-    movementDifficulty,
-    injury,
-    activityLevel,
-    diet,
-    primaryGoal,
-    weight,
-    height,
-    gender,
-    dateOfBirth,
-    name,
-  } = userData;
-
-  const isProfileComplete =
-    medicalCondition &&
-    movementDifficulty &&
-    injury &&
-    activityLevel &&
-    diet &&
-    primaryGoal &&
-    typeof weight === "number" &&
-    typeof height === "number" &&
-    gender &&
-    dateOfBirth &&
-    name?.firstName &&
-    name?.lastName &&
-    !isUserExist.isProfileUpdated;
-
-  let appData;
-
-  // Calculate TDEE and create/update UserAppData if the profile is complete
-  if (isProfileComplete) {
-    const tdee = calculateTDEE(userData).toFixed(2);
-    appData = await UserAppData.findOneAndUpdate(
-      { userId },
-      { tdee },
-      { upsert: true, new: true }
-    );
-  }
-
-  unlinkFile(isUserExist?.image);
-
-  // Update the user with the provided data
-  const updatedUser = await User.findOneAndUpdate(
-    { _id: userId },
-    {
-      ...userData,
-      isProfileUpdated: isProfileComplete || isUserExist.isProfileUpdated,
-      appData: appData?._id,
-    },
-    { new: true }
-  );
-
-  return updatedUser;
 };
 
 // const getAllUsers = async (query: Record<string, unknown>) => {

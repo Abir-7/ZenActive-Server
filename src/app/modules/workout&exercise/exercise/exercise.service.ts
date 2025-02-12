@@ -5,6 +5,7 @@ import { User } from "../../user/user.model";
 import DailyExercise from "../../usersDailyExercise/dailyExercise.model";
 import { IExercise } from "./exercise.interface";
 import Exercise from "./exercise.model";
+import status from "http-status";
 
 // Create a new exercise
 const createExercise = async (exerciseData: IExercise) => {
@@ -76,6 +77,10 @@ const getExerciseById = async (exerciseId: string) => {
     DailyExercise.countDocuments({ exerciseId }),
     Exercise.findById(exerciseId).exec(),
   ]);
+
+  if (!exercise) {
+    throw new AppError(status.NOT_FOUND, "Exercise not found.");
+  }
 
   return { exercise, participant: participantCount };
 };

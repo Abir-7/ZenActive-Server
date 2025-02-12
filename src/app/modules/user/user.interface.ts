@@ -113,5 +113,6 @@ export interface IUpdateUser {
   gender: Gender;
   dateOfBirth: Date;
   name: { firstName: string; lastName: string };
-  image?: string;
+  image: string;
+  mobile: string;
 }

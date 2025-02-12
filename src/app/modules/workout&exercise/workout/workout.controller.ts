@@ -46,6 +46,24 @@ const getWorkoutById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getWorkoutsExerciseById = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { userId } = req.user;
+    console.log(userId);
+    const result = await WorkoutService.getWorkoutsExerciseById(
+      new Types.ObjectId(id),
+      userId
+    );
+    sendResponse(res, {
+      data: result,
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "User workout data fetched successfully.",
+    });
+  }
+);
+
 const updateWorkout = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   let image = null;
@@ -88,8 +106,8 @@ const deleteWorkout = catchAsync(async (req: Request, res: Response) => {
 const addExerciseToWorkout = catchAsync(async (req: Request, res: Response) => {
   const { workoutId, exerciseId } = req.body;
   const result = await WorkoutService.addExerciseToWorkout(
-    new Types.ObjectId(workoutId),
-    new Types.ObjectId(exerciseId)
+    workoutId,
+    exerciseId
   );
   sendResponse(res, {
     data: result,
@@ -103,8 +121,8 @@ const removeExerciseFromWorkout = catchAsync(
   async (req: Request, res: Response) => {
     const { workoutId, exerciseId } = req.body;
     const result = await WorkoutService.removeExerciseFromWorkout(
-      new Types.ObjectId(workoutId),
-      new Types.ObjectId(exerciseId)
+      workoutId,
+      exerciseId
     );
     sendResponse(res, {
       data: result,
@@ -123,4 +141,5 @@ export const WorkoutController = {
   deleteWorkout,
   addExerciseToWorkout,
   removeExerciseFromWorkout,
+  getWorkoutsExerciseById,
 };

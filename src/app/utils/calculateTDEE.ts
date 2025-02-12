@@ -1,6 +1,13 @@
 import { IUpdateUser } from "../modules/user/user.interface";
 
-export const calculateTDEE = (userData: IUpdateUser): number => {
+export const calculateTDEE = (userData: {
+  weight: number;
+  height: number;
+  dateOfBirth: Date;
+  gender: string;
+  activityLevel: string;
+  primaryGoal: string;
+}): number => {
   const { weight, height, dateOfBirth, gender, activityLevel, primaryGoal } =
     userData;
 

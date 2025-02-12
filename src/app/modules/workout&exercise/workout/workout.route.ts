@@ -16,6 +16,11 @@ router.post(
   WorkoutController.createWorkout
 );
 router.get("/", auth("ADMIN", "USER"), WorkoutController.getAllWorkouts);
+router.get(
+  "/workout-exercise/:id",
+  auth("ADMIN", "USER"),
+  WorkoutController.getWorkoutsExerciseById
+);
 router.get("/:id", auth("ADMIN", "USER"), WorkoutController.getWorkoutById);
 router.delete("/:id", auth("ADMIN"), WorkoutController.deleteWorkout);
 router.patch(

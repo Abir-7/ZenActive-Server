@@ -2,6 +2,10 @@ import { Types } from "mongoose";
 import IWorkout from "./workout.interface";
 import Workout from "./workout.model";
 import unlinkFile from "../../../utils/unlinkFiles";
+import DailyExercise from "../../usersDailyExercise/dailyExercise.model";
+import AppError from "../../../errors/AppError";
+import status from "http-status";
+import Exercise from "../exercise/exercise.model";
 
 // Create a new workout
 const createWorkout = async (workoutData: IWorkout) => {
@@ -17,11 +21,93 @@ const getAllWorkouts = async () => {
   return await Workout.find().populate("exercises").exec();
 };
 
-// Get a workout by ID
+//Get a workout by ID
 const getWorkoutById = async (workoutId: Types.ObjectId) => {
   return await Workout.findById(workoutId).populate("exercises").exec();
 };
 
+const getWorkoutsExerciseById = async (
+  workoutId: Types.ObjectId,
+  userId: string
+) => {
+  const userObjectId = new Types.ObjectId(userId);
+
+  const workouts = await Workout.aggregate([
+    { $match: { _id: workoutId } },
+
+    {
+      $lookup: {
+        from: "exercises",
+        localField: "exercises",
+        foreignField: "_id",
+        as: "exercises",
+      },
+    },
+
+    {
+      $lookup: {
+        from: "dailyexercises",
+        let: { exerciseIds: "$exercises._id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$userId", userObjectId] },
+                  { $in: ["$exerciseId", "$$exerciseIds"] },
+                ],
+              },
+            },
+          },
+        ],
+        as: "dailyExercises",
+      },
+    },
+
+    {
+      $addFields: {
+        completedExerciseIds: {
+          $map: {
+            input: "$dailyExercises",
+            as: "de",
+            in: "$$de.exerciseId",
+          },
+        },
+      },
+    },
+
+    {
+      $addFields: {
+        exercises: {
+          $map: {
+            input: "$exercises",
+            as: "exercise",
+            in: {
+              $mergeObjects: [
+                "$$exercise",
+                {
+                  isCompleted: {
+                    $in: ["$$exercise._id", "$completedExerciseIds"],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+
+    {
+      $project: { dailyExercises: 0, completedExerciseIds: 0 },
+    },
+  ]);
+
+  if (!workouts || workouts.length === 0) {
+    throw new AppError(status.NOT_FOUND, "Workout not found.");
+  }
+
+  return workouts[0].exercises;
+};
 // Update a workout by ID
 const updateWorkout = async (
   workoutId: Types.ObjectId,
@@ -53,6 +139,10 @@ const addExerciseToWorkout = async (
   workoutId: Types.ObjectId,
   exerciseId: Types.ObjectId
 ) => {
+  const isExist = await Exercise.findOne({ _id: exerciseId });
+  if (!isExist) {
+    throw new AppError(status.NOT_FOUND, "Exercise not found.");
+  }
   return await Workout.findByIdAndUpdate(
     workoutId,
     { $push: { exercises: exerciseId } },
@@ -84,4 +174,5 @@ export const WorkoutService = {
   deleteWorkout,
   addExerciseToWorkout,
   removeExerciseFromWorkout,
+  getWorkoutsExerciseById,
 };
