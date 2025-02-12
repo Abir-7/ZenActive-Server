@@ -11,6 +11,6 @@ const router = express_1.default.Router();
 router.post("/", (0, auth_1.default)("USER"), userMealPlan_controller_1.UserMealPlanController.createUserMealPlan);
 router.get("/", (0, auth_1.default)("USER"), userMealPlan_controller_1.UserMealPlanController.getUserMealPlans);
 // router.get("/details/:id", UserMealPlanController.getUserMealPlanById);
-router.patch("/:id", (0, auth_1.default)("USER"), userMealPlan_controller_1.UserMealPlanController.updateUserMealPlan);
+router.patch("/:mealId", (0, auth_1.default)("USER"), userMealPlan_controller_1.UserMealPlanController.updateUserMealPlan);
 router.delete("/:id", (0, auth_1.default)("USER"), userMealPlan_controller_1.UserMealPlanController.deleteUserMealPlan);
 exports.UserMealPlanRoute = router;

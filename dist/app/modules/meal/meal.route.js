@@ -16,5 +16,6 @@ router.post("/create-meal", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_
 router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(meal_validation_1.zodUpdateMealSchema), meal_controller_1.MealController.updateMeal);
 router.delete("/:id", (0, auth_1.default)("ADMIN"), meal_controller_1.MealController.deleteMeal);
 router.get("/", (0, auth_1.default)("ADMIN", "USER"), meal_controller_1.MealController.getAllMeals);
+router.get("/user-food-list", (0, auth_1.default)("ADMIN", "USER"), meal_controller_1.MealController.getAllUserMeals);
 router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), meal_controller_1.MealController.getSingleMeal);
 exports.MealRoute = router;

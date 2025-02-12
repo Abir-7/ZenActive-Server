@@ -17,9 +17,13 @@ const http_status_1 = __importDefault(require("http-status"));
 const chat_service_1 = require("./chat.service");
 const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
+const message_1 = require("../../socket/userMessage/message");
 // Create a new chat message
 const createChat = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { senderId, receiverId, message } = req.body;
+    const { friendId: receiverId } = req.params;
+    const { userId: senderId } = req.user;
+    const { message } = req.body;
+    (0, message_1.handleSendMessage)({ senderId, receiverId, message });
     const result = yield chat_service_1.ChatService.createChat({
         senderId,
         receiverId,

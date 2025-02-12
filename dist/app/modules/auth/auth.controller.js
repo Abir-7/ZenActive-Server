@@ -70,10 +70,21 @@ const reSendOtp = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
         message: "Verification Code send successfully",
     });
 }));
+const updatePassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.user;
+    const result = yield auth_service_1.AuthService.updatePassword(userId, req.body);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Password updated successfully",
+    });
+}));
 exports.AuthController = {
     loginUser,
     forgotPass,
     resetPassword,
     verifyUser,
     reSendOtp,
+    updatePassword,
 };

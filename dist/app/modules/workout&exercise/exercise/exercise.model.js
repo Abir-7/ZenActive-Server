@@ -10,6 +10,9 @@ const exerciseSchema = new mongoose_1.Schema({
     points: { type: Number, required: true },
     description: { type: String, required: true },
     image: { type: String, required: true },
+    goal: { type: String, required: true },
+    duration: { type: Number, required: true },
+    isDeleted: { type: Boolean, default: false },
 });
 const Exercise = (0, mongoose_1.model)("Exercise", exerciseSchema);
 exports.default = Exercise;

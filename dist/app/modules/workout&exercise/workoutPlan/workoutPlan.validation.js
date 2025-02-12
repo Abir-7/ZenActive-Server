@@ -9,7 +9,7 @@ exports.zodWorkoutPlanSchema = zod_1.z.object({
             .number()
             .positive({ message: "Duration must be a positive number" }),
         workouts: zod_1.z.array(zod_1.z.string().min(1, { message: "Exercise name is required" })),
-        rewardPoints: zod_1.z
+        points: zod_1.z
             .number()
             .positive({ message: "Reward points must be a positive number" }),
         isDeleted: zod_1.z.boolean().optional().default(false),
@@ -26,7 +26,7 @@ exports.zodUpdateWorkoutPlanSchema = zod_1.z
         workouts: zod_1.z
             .array(zod_1.z.string().min(1, { message: "Exercise name is required" }))
             .optional(),
-        rewardPoints: zod_1.z
+        points: zod_1.z
             .number()
             .positive({ message: "Reward points must be a positive number" })
             .optional(),

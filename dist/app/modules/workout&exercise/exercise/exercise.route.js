@@ -12,10 +12,10 @@ const validator_1 = __importDefault(require("../../../middleware/validator"));
 const fileUploadHandler_1 = __importDefault(require("../../../middleware/fileUploadHandler"));
 const exercise_validation_1 = require("./exercise.validation");
 const router = (0, express_1.Router)();
-router.post("/", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(exercise_validation_1.zodExerciseSchema), exercise_controller_1.WorkoutController.createWorkout);
-router.get("/", (0, auth_1.default)("ADMIN", "USER"), exercise_controller_1.WorkoutController.getAllWorkouts); //
-router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), exercise_controller_1.WorkoutController.getWorkoutById);
-router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), exercise_controller_1.WorkoutController.updateWorkout);
-router.delete("/:id", (0, auth_1.default)("ADMIN"), exercise_controller_1.WorkoutController.deleteWorkout);
+router.post("/", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(exercise_validation_1.zodExerciseSchema), exercise_controller_1.WorkoutController.createExercise);
+router.get("/", (0, auth_1.default)("ADMIN", "USER"), exercise_controller_1.WorkoutController.getAllExercise); //
+router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), exercise_controller_1.WorkoutController.getExerciseById);
+router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), exercise_controller_1.WorkoutController.updateExercise);
+router.delete("/:id", (0, auth_1.default)("ADMIN"), exercise_controller_1.WorkoutController.deleteExercise);
 exports.default = router;
 exports.ExerciseRoute = router;

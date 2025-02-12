@@ -14,9 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkoutService = void 0;
 const workout_model_1 = __importDefault(require("./workout.model"));
+const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 // Create a new workout
 const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, function* () {
     const workout = new workout_model_1.default(workoutData);
+    if (!workout && workoutData.image) {
+        (0, unlinkFiles_1.default)(workoutData.image);
+    }
     return yield workout.save();
 });
 // Get all workouts
@@ -29,13 +33,17 @@ const getWorkoutById = (workoutId) => __awaiter(void 0, void 0, void 0, function
 });
 // Update a workout by ID
 const updateWorkout = (workoutId, updateData) => __awaiter(void 0, void 0, void 0, function* () {
+    const workoutData = yield workout_model_1.default.findById(workoutId);
+    if (workoutData && updateData.image) {
+        (0, unlinkFiles_1.default)(workoutData.image);
+    }
     return yield workout_model_1.default.findByIdAndUpdate(workoutId, updateData, { new: true })
         .populate("exercises")
         .exec();
 });
 // Delete a workout by ID
 const deleteWorkout = (workoutId) => __awaiter(void 0, void 0, void 0, function* () {
-    yield workout_model_1.default.findByIdAndDelete(workoutId).exec();
+    yield workout_model_1.default.findByIdAndUpdate(workoutId, { isDeleted: true }, { new: true }).exec();
 });
 // Add an exercise to a workout
 const addExerciseToWorkout = (workoutId, exerciseId) => __awaiter(void 0, void 0, void 0, function* () {

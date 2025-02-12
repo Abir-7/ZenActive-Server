@@ -15,10 +15,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MealService = exports.updateMeal = void 0;
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const unlinkFiles_1 = __importDefault(require("../../utils/unlinkFiles"));
+const user_model_1 = require("../user/user.model");
 const meal_model_1 = __importDefault(require("./meal.model"));
 const http_status_1 = __importDefault(require("http-status"));
+const QueryBuilder_1 = __importDefault(require("../../builder/QueryBuilder"));
 const createMeal = (mealData) => __awaiter(void 0, void 0, void 0, function* () {
     const newMeal = yield meal_model_1.default.create(mealData);
+    if (!newMeal) {
+        (0, unlinkFiles_1.default)(mealData === null || mealData === void 0 ? void 0 : mealData.image);
+    }
     return newMeal;
 });
 const updateMeal = (mealId, updateFields) => __awaiter(void 0, void 0, void 0, function* () {
@@ -35,7 +40,9 @@ const updateMeal = (mealId, updateFields) => __awaiter(void 0, void 0, void 0, f
             updateObject[key] = value;
         }
     }
-    (0, unlinkFiles_1.default)(isMealExist === null || isMealExist === void 0 ? void 0 : isMealExist.image);
+    if (updateFields.image) {
+        (0, unlinkFiles_1.default)(isMealExist === null || isMealExist === void 0 ? void 0 : isMealExist.image);
+    }
     const updatedMeal = yield meal_model_1.default.findByIdAndUpdate(mealId, { $set: updateObject }, { new: true });
     if (!updatedMeal) {
         throw new Error("Meal not found");
@@ -43,9 +50,19 @@ const updateMeal = (mealId, updateFields) => __awaiter(void 0, void 0, void 0, f
     return updatedMeal;
 });
 exports.updateMeal = updateMeal;
-const getAllMeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (filter = {}) {
-    const meals = yield meal_model_1.default.find(Object.assign(Object.assign({}, filter), { isDeleted: { $ne: true } }));
-    return meals;
+const getAllMeals = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    query.isDeleted = false;
+    if (query.suitableFor == "No Preference") {
+        delete query.suitableFor;
+    }
+    const meals = new QueryBuilder_1.default(meal_model_1.default.find(), query)
+        .search(["mealName"])
+        .filter()
+        .paginate()
+        .sort();
+    const allMeals = yield meals.modelQuery;
+    const meta = yield meals.countTotal();
+    return { allMeals, meta };
 });
 const getSingleMeal = (mealId) => __awaiter(void 0, void 0, void 0, function* () {
     const meal = yield meal_model_1.default.findById(mealId);
@@ -58,11 +75,21 @@ const getSingleMeal = (mealId) => __awaiter(void 0, void 0, void 0, function* ()
     return meal;
 });
 const deleteMeal = (mealId) => __awaiter(void 0, void 0, void 0, function* () {
-    const deletedMeal = yield meal_model_1.default.findByIdAndUpdate(mealId, { $set: { isDeleted: true } }, { new: true });
+    const deletedMeal = yield meal_model_1.default.findByIdAndUpdate(mealId, {
+        $set: { isDeleted: true },
+    });
     if (!deletedMeal) {
-        throw new Error("Meal not found");
+        throw new AppError_1.default(404, "Meal not found");
     }
     return { message: "Meal deleted." };
+});
+const getAlluserMeals = (filter, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const userData = yield user_model_1.User.findOne({ _id: userId });
+    if (!userData) {
+        throw new AppError_1.default(404, "User not found");
+    }
+    const meals = yield meal_model_1.default.find(Object.assign(Object.assign({}, filter), { isDeleted: { $ne: true }, suitableFor: { $in: [userData === null || userData === void 0 ? void 0 : userData.diet] } }));
+    return meals;
 });
 exports.MealService = {
     updateMeal: exports.updateMeal,
@@ -70,4 +97,5 @@ exports.MealService = {
     getAllMeals,
     getSingleMeal,
     deleteMeal,
+    getAlluserMeals,
 };

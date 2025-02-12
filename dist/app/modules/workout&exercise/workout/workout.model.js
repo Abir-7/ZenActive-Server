@@ -14,9 +14,14 @@ const workoutSchema = new mongoose_1.Schema({
         type: Number,
         required: true,
     },
+    isDeleted: { type: Boolean, default: false },
     exercises: [
         { type: mongoose_1.Schema.Types.ObjectId, ref: "Exercise", required: true },
     ],
+    image: {
+        type: String,
+        required: true,
+    },
 }, { timestamps: true });
 const Workout = (0, mongoose_1.model)("Workout", workoutSchema);
 exports.default = Workout;

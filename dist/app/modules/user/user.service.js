@@ -8,13 +8,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const QueryBuilder_1 = __importDefault(require("../../builder/QueryBuilder"));
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const calculateTDEE_1 = require("../../utils/calculateTDEE");
 const generateOtp_1 = __importDefault(require("../../utils/generateOtp"));
@@ -83,15 +93,119 @@ const updateUser = (userId, userData) => __awaiter(void 0, void 0, void 0, funct
     const updatedUser = yield user_model_1.User.findOneAndUpdate({ _id: userId }, Object.assign(Object.assign({}, userData), { isProfileUpdated: isProfileComplete || isUserExist.isProfileUpdated, appData: appData === null || appData === void 0 ? void 0 : appData._id }), { new: true });
     return updatedUser;
 });
+// const getAllUsers = async (query: Record<string, unknown>) => {
+//   query.isDeleted = false;
+//   query.isBlocked = false;
+//   const users = new QueryBuilder(User.find(), query)
+//     .search(["name.firstName", "name.lastName", "email"])
+//     .filter()
+//     .paginate();
+//   const result1 = await users.modelQuery;
+//   const meta = await users.countTotal();
+//   const result = await Promise.all(
+//     result1.map(async (user) => {
+//       const appData = await UserAppData.find({ userId: user._id }).exec();
+//       return {
+//         ...user.toObject(), // Convert Mongoose document to plain object
+//         appData, // Attach appData to the user
+//       };
+//     })
+//   );
+//   console.log(meta);
+//   return { result, meta };
+// };
+// const getSingleUser = async (userId: string) => {
+//   const [user, badges, appData] = await Promise.all([
+//     User.findOne({ _id: userId }), // User data
+//     UserBadge.findOne({ userId }).populate("badgeId"), // Badges
+//     UserAppData.findOne({ userId }), // App data
+//   ]);
+//   if (!user) {
+//     throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//   }
+//   if (user.isBlocked) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "User is Blocked");
+//   }
+//   if (user.isDeleted) {
+//     throw new AppError(httpStatus.BAD_REQUEST, "User is Deleted");
+//   }
+//   return {
+//     user,
+//     appData,
+//     badges,
+//   };
+// };
 const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const users = new QueryBuilder_1.default(user_model_1.User.find({ isDeleted: false, role: "USER" }).populate("appData"), query)
-        .search(["name.firstName", "name.lastName", "email"])
-        .paginate();
-    const result = yield users.modelQuery;
-    return result;
+    query.isDeleted = false;
+    query.isBlocked = false;
+    const { searchTerm, page = 1, limit = 10 } = query, filterQuery = __rest(query, ["searchTerm", "page", "limit"]);
+    const searchFilter = searchTerm
+        ? {
+            $or: [
+                { "name.firstName": { $regex: searchTerm, $options: "i" } },
+                { "name.lastName": { $regex: searchTerm, $options: "i" } },
+                { email: { $regex: searchTerm, $options: "i" } },
+            ],
+        }
+        : {};
+    const combinedQuery = Object.assign(Object.assign(Object.assign({}, filterQuery), searchFilter), { isDeleted: false, isBlocked: false });
+    const users = yield user_model_1.User.aggregate([
+        { $match: combinedQuery },
+        {
+            $lookup: {
+                from: "userappdatas",
+                localField: "_id",
+                foreignField: "userId",
+                as: "appData",
+            },
+        },
+        {
+            $unwind: {
+                path: "$appData",
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+            $project: {
+                isVerified: 1,
+                _id: 1,
+                role: 1,
+                isDeleted: 1,
+                isBlocked: 1,
+                name: 1,
+                image: 1,
+                email: 1,
+                appData: 1,
+                isProfileUpdated: 1,
+                authentication: 1,
+                dateOfBirth: 1,
+                diet: 1,
+                gender: 1,
+                height: 1,
+                weight: 1,
+                primaryGoal: 1,
+                movementDifficulty: 1,
+                medicalCondition: 1,
+                injury: 1,
+                activityLevel: 1,
+            },
+        },
+    ]);
+    const totalUsers = yield user_model_1.User.countDocuments(combinedQuery);
+    return {
+        meta: {
+            total: totalUsers,
+            totalPage: Math.ceil(totalUsers / limit),
+            page,
+            limit,
+        },
+        result: users,
+    };
 });
 const getSingleUser = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield user_model_1.User.aggregate([
+    const result = yield user_model_1.User.aggregate([
         { $match: { _id: new mongoose_1.default.Types.ObjectId(userId) } },
         {
             $lookup: {
@@ -112,30 +226,58 @@ const getSingleUser = (userId) => __awaiter(void 0, void 0, void 0, function* ()
         {
             $lookup: {
                 from: "userappdatas",
-                localField: "appData",
-                foreignField: "_id",
+                localField: "_id",
+                foreignField: "userId",
                 as: "appData",
             },
         },
-        { $unwind: { path: "$appData", preserveNullAndEmptyArrays: true } },
-        { $unwind: { path: "$badges", preserveNullAndEmptyArrays: true } },
+        {
+            $addFields: {
+                badges: { $arrayElemAt: ["$badges", 0] },
+                appData: { $arrayElemAt: ["$appData", 0] },
+            },
+        },
         {
             $project: {
-                password: 0,
-                authentication: 0,
+                isVerified: 1,
+                _id: 1,
+                role: 1,
+                isDeleted: 1,
+                isBlocked: 1,
+                name: 1,
+                image: 1,
+                email: 1,
+                isProfileUpdated: 1,
+                authentication: 1,
+                dateOfBirth: 1,
+                diet: 1,
+                gender: 1,
+                height: 1,
+                weight: 1,
+                primaryGoal: 1,
+                movementDifficulty: 1,
+                medicalCondition: 1,
+                injury: 1,
+                activityLevel: 1,
+                badges: 1,
+                appData: 1,
             },
         },
     ]);
-    if (!user || user.length === 0) {
+    // Check if the user exists
+    if (result.length === 0) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "User not found");
     }
-    if (user[0].isBlocked) {
+    const user = result[0];
+    // Check for user status
+    if (user.isBlocked) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "User is Blocked");
     }
-    if (user[0].isDeleted) {
+    if (user.isDeleted) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "User is Deleted");
     }
-    return user[0];
+    // Return the populated user with badge and app data
+    return user;
 });
 const deleteUser = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const isUserDeleted = yield user_model_1.User.findOne({ _id: userId });
@@ -159,6 +301,13 @@ const blockUser = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     }
     return { message: "User deleted successfully." };
 });
+const getTotalUserCount = () => __awaiter(void 0, void 0, void 0, function* () {
+    const totalUsers = yield user_model_1.User.countDocuments({
+        isDeleted: false,
+        isBlocked: false,
+    });
+    return { totalUsers };
+});
 exports.UserService = {
     createUser,
     deleteUser,
@@ -166,4 +315,5 @@ exports.UserService = {
     getSingleUser,
     updateUser,
     blockUser,
+    getTotalUserCount,
 };

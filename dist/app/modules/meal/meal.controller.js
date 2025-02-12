@@ -66,6 +66,18 @@ const getAllMeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
     const filter = req.query; // You can pass filters here if needed (e.g., { category: 'vegan' })
     const result = yield meal_service_1.MealService.getAllMeals(filter);
     (0, sendResponse_1.default)(res, {
+        data: result.allMeals,
+        meta: result.meta,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Meals retrieved successfully.",
+    });
+}));
+const getAllUserMeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const filter = req.query; // You can pass filters here if needed (e.g., { category: 'vegan' })
+    const { userId } = req.user;
+    const result = yield meal_service_1.MealService.getAlluserMeals(filter, userId);
+    (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
         statusCode: http_status_1.default.OK,
@@ -88,4 +100,5 @@ exports.MealController = {
     deleteMeal,
     getAllMeals,
     getSingleMeal,
+    getAllUserMeals,
 };

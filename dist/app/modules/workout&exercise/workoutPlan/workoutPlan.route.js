@@ -13,7 +13,7 @@ const validator_1 = __importDefault(require("../../../middleware/validator"));
 const workoutPlan_validation_1 = require("./workoutPlan.validation");
 const router = (0, express_1.Router)();
 router.post("/create-workout-plan", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(workoutPlan_validation_1.zodWorkoutPlanSchema), workoutPlan_controller_1.WorkoutPlanController.createWorkoutPlan);
-router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, validator_1.default)(workoutPlan_validation_1.zodUpdateWorkoutPlanSchema.unwrap()), workoutPlan_controller_1.WorkoutPlanController.updateWorkoutPlan);
+router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(workoutPlan_validation_1.zodUpdateWorkoutPlanSchema.unwrap()), workoutPlan_controller_1.WorkoutPlanController.updateWorkoutPlan);
 router.get("/", (0, auth_1.default)("ADMIN", "USER"), workoutPlan_controller_1.WorkoutPlanController.getAllWorkoutsPlan);
 router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), workoutPlan_controller_1.WorkoutPlanController.getSingleWorkoutPlan);
 router.delete("/delete/:id", (0, auth_1.default)("ADMIN"), workoutPlan_controller_1.WorkoutPlanController.deleteWorkoutPlan);

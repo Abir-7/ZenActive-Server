@@ -17,8 +17,10 @@ const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const http_status_1 = __importDefault(require("http-status"));
 const user_service_1 = require("./user.service");
+const newUserNotofication_1 = require("../../socket/notification/newUserNotofication");
 const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.UserService.createUser(req.body);
+    (0, newUserNotofication_1.handleNewUser)();
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -51,7 +53,8 @@ const updateUserInfo = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
 const getAllUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const users = yield user_service_1.UserService.getAllUsers(req.query);
     (0, sendResponse_1.default)(res, {
-        data: users,
+        data: users.result,
+        meta: users.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Users retrieved successfully.",
@@ -93,8 +96,17 @@ const blockUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
-        statusCode: http_status_1.default.NO_CONTENT,
+        statusCode: http_status_1.default.OK,
         message: "User deleted successfully.",
+    });
+}));
+const getTotalUserCount = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.getTotalUserCount();
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Total user number fetched successfully.",
     });
 }));
 exports.UserController = {
@@ -105,4 +117,5 @@ exports.UserController = {
     getSingleUser,
     updateUserInfo,
     getMydata,
+    getTotalUserCount,
 };

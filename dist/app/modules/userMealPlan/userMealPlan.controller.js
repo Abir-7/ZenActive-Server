@@ -51,7 +51,8 @@ const getUserMealPlans = (0, catchAsync_1.default)((req, res) => __awaiter(void 
 const updateUserMealPlan = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { userId } = req.user;
-    const mealPlan = yield userMealPlan_service_1.UserMealPlanService.updateUserMealPlan(userId, (_a = req.params) === null || _a === void 0 ? void 0 : _a.id);
+    console.log("hh");
+    const mealPlan = yield userMealPlan_service_1.UserMealPlanService.updateUserMealPlan(userId, (_a = req.params) === null || _a === void 0 ? void 0 : _a.mealId);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

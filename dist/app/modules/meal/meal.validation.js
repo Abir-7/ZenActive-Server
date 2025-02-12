@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.zodUpdateMealSchema = exports.zodMealSchema = void 0;
 const zod_1 = require("zod");
+const meal_interface_1 = require("./meal.interface");
 // Reusable schema for required nutritional information
 const NutritionalInfoSchema = zod_1.z.object({
     calories: zod_1.z
@@ -24,6 +25,11 @@ const BaseMealSchema = zod_1.z.object({
     category: zod_1.z
         .string({ required_error: "Category is required" })
         .min(1, { message: "Category cannot be empty" }),
+    mealTime: zod_1.z
+        .enum(meal_interface_1.Time, { required_error: "Meal time is required" })
+        .refine((val) => ["Breakfast", "Lunch", "Dinner", "Snacks"].includes(val), {
+        message: "Invalid meal time",
+    }),
 });
 exports.zodMealSchema = zod_1.z.object({
     body: BaseMealSchema.extend({

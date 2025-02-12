@@ -9,4 +9,5 @@ const auth_1 = __importDefault(require("../../middleware/auth/auth"));
 const chat_controller_1 = require("./chat.controller");
 const router = (0, express_1.Router)();
 router.get("/get-user-chat/:friendId", (0, auth_1.default)("USER"), chat_controller_1.ChatController.getChatsBetweenUsers);
+router.post("/:friendId", (0, auth_1.default)("USER"), chat_controller_1.ChatController.createChat);
 exports.ChatRouter = router;

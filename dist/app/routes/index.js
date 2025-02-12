@@ -4,7 +4,7 @@ const express_1 = require("express");
 const user_route_1 = require("../modules/user/user.route");
 const auth_route_1 = require("../modules/auth/auth.route");
 const meal_route_1 = require("../modules/meal/meal.route");
-const challenge_route_1 = require("../modules/challenge/challenge.route");
+const challenge_route_1 = require("../modules/challenge( maybe not needed)/challenge.route");
 const badge_route_1 = require("../modules/badge/badge.route");
 const blocklist_route_1 = require("../modules/userConnection/blocklist/blocklist.route");
 const friendlist_route_1 = require("../modules/userConnection/friendList/friendlist.route");
@@ -21,7 +21,10 @@ const exercise_route_1 = require("../modules/workout&exercise/exercise/exercise.
 const workout_route_1 = require("../modules/workout&exercise/workout/workout.route");
 const feedback_route_1 = require("../modules/userFeedback/feedback.route");
 const userBadge_route_1 = require("../modules/usersBadge/userBadge.route");
-const package_route_1 = require("../modules/payment/package/package.route");
+//import { PackageRoute } from "../modules/payment/package/package.route";
+const subscription_route_1 = require("../modules/payment/subscription/subscription.route");
+const privacy_terms_aboutus_route_1 = require("../modules/privacy & terms & about us/privacy_terms_aboutus.route");
+const dailyExercise_route_1 = require("../modules/usersDailyExercise/dailyExercise.route");
 const router = (0, express_1.Router)();
 const apiRoutes = [
     { path: "/user", route: user_route_1.UserRoute },
@@ -31,7 +34,7 @@ const apiRoutes = [
     { path: "/workout-plan", route: userWorkoutPlan_router_1.UserWorkoutPlanRoute },
     { path: "/challenge", route: challenge_route_1.ChallengeRoute },
     { path: "/badge", route: badge_route_1.BadgeRoute },
-    { path: "/package", route: package_route_1.PackageRoute },
+    // { path: "/package", route: PackageRoute },
     { path: "/block-list", route: blocklist_route_1.BlockRoute },
     { path: "/friend", route: friendlist_route_1.FriendListRoute },
     { path: "/meal-plan", route: userMealPlan_route_1.UserMealPlanRoute },
@@ -45,6 +48,9 @@ const apiRoutes = [
     { path: "/workout", route: workout_route_1.WorkoutRoute },
     { path: "/feedback", route: feedback_route_1.FeedbackRoute },
     { path: "/user-badge", route: userBadge_route_1.UserBadgeRoute },
+    { path: "/subscription", route: subscription_route_1.SubscriptionRoute },
+    { path: "/privacy&terms", route: privacy_terms_aboutus_route_1.PrivacyTermsAboutUsRoute },
+    { path: "/daily-exercise", route: dailyExercise_route_1.DailyExerciseRoutes },
 ];
 apiRoutes.forEach((route) => router.use(route.path, route.route));
 exports.default = router;

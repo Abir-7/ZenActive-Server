@@ -16,8 +16,8 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const config_1 = require("./app/config");
 const app_1 = require("./app");
 const seedAdmin_1 = __importDefault(require("./app/DB/seedAdmin"));
-const node_cron_1 = __importDefault(require("node-cron"));
-const userMealPlan_model_1 = __importDefault(require("./app/modules/userMealPlan/userMealPlan.model"));
+const cronJobs_1 = require("./app/cron_jobs/cronJobs");
+const socket_1 = require("./app/socket/socket");
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error);
@@ -30,28 +30,8 @@ function startServer() {
             yield mongoose_1.default.connect(config_1.config.database.url);
             console.log("MongoDB connected successfully");
             (0, seedAdmin_1.default)();
-            // cron job
-            node_cron_1.default.schedule("0 0 * * *", () => __awaiter(this, void 0, void 0, function* () {
-                console.log("Deleting completed meal plans at 12 AM...");
-                const result = yield userMealPlan_model_1.default.deleteMany();
-                console.log(`Deleted ${result.deletedCount}  meal plans.`);
-                // {
-                //   const message = {
-                //     token:
-                //       "eZ0OZnAZSJaJbNaJb8cMhX:APA91bEj2zajj__PCCw-J5A8pUW52LkhEIeke3of5OybdJ9PJPYqKFZy5oQ21Ng1VW1FoO-cggY6hiVGurdcQG9VKiFfpcXN4mv8nwabjEBYvytQ0hrdmqY", // Device FCM Token
-                //     notification: {
-                //       title: "From node cron",
-                //       body: "This is your notification message.",
-                //     },
-                //     data: {
-                //       extraData: "Custom Data",
-                //     },
-                //   };
-                //   const response = await admin.messaging().send(message);
-                // }
-            }));
-            // cron job end
-            // Start the server
+            (0, cronJobs_1.setupCronJobs)();
+            (0, socket_1.setupSocket)(app_1.server);
             app_1.server.listen(config_1.config.server.port, config_1.config.server.ip, () => {
                 console.log(`Example app listening on port ${config_1.config.server.port} ip:${config_1.config.server.ip}`);
             });
@@ -77,3 +57,17 @@ process.on("unhandledRejection", (reason, promise) => {
 startServer().catch((err) => {
     console.error("Error starting server:", err);
 });
+// {
+//   const message = {
+//     token:
+//       "eZ0OZnAZSJaJbNaJb8cMhX:APA91bEj2zajj__PCCw-J5A8pUW52LkhEIeke3of5OybdJ9PJPYqKFZy5oQ21Ng1VW1FoO-cggY6hiVGurdcQG9VKiFfpcXN4mv8nwabjEBYvytQ0hrdmqY", // Device FCM Token
+//     notification: {
+//       title: "From node cron",
+//       body: "This is your notification message.",
+//     },
+//     data: {
+//       extraData: "Custom Data",
+//     },
+//   };
+//   const response = await admin.messaging().send(message);
+// }

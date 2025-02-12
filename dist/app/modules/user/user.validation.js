@@ -24,25 +24,36 @@ exports.zodCreateUserSchema = zod_1.z
 exports.zodUserUpdateSchema = zod_1.z
     .object({
     body: zod_1.z.object({
-        medicalCondition: zod_1.z.enum(Object.values(user_interface_1.MedicalCondition)),
-        movementDifficulty: zod_1.z.enum(Object.values(user_interface_1.MovementDifficulty)),
-        injury: zod_1.z.enum(Object.values(user_interface_1.Injury)),
-        activityLevel: zod_1.z.enum(Object.values(user_interface_1.ActivityLevel)),
-        diet: zod_1.z.enum(Object.values(user_interface_1.DietType)),
-        primaryGoal: zod_1.z.enum(Object.values(user_interface_1.PrimaryGoals)),
-        weight: zod_1.z.number().min(1, "Weight must be a positive number"),
-        height: zod_1.z.number().min(1, "Height must be a positive number"),
-        gender: zod_1.z.enum(Object.values(user_interface_1.Gender)),
+        medicalCondition: zod_1.z
+            .enum(Object.values(user_interface_1.MedicalCondition))
+            .optional(),
+        movementDifficulty: zod_1.z
+            .enum(Object.values(user_interface_1.MovementDifficulty))
+            .optional(),
+        injury: zod_1.z.enum(Object.values(user_interface_1.Injury)).optional(),
+        activityLevel: zod_1.z
+            .enum(Object.values(user_interface_1.ActivityLevel))
+            .optional(),
+        diet: zod_1.z.enum(Object.values(user_interface_1.DietType)).optional(),
+        primaryGoal: zod_1.z
+            .enum(Object.values(user_interface_1.PrimaryGoals))
+            .optional(),
+        weight: zod_1.z.number().min(1, "Weight must be a positive number").optional(),
+        height: zod_1.z.number().min(1, "Height must be a positive number").optional(),
+        gender: zod_1.z.enum(Object.values(user_interface_1.Gender)).optional(),
         dateOfBirth: zod_1.z
             .string()
             .refine((val) => !isNaN(Date.parse(val)), {
             message: "Invalid date format",
         })
-            .transform((val) => new Date(val)), // Converts the string to a Date
-        name: zod_1.z.object({
+            .transform((val) => new Date(val))
+            .optional(), // Converts the string to a Date
+        name: zod_1.z
+            .object({
             firstName: zod_1.z.string().min(1, "First name is required"),
             lastName: zod_1.z.string().min(1, "Last name is required"),
-        }),
+        })
+            .optional(),
     }),
 })
     .strict();

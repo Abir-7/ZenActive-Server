@@ -26,14 +26,25 @@ const createUserMealPlan = (userId, mealId) => __awaiter(void 0, void 0, void 0,
     return yield userMealPlan_model_1.default.create({ mealId, userId });
 });
 const getUserMealPlans = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield userMealPlan_model_1.default.find({ userId }).populate("mealId");
+    const data = yield userMealPlan_model_1.default.find({ userId }).populate("mealId").lean();
+    const mainData = data
+        .map((meal) => {
+        if (!meal.mealId)
+            return null;
+        const mealData = meal.mealId;
+        return Object.assign(Object.assign({}, mealData), { isComplete: meal.isCompleted });
+    })
+        .filter(Boolean);
+    return mainData;
 });
 // export const getUserMealPlanById = async (userid: string) => {
 //   return await UserMealPlan.findById(id).populate("mealId userId");
 // };
 const updateUserMealPlan = (userId, id) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    const updatedUserMealPlan = yield userMealPlan_model_1.default.findOneAndUpdate({ _id: id, userId }, { isCompleted: true }, { new: true }).populate("mealId");
+    console.log(userId, id);
+    const updatedUserMealPlan = yield userMealPlan_model_1.default.findOneAndUpdate({ mealId: id, userId }, { isCompleted: true }, { new: true }).populate("mealId");
+    console.log(updatedUserMealPlan);
     if (!updatedUserMealPlan) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "UserMealPlan not found");
     }
@@ -42,9 +53,11 @@ const updateUserMealPlan = (userId, id) => __awaiter(void 0, void 0, void 0, fun
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "User App data not found");
     }
     yield appdata_model_1.UserAppData.findOneAndUpdate({ userId }, {
-        gainedCalories: ((_b = (_a = updatedUserMealPlan.mealId) === null || _a === void 0 ? void 0 : _a.nutritionalInfo) === null || _b === void 0 ? void 0 : _b.calories) +
-            (userAppData === null || userAppData === void 0 ? void 0 : userAppData.gainedCalories),
-    });
+        $set: {
+            gainedCalories: ((_b = (_a = updatedUserMealPlan.mealId) === null || _a === void 0 ? void 0 : _a.nutritionalInfo) === null || _b === void 0 ? void 0 : _b.calories) +
+                userAppData.gainedCalories,
+        },
+    }, { new: true, upsert: true });
     return updatedUserMealPlan;
 });
 const deleteUserMealPlan = (id, userId) => __awaiter(void 0, void 0, void 0, function* () {

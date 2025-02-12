@@ -22,7 +22,7 @@ exports.createWorkoutPlan = (0, catchAsync_1.default)((req, res) => __awaiter(vo
     if (req.files && "image" in req.files && req.files.image[0]) {
         image = `/images/${req.files.image[0].filename}`;
     }
-    const value = Object.assign(Object.assign({}, req.body), { image });
+    const value = Object.assign({}, req.body);
     const result = yield workoutPlan_service_1.WorkoutPlanService.createWorkout(value);
     (0, sendResponse_1.default)(res, {
         data: result,
@@ -33,7 +33,18 @@ exports.createWorkoutPlan = (0, catchAsync_1.default)((req, res) => __awaiter(vo
 }));
 const updateWorkoutPlan = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
-    const result = yield workoutPlan_service_1.WorkoutPlanService.updateWorkout(id, req.body);
+    let image = null;
+    let value = null;
+    if (req.files && "image" in req.files && req.files.image[0]) {
+        image = `/images/${req.files.image[0].filename}`;
+    }
+    if (image) {
+        value = Object.assign(Object.assign({}, req.body), { image });
+    }
+    else {
+        value = req.body;
+    }
+    const result = yield workoutPlan_service_1.WorkoutPlanService.updateWorkout(id, value);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

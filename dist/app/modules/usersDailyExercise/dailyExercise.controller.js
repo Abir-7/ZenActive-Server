@@ -19,8 +19,9 @@ const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 // Create a new daily exercise record
 const createDailyExercise = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.user;
     const dailyExerciseData = req.body;
-    const result = yield dailyExercise_service_1.DailyExerciseService.createDailyExercise(Object.assign(Object.assign({}, dailyExerciseData), { completedDate: new Date(Date.now()) }));
+    const result = yield dailyExercise_service_1.DailyExerciseService.createDailyExercise(Object.assign(Object.assign({}, dailyExerciseData), { userId, completedDate: new Date(Date.now()) }));
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

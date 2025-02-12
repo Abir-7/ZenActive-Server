@@ -15,5 +15,4 @@ const userAppDataSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
 });
-// Create the model
 exports.UserAppData = (0, mongoose_1.model)("UserAppData", userAppDataSchema);

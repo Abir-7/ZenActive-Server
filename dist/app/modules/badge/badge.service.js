@@ -13,12 +13,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const AppError_1 = __importDefault(require("../../errors/AppError"));
+const unlinkFiles_1 = __importDefault(require("../../utils/unlinkFiles"));
 const badge_model_1 = __importDefault(require("./badge.model"));
 const http_status_1 = __importDefault(require("http-status"));
 const createBadge = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield badge_model_1.default.create(data);
+    const badge = yield badge_model_1.default.create(data);
+    if (!badge) {
+        (0, unlinkFiles_1.default)(data.image);
+    }
+    return badge;
 });
 const editBadge = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
+    const badgeData = yield badge_model_1.default.findById(id);
+    if (data.image && badgeData) {
+        (0, unlinkFiles_1.default)(badgeData === null || badgeData === void 0 ? void 0 : badgeData.image);
+    }
+    if (data.image && !badgeData) {
+        (0, unlinkFiles_1.default)(data.image);
+    }
     const badge = yield badge_model_1.default.findByIdAndUpdate(id, data, { new: true });
     if (!badge) {
         throw new Error("Badge not found");
@@ -32,11 +44,15 @@ const getSingleBadge = (id) => __awaiter(void 0, void 0, void 0, function* () {
     return yield badge_model_1.default.findOne({ _id: id, isDeleted: false });
 });
 const deleteBadge = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const badge = yield badge_model_1.default.findByIdAndDelete(id);
+    const badge = yield badge_model_1.default.findById(id);
     if (!badge) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Badge not found");
     }
-    return badge;
+    const deleteBadge = yield badge_model_1.default.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+    if (!deleteBadge) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Badge not deleted.");
+    }
+    return deleteBadge;
 });
 const BadgeService = {
     createBadge,

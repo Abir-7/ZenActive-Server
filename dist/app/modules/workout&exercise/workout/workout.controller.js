@@ -19,8 +19,12 @@ const sendResponse_1 = __importDefault(require("../../../utils/sendResponse"));
 const workout_service_1 = require("./workout.service");
 const catchAsync_1 = __importDefault(require("../../../utils/catchAsync"));
 const createWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const workoutData = req.body;
-    const result = yield workout_service_1.WorkoutService.createWorkout(workoutData);
+    let image = null;
+    if (req.files && "image" in req.files && req.files.image[0]) {
+        image = `/images/${req.files.image[0].filename}`;
+    }
+    const value = Object.assign(Object.assign({}, req.body), { image });
+    const result = yield workout_service_1.WorkoutService.createWorkout(value);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -49,8 +53,18 @@ const getWorkoutById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
 }));
 const updateWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const updateData = req.body;
-    const result = yield workout_service_1.WorkoutService.updateWorkout(new mongoose_1.Types.ObjectId(id), updateData);
+    let image = null;
+    let value = null;
+    if (req.files && "image" in req.files && req.files.image[0]) {
+        image = `/images/${req.files.image[0].filename}`;
+    }
+    if (image) {
+        value = Object.assign(Object.assign({}, req.body), { image });
+    }
+    else {
+        value = req.body;
+    }
+    const result = yield workout_service_1.WorkoutService.updateWorkout(new mongoose_1.Types.ObjectId(id), value);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

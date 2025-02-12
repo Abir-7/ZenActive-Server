@@ -117,7 +117,8 @@ const updatePresentWorkout = (userId, planId) => __awaiter(void 0, void 0, void 
 // Increment the number of workouts done
 // Get a user's active workout plan
 const getActiveWorkoutPlan = (userId, planId) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield userWorkoutPlan_model_1.default.findOne({
+    console.log(userId, planId);
+    const data = yield userWorkoutPlan_model_1.default.findOne({
         workoutPlanId: planId,
         userId,
         isCompleted: "InProgress",
@@ -133,7 +134,22 @@ const getActiveWorkoutPlan = (userId, planId) => __awaiter(void 0, void 0, void 
             },
         },
     })
-        .exec();
+        .lean();
+    // console.log(
+    //   (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
+    //     data?.currentWorkoutIndex as number,
+    //     (data?.currentWorkoutIndex as number) + 1
+    //   ),
+    //   "gg"
+    // );
+    return data;
+    // return {
+    //   ...data,
+    //   workoutPlanId: (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
+    //     data?.currentWorkoutIndex as number,
+    //     (data?.currentWorkoutIndex as number) + 1
+    //   ),
+    // };
 });
 const giveFeedback = (data) => __awaiter(void 0, void 0, void 0, function* () { });
 exports.UserWorkoutPlanService = {
