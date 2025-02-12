@@ -1,3 +1,4 @@
+import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../errors/AppError";
 import unlinkFile from "../../utils/unlinkFiles";
 import { IBadge } from "./badge.interface";
@@ -28,8 +29,15 @@ const editBadge = async (id: string, data: Partial<IBadge>) => {
   return badge;
 };
 
-const getAllBadge = async () => {
-  return await Badge.find({ isDeleted: false });
+const getAllBadge = async (query: Record<string, unknown>) => {
+  const badege = new QueryBuilder(Badge.find({ isDeleted: false }), query)
+    .sort()
+    .paginate();
+
+  const result = await badege.modelQuery;
+  const meta = await badege.countTotal();
+
+  return { result, meta };
 };
 
 const getSingleBadge = async (id: string) => {

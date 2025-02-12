@@ -52,9 +52,10 @@ const editBadge = catchAsync(async (req, res) => {
 });
 
 const getAllBadge = catchAsync(async (req, res) => {
-  const result = await BadgeService.getAllBadge();
+  const result = await BadgeService.getAllBadge(req.query);
   sendResponse(res, {
-    data: result,
+    data: result.result,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Badges are successfully fetched.",
