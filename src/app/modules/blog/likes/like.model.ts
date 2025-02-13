@@ -5,7 +5,6 @@ const likeSchema = new Schema<ILike>(
   {
     postId: { type: Schema.Types.ObjectId, ref: "Post", required: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    isLiked: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

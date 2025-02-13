@@ -28,18 +28,18 @@ const createComment = catchAsync(async (req: Request, res: Response) => {
 //   });
 // });
 
-// const fetchCommentsByPostId = catchAsync(
-//   async (req: Request, res: Response) => {
-//     const { postId } = req.params;
-//     const result = await CommentService.getCommentsByPostId(postId);
-//     sendResponse(res, {
-//       data: result,
-//       success: true,
-//       statusCode: httpStatus.OK,
-//       message: "Comments fetched successfully.",
-//     });
-//   }
-// );
+const fetchCommentsByPostId = catchAsync(
+  async (req: Request, res: Response) => {
+    const { postId } = req.params;
+    const result = await CommentService.getCommentsByPostId(postId);
+    sendResponse(res, {
+      data: result,
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Comments fetched successfully.",
+    });
+  }
+);
 
 const editComment = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
@@ -69,7 +69,7 @@ const removeComment = catchAsync(async (req: Request, res: Response) => {
 export const CommentController = {
   createComment,
   //fetchCommentById,
-  //fetchCommentsByPostId,
+  fetchCommentsByPostId,
   editComment,
   removeComment,
 };

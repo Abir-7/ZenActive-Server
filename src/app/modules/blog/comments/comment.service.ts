@@ -9,11 +9,6 @@ const addComment = async (commentData: IComment) => {
     throw new AppError(httpStatus.NOT_FOUND, "Post not found to add comment.");
   }
   const comment = await Comment.create(commentData);
-  await Post.findByIdAndUpdate(
-    commentData.postId,
-    { $push: { comments: comment._id } },
-    { new: true }
-  );
 
   return comment;
 };
@@ -22,9 +17,14 @@ const addComment = async (commentData: IComment) => {
 //   return await Comment.findById(commentId).populate("postId userId").exec();
 // };
 
-// const getCommentsByPostId = async (postId: string) => {
-//   return await Comment.find({ postId }).populate("userId").exec();
-// };
+const getCommentsByPostId = async (postId: string) => {
+  return await Comment.find({ postId })
+    .populate({
+      path: "userId",
+      select: "name _id email image",
+    })
+    .exec();
+};
 
 const updateComment = async (
   commentId: string,
@@ -58,7 +58,7 @@ const deleteComment = async (commentId: string) => {
 export const CommentService = {
   addComment,
   //getCommentById,
-  //getCommentsByPostId,
+  getCommentsByPostId,
   updateComment,
   deleteComment,
 };

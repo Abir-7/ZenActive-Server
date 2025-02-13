@@ -19,6 +19,7 @@ router.patch(
   PostController.editPost
 );
 router.get("/user-post", auth("USER"), PostController.getUserPosts);
+router.get("/all-user-post", auth("USER"), PostController.getAllUserPosts);
 router.get("/group-post/:groupId", auth("USER"), PostController.getGroupPosts);
 router.delete("/:postId", auth("USER"), PostController.deletePost);
 

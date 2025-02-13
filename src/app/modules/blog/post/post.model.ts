@@ -4,8 +4,7 @@ import { IPost } from "./post.interface";
 const postSchema: Schema = new Schema<IPost>(
   {
     text: { type: String, required: true },
-    comments: [{ type: Schema.Types.ObjectId, ref: "Comment", default: [] }],
-    likes: [{ type: Schema.Types.ObjectId, ref: "Like", default: [] }],
+
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     groupId: { type: Schema.Types.ObjectId, ref: "Group", default: null },
     isGroup: { type: Boolean, default: false },

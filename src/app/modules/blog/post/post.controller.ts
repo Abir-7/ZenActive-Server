@@ -40,6 +40,17 @@ const getUserPosts = catchAsync(async (req, res) => {
   });
 });
 
+const getAllUserPosts = catchAsync(async (req, res) => {
+  const { userId } = req.user;
+  const result = await PostService.getAllUserPosts(userId);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Posts from users fetched successfully.",
+  });
+});
+
 const getGroupPosts = catchAsync(async (req, res) => {
   const { groupId } = req.params;
   const result = await PostService.getGroupPosts(groupId);
@@ -69,4 +80,5 @@ export const PostController = {
   getGroupPosts,
   getUserPosts,
   deletePost,
+  getAllUserPosts,
 };
