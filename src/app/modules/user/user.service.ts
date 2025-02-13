@@ -369,6 +369,12 @@ const getSingleUser = async (userId: string) => {
         preserveNullAndEmptyArrays: true, // Keeps users even if no data
       },
     },
+    {
+      $unwind: {
+        path: "$badges",
+        preserveNullAndEmptyArrays: true, // Keeps users even if no data
+      },
+    },
 
     // Group and format the final result
     {

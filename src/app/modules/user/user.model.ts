@@ -17,7 +17,7 @@ import { config } from "../../config";
 import { userRole } from "./user.constant";
 export const userSchema = new Schema<IUser, IUserModel>(
   {
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, trim: true },
     role: {
       type: String,
       enum: userRole,
