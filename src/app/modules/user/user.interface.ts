@@ -18,6 +18,7 @@ export interface IUser {
   weight?: number;
   primaryGoal?: PrimaryGoals;
   diet?: DietType;
+  restriction: Restrictions;
   activityLevel?: ActivityLevel;
   injury?: Injury;
   movementDifficulty?: MovementDifficulty;
@@ -60,6 +61,12 @@ export enum DietType {
   NoPreference = "No Preference",
   KetoLowCarb = "Keto/Low Carb",
   GlutenFree = "Gluten-Free",
+}
+
+export enum Restrictions {
+  GlutenFree = "Gluten-Free",
+  NutFree = "Nut-Free",
+  DairyFree = "Dairy-Free",
 }
 
 export enum ActivityLevel {
@@ -115,4 +122,5 @@ export interface IUpdateUser {
   name: { firstName: string; lastName: string };
   image: string;
   mobile: string;
+  restriction: Restrictions;
 }

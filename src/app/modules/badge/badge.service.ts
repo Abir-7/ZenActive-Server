@@ -3,7 +3,7 @@ import AppError from "../../errors/AppError";
 import unlinkFile from "../../utils/unlinkFiles";
 import { IBadge } from "./badge.interface";
 import Badge from "./badge.model";
-import httpStatus from "http-status";
+import httpStatus, { status } from "http-status";
 const createBadge = async (data: IBadge) => {
   const badge = await Badge.create(data);
 
@@ -15,6 +15,12 @@ const createBadge = async (data: IBadge) => {
 
 const editBadge = async (id: string, data: Partial<IBadge>) => {
   const badgeData = await Badge.findById(id);
+  // if (!data.points && !data.image && !data.points) {
+  //   throw new AppError(status.BAD_REQUEST, "Give Data");
+  // }
+  if (!badgeData) {
+    throw new AppError(404, "Badge not found.");
+  }
 
   if (data.image && badgeData) {
     unlinkFile(badgeData?.image);
@@ -22,6 +28,7 @@ const editBadge = async (id: string, data: Partial<IBadge>) => {
   if (data.image && !badgeData) {
     unlinkFile(data.image);
   }
+
   const badge = await Badge.findByIdAndUpdate(id, data, { new: true });
   if (!badge) {
     throw new Error("Badge not found");

@@ -77,11 +77,13 @@ const updateUser = async (userId: string, userData: IUpdateUser) => {
       height,
       gender,
       dateOfBirth,
+      restriction,
       name,
     } = userData;
 
     // Determine if the profile is complete (and not already updated)
     const isProfileComplete =
+      restriction &&
       medicalCondition &&
       movementDifficulty &&
       injury &&
@@ -309,70 +311,92 @@ const getAllUsers = async (query: {
 };
 
 const getSingleUser = async (userId: string) => {
+  console.log(await User.findOne({ _id: userId }));
+
   const result = await User.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(userId) } },
 
+    // Lookup userAppData
+    {
+      $lookup: {
+        from: "userappdatas", // Collection name in MongoDB
+        localField: "_id",
+        foreignField: "userId",
+        as: "userAppData",
+      },
+    },
+
+    // Lookup userMealData and populate mealId
+    {
+      $lookup: {
+        from: "usermealplans",
+        localField: "_id",
+        foreignField: "userId",
+        as: "userMealData",
+      },
+    },
+    {
+      $lookup: {
+        from: "meals",
+        localField: "userMealData.mealId",
+        foreignField: "_id",
+        as: "meals",
+      },
+    },
+
+    // Lookup userBadgeData and populate badgeId
     {
       $lookup: {
         from: "userbadges",
         localField: "_id",
         foreignField: "userId",
-        as: "badges",
+        as: "userBadgeData",
       },
     },
-
     {
       $lookup: {
         from: "badges",
-        localField: "badges.badgeId",
+        localField: "userBadgeData.badgeId",
         foreignField: "_id",
         as: "badges",
       },
     },
 
+    // Unwind userAppData to avoid nested array (optional)
     {
-      $lookup: {
-        from: "userappdatas",
-        localField: "_id",
-        foreignField: "userId",
-        as: "appData",
+      $unwind: {
+        path: "$userAppData",
+        preserveNullAndEmptyArrays: true, // Keeps users even if no data
       },
     },
 
-    {
-      $addFields: {
-        badges: { $arrayElemAt: ["$badges", 0] },
-        appData: { $arrayElemAt: ["$appData", 0] },
-      },
-    },
-
+    // Group and format the final result
     {
       $project: {
-        isVerified: 1,
-
         _id: 1,
-
-        role: 1,
-        isDeleted: 1,
-        isBlocked: 1,
-        name: 1,
-        image: 1,
         email: 1,
-
-        isProfileUpdated: 1,
-        authentication: 1,
+        role: 1,
+        isVerified: 1,
+        name: 1,
         dateOfBirth: 1,
-        diet: 1,
         gender: 1,
         height: 1,
         weight: 1,
         primaryGoal: 1,
-        movementDifficulty: 1,
-        medicalCondition: 1,
-        injury: 1,
+        diet: 1,
+        restriction: 1,
         activityLevel: 1,
-        badges: 1,
-        appData: 1,
+        occupation: 1,
+        image: 1,
+        mobile: 1,
+        isProfileUpdated: 1,
+        isDeleted: 1,
+        isBlocked: 1,
+        fcmToken: 1,
+
+        userAppData: 1, // Include userAppData
+        userMealData: "$meals", // Populated meals
+        userBadgeData: "$badges", // Populated badges
       },
     },
   ]);

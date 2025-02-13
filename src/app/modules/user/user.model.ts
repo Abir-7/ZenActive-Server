@@ -9,6 +9,7 @@ import {
   MedicalCondition,
   MovementDifficulty,
   PrimaryGoals,
+  Restrictions,
 } from "./user.interface";
 
 import bcrypt from "bcryptjs";
@@ -44,6 +45,11 @@ export const userSchema = new Schema<IUser, IUserModel>(
     diet: {
       type: String,
       enum: Object.values(DietType),
+      required: false,
+    },
+    restriction: {
+      type: String,
+      enum: Object.values(Restrictions),
       required: false,
     },
     activityLevel: {

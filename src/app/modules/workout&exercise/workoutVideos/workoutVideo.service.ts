@@ -8,6 +8,14 @@ const getAllWorkoutVideos = async () => {
   return await WorkoutVideo.find().exec();
 };
 
+const getSingleWorkoutVideos = async (id: string) => {
+  const data = await WorkoutVideo.findOne({ _id: id }).exec();
+  if (!data) {
+    throw new AppError(404, "Video data not found");
+  }
+  return data;
+};
+
 const createWorkoutVideo = async (payload: IWorkoutVideo) => {
   const workoutVideo = await WorkoutVideo.create(payload);
   if (!workoutVideo) {
@@ -62,4 +70,5 @@ export const WorkoutVideoService = {
   createWorkoutVideo,
   updateWorkoutVideo,
   deleteWorkoutVideo,
+  getSingleWorkoutVideos,
 };

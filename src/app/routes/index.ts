@@ -27,6 +27,7 @@ import { UserBadgeRoute } from "../modules/usersBadge/userBadge.route";
 import { SubscriptionRoute } from "../modules/payment/subscription/subscription.route";
 import { PrivacyTermsAboutUsRoute } from "../modules/privacy & terms & about us/privacy_terms_aboutus.route";
 import { DailyExerciseRoutes } from "../modules/usersDailyExercise/dailyExercise.route";
+import { WorkoutVideoRoutes } from "../modules/workout&exercise/workoutVideos/workoutVideo.route";
 
 const router = Router();
 
@@ -50,6 +51,7 @@ const apiRoutes = [
   { path: "/chat", route: ChatRouter },
   { path: "/exercise", route: ExerciseRoute },
   { path: "/workout", route: WorkoutRoute },
+  { path: "/workout-video", route: WorkoutVideoRoutes },
   { path: "/feedback", route: FeedbackRoute },
   { path: "/user-badge", route: UserBadgeRoute },
   { path: "/subscription", route: SubscriptionRoute },

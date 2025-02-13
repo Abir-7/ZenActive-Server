@@ -11,6 +11,11 @@ router.get(
   auth("ADMIN", "USER"),
   WorkoutVideoController.getAllWorkoutVideos
 );
+router.get(
+  "/:id",
+  auth("ADMIN", "USER"),
+  WorkoutVideoController.getSingleWorkoutVideos
+);
 router.post(
   "/",
   auth("ADMIN"),
