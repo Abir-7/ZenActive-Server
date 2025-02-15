@@ -13,8 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkoutService = void 0;
+const mongoose_1 = require("mongoose");
 const workout_model_1 = __importDefault(require("./workout.model"));
 const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
+const AppError_1 = __importDefault(require("../../../errors/AppError"));
+const http_status_1 = __importDefault(require("http-status"));
+const exercise_model_1 = __importDefault(require("../exercise/exercise.model"));
+const QueryBuilder_1 = __importDefault(require("../../../builder/QueryBuilder"));
 // Create a new workout
 const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, function* () {
     const workout = new workout_model_1.default(workoutData);
@@ -24,12 +29,91 @@ const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, functio
     return yield workout.save();
 });
 // Get all workouts
-const getAllWorkouts = () => __awaiter(void 0, void 0, void 0, function* () {
-    return yield workout_model_1.default.find().populate("exercises").exec();
+const getAllWorkouts = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    query.isDeleted = false;
+    const workout = new QueryBuilder_1.default(workout_model_1.default.find().populate("exercises"), query)
+        .search(["name"])
+        .filter()
+        .sort()
+        .paginate();
+    const result = yield workout.modelQuery;
+    const meta = yield workout.countTotal();
+    return { result, meta };
 });
-// Get a workout by ID
+//Get a workout by ID
 const getWorkoutById = (workoutId) => __awaiter(void 0, void 0, void 0, function* () {
     return yield workout_model_1.default.findById(workoutId).populate("exercises").exec();
+});
+const getWorkoutsExerciseById = (workoutId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const userObjectId = new mongoose_1.Types.ObjectId(userId);
+    const workouts = yield workout_model_1.default.aggregate([
+        { $match: { _id: workoutId } },
+        {
+            $lookup: {
+                from: "exercises",
+                localField: "exercises",
+                foreignField: "_id",
+                as: "exercises",
+            },
+        },
+        {
+            $lookup: {
+                from: "dailyexercises",
+                let: { exerciseIds: "$exercises._id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$userId", userObjectId] },
+                                    { $in: ["$exerciseId", "$$exerciseIds"] },
+                                ],
+                            },
+                        },
+                    },
+                ],
+                as: "dailyExercises",
+            },
+        },
+        {
+            $addFields: {
+                completedExerciseIds: {
+                    $map: {
+                        input: "$dailyExercises",
+                        as: "de",
+                        in: "$$de.exerciseId",
+                    },
+                },
+            },
+        },
+        {
+            $addFields: {
+                exercises: {
+                    $map: {
+                        input: "$exercises",
+                        as: "exercise",
+                        in: {
+                            $mergeObjects: [
+                                "$$exercise",
+                                {
+                                    isCompleted: {
+                                        $in: ["$$exercise._id", "$completedExerciseIds"],
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
+        },
+        {
+            $project: { dailyExercises: 0, completedExerciseIds: 0 },
+        },
+    ]);
+    if (!workouts || workouts.length === 0) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Workout not found.");
+    }
+    return workouts[0].exercises;
 });
 // Update a workout by ID
 const updateWorkout = (workoutId, updateData) => __awaiter(void 0, void 0, void 0, function* () {
@@ -47,6 +131,10 @@ const deleteWorkout = (workoutId) => __awaiter(void 0, void 0, void 0, function*
 });
 // Add an exercise to a workout
 const addExerciseToWorkout = (workoutId, exerciseId) => __awaiter(void 0, void 0, void 0, function* () {
+    const isExist = yield exercise_model_1.default.findOne({ _id: exerciseId });
+    if (!isExist) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Exercise not found.");
+    }
     return yield workout_model_1.default.findByIdAndUpdate(workoutId, { $push: { exercises: exerciseId } }, { new: true })
         .populate("exercises")
         .exec();
@@ -65,4 +153,5 @@ exports.WorkoutService = {
     deleteWorkout,
     addExerciseToWorkout,
     removeExerciseFromWorkout,
+    getWorkoutsExerciseById,
 };

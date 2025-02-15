@@ -25,6 +25,7 @@ const userBadge_route_1 = require("../modules/usersBadge/userBadge.route");
 const subscription_route_1 = require("../modules/payment/subscription/subscription.route");
 const privacy_terms_aboutus_route_1 = require("../modules/privacy & terms & about us/privacy_terms_aboutus.route");
 const dailyExercise_route_1 = require("../modules/usersDailyExercise/dailyExercise.route");
+const workoutVideo_route_1 = require("../modules/workout&exercise/workoutVideos/workoutVideo.route");
 const router = (0, express_1.Router)();
 const apiRoutes = [
     { path: "/user", route: user_route_1.UserRoute },
@@ -46,6 +47,7 @@ const apiRoutes = [
     { path: "/chat", route: chat_route_1.ChatRouter },
     { path: "/exercise", route: exercise_route_1.ExerciseRoute },
     { path: "/workout", route: workout_route_1.WorkoutRoute },
+    { path: "/workout-video", route: workoutVideo_route_1.WorkoutVideoRoutes },
     { path: "/feedback", route: feedback_route_1.FeedbackRoute },
     { path: "/user-badge", route: userBadge_route_1.UserBadgeRoute },
     { path: "/subscription", route: subscription_route_1.SubscriptionRoute },

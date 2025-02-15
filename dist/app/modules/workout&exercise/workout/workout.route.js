@@ -14,6 +14,7 @@ const workout_validation_1 = require("./workout.validation");
 const router = (0, express_1.Router)();
 router.post("/create-workout", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(workout_validation_1.zodWorkoutSchema), workout_controller_1.WorkoutController.createWorkout);
 router.get("/", (0, auth_1.default)("ADMIN", "USER"), workout_controller_1.WorkoutController.getAllWorkouts);
+router.get("/workout-exercise/:id", (0, auth_1.default)("ADMIN", "USER"), workout_controller_1.WorkoutController.getWorkoutsExerciseById);
 router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), workout_controller_1.WorkoutController.getWorkoutById);
 router.delete("/:id", (0, auth_1.default)("ADMIN"), workout_controller_1.WorkoutController.deleteWorkout);
 router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), workout_controller_1.WorkoutController.updateWorkout);

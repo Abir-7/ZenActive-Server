@@ -5,4 +5,5 @@ export interface IUserAppData {
   points?: number;
   gainedCalories?: number;
   userId: Types.ObjectId;
+  workoutTime: number;
 }

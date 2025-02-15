@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MedicalCondition = exports.MovementDifficulty = exports.Injury = exports.ActivityLevel = exports.DietType = exports.PrimaryGoals = exports.Gender = void 0;
+exports.MedicalCondition = exports.MovementDifficulty = exports.Injury = exports.ActivityLevel = exports.Restrictions = exports.DietType = exports.PrimaryGoals = exports.Gender = void 0;
 var Gender;
 (function (Gender) {
     Gender["Male"] = "Male";
@@ -24,6 +24,12 @@ var DietType;
     DietType["KetoLowCarb"] = "Keto/Low Carb";
     DietType["GlutenFree"] = "Gluten-Free";
 })(DietType || (exports.DietType = DietType = {}));
+var Restrictions;
+(function (Restrictions) {
+    Restrictions["GlutenFree"] = "Gluten-Free";
+    Restrictions["NutFree"] = "Nut-Free";
+    Restrictions["DairyFree"] = "Dairy-Free";
+})(Restrictions || (exports.Restrictions = Restrictions = {}));
 var ActivityLevel;
 (function (ActivityLevel) {
     ActivityLevel["Sedentary"] = "Sedentary (little to no exercise)";

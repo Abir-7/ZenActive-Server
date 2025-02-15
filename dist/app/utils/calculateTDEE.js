@@ -13,52 +13,66 @@ const calculateTDEE = (userData) => {
     else {
         bmr = 10 * weight + 6.25 * height - 5 * age - 161;
     }
-    // Activity multiplier based on the activityLevel string
+    // Activity multiplier and baseline workout time
     let activityMultiplier;
+    let baseWorkoutTime; // In minutes
     switch (activityLevel) {
         case "Lightly Active (light exercise 1-3 days/week)":
             activityMultiplier = 1.375;
+            baseWorkoutTime = 30; // ~30 min/day
             break;
         case "Moderately Active (exercise 3-5 days/week)":
             activityMultiplier = 1.55;
+            baseWorkoutTime = 45; // ~45 min/day
             break;
         case "Very Active (hard exercise 6-7 days/week)":
             activityMultiplier = 1.725;
+            baseWorkoutTime = 60; // ~60 min/day
             break;
         case "Super Active (intense exercise every day)":
             activityMultiplier = 1.9;
+            baseWorkoutTime = 75; // ~75 min/day
             break;
         default:
-            activityMultiplier = 1.2; // Default to Sedentary (little to no exercise)
+            activityMultiplier = 1.2; // Sedentary (little to no exercise)
+            baseWorkoutTime = 15; // ~15 min/day (light movement)
     }
     // Calculate TDEE
-    const tdee = bmr * activityMultiplier;
-    // Adjust for primary goal
+    let tdee = bmr * activityMultiplier;
+    // Adjust TDEE and workout time based on primary goal
     let adjustedTDEE = tdee;
+    let workoutTimeAdjustment = 0; // Additional workout time
     switch (primaryGoal) {
         case "Lose Weight":
-            adjustedTDEE -= 500; // Subtract 500 calories for weight loss
+            adjustedTDEE -= 500; // Reduce calories
+            workoutTimeAdjustment = 15; // Increase workout time
             break;
         case "Build Muscle":
         case "Gain Weight":
-            adjustedTDEE += 500; // Add 500 calories for muscle gain or weight gain
+            adjustedTDEE += 500; // Increase calories
+            workoutTimeAdjustment = 20; // More strength training
             break;
         case "Improve Endurance":
-            adjustedTDEE += 200; // Add 200 calories for endurance improvement
+            adjustedTDEE += 200;
+            workoutTimeAdjustment = 25; // Focus on cardio
             break;
         case "Increase Flexibility":
-            adjustedTDEE += 100; // Add 100 calories for flexibility
+            adjustedTDEE += 100;
+            workoutTimeAdjustment = 10; // Extra stretching/yoga
             break;
         case "Boost Energy":
-            adjustedTDEE += 150; // Add 150 calories for energy
+            adjustedTDEE += 150;
+            workoutTimeAdjustment = 10;
             break;
-        case "Enhance Mental health":
-            adjustedTDEE += 100; // Add 100 calories for mental well-being
+        case "Enhance Mental Health":
+            adjustedTDEE += 100;
+            workoutTimeAdjustment = 15; // Yoga/meditation sessions
             break;
         default:
-            // No adjustment if goal is not recognized
+            // No specific adjustment
             break;
     }
-    return adjustedTDEE;
+    const dailyWorkoutTime = baseWorkoutTime + workoutTimeAdjustment;
+    return { tdee: Math.round(adjustedTDEE), dailyWorkoutTime };
 };
 exports.calculateTDEE = calculateTDEE;

@@ -19,7 +19,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const config_1 = require("../../config");
 const user_constant_1 = require("./user.constant");
 exports.userSchema = new mongoose_1.Schema({
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, trim: true },
     role: {
         type: String,
         enum: user_constant_1.userRole,
@@ -45,6 +45,11 @@ exports.userSchema = new mongoose_1.Schema({
     diet: {
         type: String,
         enum: Object.values(user_interface_1.DietType),
+        required: false,
+    },
+    restriction: {
+        type: String,
+        enum: Object.values(user_interface_1.Restrictions),
         required: false,
     },
     activityLevel: {

@@ -18,24 +18,18 @@ const post_model_1 = __importDefault(require("../post/post.model"));
 const like_model_1 = __importDefault(require("./like.model"));
 const http_status_1 = __importDefault(require("http-status"));
 const toggleLike = (postId, userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield like_model_1.default.updateOne({ postId, userId }, { $set: { isLiked: true } }, { upsert: true });
     const isExist = yield post_model_1.default.findById(postId);
     if (!isExist) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Post not found");
     }
-    if (result.upsertedCount > 0) {
-        const like = yield like_model_1.default.findOne({ postId, userId });
-        yield post_model_1.default.findByIdAndUpdate(postId, { $push: { likes: like === null || like === void 0 ? void 0 : like._id } }, { new: true });
-        return result;
+    const isLiked = yield like_model_1.default.findOne({ postId, userId });
+    if (isLiked) {
+        yield like_model_1.default.findOneAndDelete({ postId, userId });
+        return { message: "Like status updated" };
     }
     else {
-        const like = yield like_model_1.default.findOne({ postId, userId });
-        if (like) {
-            yield post_model_1.default.findByIdAndUpdate(postId, { $pull: { likes: like._id } }, // Remove like from post
-            { new: true });
-            yield like_model_1.default.deleteOne({ postId, userId });
-        }
-        return { message: "Like Status Updated" };
+        yield like_model_1.default.create({ postId, userId });
+        return { message: "Like status updated" };
     }
 });
 exports.LikeService = {

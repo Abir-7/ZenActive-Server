@@ -53,9 +53,10 @@ const editBadge = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
     });
 }));
 const getAllBadge = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield badge_service_1.default.getAllBadge();
+    const result = yield badge_service_1.default.getAllBadge(req.query);
     (0, sendResponse_1.default)(res, {
-        data: result,
+        data: result.result,
+        meta: result.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Badges are successfully fetched.",

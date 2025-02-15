@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import { handleMongooseError } from "../errors/mongooseErrorHandler";
 import { ZodError } from "zod";
 import { handleZodError } from "../errors/zodErrorHandler";
-import handleDuplicateError from "../errors/handleDuplicateError";
+
 import AppError from "../errors/AppError";
 
 export const globalErrorHandler = (

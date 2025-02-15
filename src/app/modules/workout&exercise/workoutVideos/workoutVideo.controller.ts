@@ -39,7 +39,6 @@ const createWorkoutVideo = catchAsync(async (req: Request, res: Response) => {
 
   if (req.files && "media" in req.files && req.files.media[0]) {
     video = `/medias/${req.files.media[0].filename}`;
-    console.log();
 
     await getVideoDurationInSeconds(req.files.media[0].path)
       .then((durations: number) => {

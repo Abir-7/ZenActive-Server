@@ -3,8 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const postSchema = new mongoose_1.Schema({
     text: { type: String, required: true },
-    comments: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Comment", default: [] }],
-    likes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Like", default: [] }],
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
     groupId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Group", default: null },
     isGroup: { type: Boolean, default: false },

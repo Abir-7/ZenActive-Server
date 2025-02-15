@@ -50,6 +50,16 @@ const getUserPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         message: "Posts fetched successfully.",
     });
 }));
+const getAllUserPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.user;
+    const result = yield post_service_1.PostService.getAllUserPosts(userId);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Posts from users fetched successfully.",
+    });
+}));
 const getGroupPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { groupId } = req.params;
     const result = yield post_service_1.PostService.getGroupPosts(groupId);
@@ -76,4 +86,5 @@ exports.PostController = {
     getGroupPosts,
     getUserPosts,
     deletePost,
+    getAllUserPosts,
 };

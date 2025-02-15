@@ -42,9 +42,7 @@ const getUserMealPlans = (userId) => __awaiter(void 0, void 0, void 0, function*
 // };
 const updateUserMealPlan = (userId, id) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    console.log(userId, id);
     const updatedUserMealPlan = yield userMealPlan_model_1.default.findOneAndUpdate({ mealId: id, userId }, { isCompleted: true }, { new: true }).populate("mealId");
-    console.log(updatedUserMealPlan);
     if (!updatedUserMealPlan) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "UserMealPlan not found");
     }

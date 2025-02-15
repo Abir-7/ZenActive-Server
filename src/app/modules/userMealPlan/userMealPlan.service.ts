@@ -35,14 +35,12 @@ const getUserMealPlans = async (userId: string) => {
 // };
 
 const updateUserMealPlan = async (userId: string, id: string) => {
-  console.log(userId, id);
-
   const updatedUserMealPlan = await UserMealPlan.findOneAndUpdate(
     { mealId: id, userId },
     { isCompleted: true },
     { new: true }
   ).populate("mealId");
-  console.log(updatedUserMealPlan);
+
   if (!updatedUserMealPlan) {
     throw new AppError(httpStatus.NOT_FOUND, "UserMealPlan not found");
   }

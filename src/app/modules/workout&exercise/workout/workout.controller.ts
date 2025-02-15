@@ -26,9 +26,10 @@ const createWorkout = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllWorkouts = catchAsync(async (req: Request, res: Response) => {
-  const result = await WorkoutService.getAllWorkouts();
+  const result = await WorkoutService.getAllWorkouts(req.query);
   sendResponse(res, {
-    data: result,
+    data: result.result,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Workouts fetched successfully.",
@@ -50,7 +51,7 @@ const getWorkoutsExerciseById = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const { userId } = req.user;
-    console.log(userId);
+
     const result = await WorkoutService.getWorkoutsExerciseById(
       new Types.ObjectId(id),
       userId

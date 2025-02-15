@@ -18,7 +18,7 @@ const createUser = catchAsync(async (req, res) => {
 
 const updateUserInfo = catchAsync(async (req, res) => {
   const id = req?.user?.userId;
-
+  console.log(req.files);
   let image = null;
   let value = null;
   if (req.files && "image" in req.files && req.files.image[0]) {

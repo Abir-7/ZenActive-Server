@@ -19,6 +19,13 @@ const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const getAllWorkoutVideos = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield workoutVideo_model_1.WorkoutVideo.find().exec();
 });
+const getSingleWorkoutVideos = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = yield workoutVideo_model_1.WorkoutVideo.findOne({ _id: id }).exec();
+    if (!data) {
+        throw new AppError_1.default(404, "Video data not found");
+    }
+    return data;
+});
 const createWorkoutVideo = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const workoutVideo = yield workoutVideo_model_1.WorkoutVideo.create(payload);
     if (!workoutVideo) {
@@ -62,4 +69,5 @@ exports.WorkoutVideoService = {
     createWorkoutVideo,
     updateWorkoutVideo,
     deleteWorkoutVideo,
+    getSingleWorkoutVideos,
 };

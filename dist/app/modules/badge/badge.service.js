@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const QueryBuilder_1 = __importDefault(require("../../builder/QueryBuilder"));
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const unlinkFiles_1 = __importDefault(require("../../utils/unlinkFiles"));
 const badge_model_1 = __importDefault(require("./badge.model"));
@@ -25,6 +26,12 @@ const createBadge = (data) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const editBadge = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     const badgeData = yield badge_model_1.default.findById(id);
+    // if (!data.points && !data.image && !data.points) {
+    //   throw new AppError(status.BAD_REQUEST, "Give Data");
+    // }
+    if (!badgeData) {
+        throw new AppError_1.default(404, "Badge not found.");
+    }
     if (data.image && badgeData) {
         (0, unlinkFiles_1.default)(badgeData === null || badgeData === void 0 ? void 0 : badgeData.image);
     }
@@ -37,8 +44,13 @@ const editBadge = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     }
     return badge;
 });
-const getAllBadge = () => __awaiter(void 0, void 0, void 0, function* () {
-    return yield badge_model_1.default.find({ isDeleted: false });
+const getAllBadge = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const badege = new QueryBuilder_1.default(badge_model_1.default.find({ isDeleted: false }), query)
+        .sort()
+        .paginate();
+    const result = yield badege.modelQuery;
+    const meta = yield badege.countTotal();
+    return { result, meta };
 });
 const getSingleBadge = (id) => __awaiter(void 0, void 0, void 0, function* () {
     return yield badge_model_1.default.findOne({ _id: id, isDeleted: false });

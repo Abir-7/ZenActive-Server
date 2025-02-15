@@ -18,6 +18,7 @@ const AppError_1 = __importDefault(require("../../../errors/AppError"));
 const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const dailyExercise_model_1 = __importDefault(require("../../usersDailyExercise/dailyExercise.model"));
 const exercise_model_1 = __importDefault(require("./exercise.model"));
+const http_status_1 = __importDefault(require("http-status"));
 // Create a new exercise
 const createExercise = (exerciseData) => __awaiter(void 0, void 0, void 0, function* () {
     const exercise = yield exercise_model_1.default.create(Object.assign(Object.assign({}, exerciseData), { duration: Number(exerciseData.duration * 60) }));
@@ -83,6 +84,9 @@ const getExerciseById = (exerciseId) => __awaiter(void 0, void 0, void 0, functi
         dailyExercise_model_1.default.countDocuments({ exerciseId }),
         exercise_model_1.default.findById(exerciseId).exec(),
     ]);
+    if (!exercise) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Exercise not found.");
+    }
     return { exercise, participant: participantCount };
 });
 // Update an exercise by ID

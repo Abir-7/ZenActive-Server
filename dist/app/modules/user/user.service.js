@@ -62,36 +62,77 @@ const createUser = (userData) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 const updateUser = (userId, userData) => __awaiter(void 0, void 0, void 0, function* () {
-    // Check if the user exists
-    const isUserExist = yield user_model_1.User.findById(userId);
-    if (!isUserExist) {
-        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Failed to update. User not found.");
+    // Start a Mongoose session and begin a transaction
+    const session = yield mongoose_1.default.startSession();
+    session.startTransaction();
+    try {
+        // Fetch the user record within the transaction
+        const existingUser = yield user_model_1.User.findById(userId).session(session);
+        if (!existingUser) {
+            throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Failed to update. User not found.");
+        }
+        // Destructure userData for easier access
+        const { medicalCondition, movementDifficulty, injury, activityLevel, diet, primaryGoal, weight, height, gender, dateOfBirth, restriction, name, } = userData;
+        // Determine if the profile is complete (and not already updated)
+        const isProfileComplete = restriction &&
+            medicalCondition &&
+            movementDifficulty &&
+            injury &&
+            activityLevel &&
+            diet &&
+            primaryGoal &&
+            typeof weight === "number" &&
+            typeof height === "number" &&
+            gender &&
+            dateOfBirth &&
+            (name === null || name === void 0 ? void 0 : name.firstName) &&
+            (name === null || name === void 0 ? void 0 : name.lastName) &&
+            !existingUser.isProfileUpdated;
+        let appData;
+        if (isProfileComplete && existingUser.role === "USER") {
+            const { tdee, dailyWorkoutTime } = (0, calculateTDEE_1.calculateTDEE)(userData);
+            appData = yield appdata_model_1.UserAppData.findOneAndUpdate({ userId }, { tdee: tdee.toFixed(2), workoutTime: dailyWorkoutTime }, { upsert: true, new: true, session });
+        }
+        if (!isProfileComplete &&
+            existingUser.role === "USER" &&
+            (weight != null ||
+                height != null ||
+                dateOfBirth != null ||
+                gender != null ||
+                activityLevel != null ||
+                primaryGoal != null)) {
+            // Use the provided values if available; otherwise, fall back to existingUser data.
+            const updatedProfile = {
+                weight: weight !== null && weight !== void 0 ? weight : existingUser.weight,
+                height: height !== null && height !== void 0 ? height : existingUser.height,
+                dateOfBirth: dateOfBirth !== null && dateOfBirth !== void 0 ? dateOfBirth : existingUser.dateOfBirth,
+                gender: gender !== null && gender !== void 0 ? gender : existingUser.gender,
+                activityLevel: activityLevel !== null && activityLevel !== void 0 ? activityLevel : existingUser.activityLevel,
+                primaryGoal: primaryGoal !== null && primaryGoal !== void 0 ? primaryGoal : existingUser.primaryGoal,
+            };
+            // Calculate TDEE using the updated profile data.
+            const { tdee, dailyWorkoutTime } = (0, calculateTDEE_1.calculateTDEE)(updatedProfile);
+            // Update the user's application data.
+            appData = yield appdata_model_1.UserAppData.findOneAndUpdate({ userId }, { tdee: tdee.toFixed(2), workoutTime: dailyWorkoutTime }, { upsert: true, new: true, session });
+        }
+        // Remove the user's previous image file (consider if this should happen post-transaction)
+        if (userData.image) {
+            (0, unlinkFiles_1.default)(existingUser.image);
+        }
+        // Update the user document with the provided data and new appData reference
+        const updatedUser = yield user_model_1.User.findOneAndUpdate({ _id: userId }, Object.assign(Object.assign({}, userData), { isProfileUpdated: isProfileComplete || existingUser.isProfileUpdated, appData: appData === null || appData === void 0 ? void 0 : appData._id }), { new: true, session });
+        // Commit the transaction if all operations were successful
+        yield session.commitTransaction();
+        return updatedUser;
     }
-    // Destructure userData for easier access
-    const { medicalCondition, movementDifficulty, injury, activityLevel, diet, primaryGoal, weight, height, gender, dateOfBirth, name, } = userData;
-    const isProfileComplete = medicalCondition &&
-        movementDifficulty &&
-        injury &&
-        activityLevel &&
-        diet &&
-        primaryGoal &&
-        typeof weight === "number" &&
-        typeof height === "number" &&
-        gender &&
-        dateOfBirth &&
-        (name === null || name === void 0 ? void 0 : name.firstName) &&
-        (name === null || name === void 0 ? void 0 : name.lastName) &&
-        !isUserExist.isProfileUpdated;
-    let appData;
-    // Calculate TDEE and create/update UserAppData if the profile is complete
-    if (isProfileComplete) {
-        const tdee = (0, calculateTDEE_1.calculateTDEE)(userData).toFixed(2);
-        appData = yield appdata_model_1.UserAppData.findOneAndUpdate({ userId }, { tdee }, { upsert: true, new: true });
+    catch (error) {
+        // Abort the transaction on error
+        yield session.abortTransaction();
+        throw error;
     }
-    (0, unlinkFiles_1.default)(isUserExist === null || isUserExist === void 0 ? void 0 : isUserExist.image);
-    // Update the user with the provided data
-    const updatedUser = yield user_model_1.User.findOneAndUpdate({ _id: userId }, Object.assign(Object.assign({}, userData), { isProfileUpdated: isProfileComplete || isUserExist.isProfileUpdated, appData: appData === null || appData === void 0 ? void 0 : appData._id }), { new: true });
-    return updatedUser;
+    finally {
+        session.endSession();
+    }
 });
 // const getAllUsers = async (query: Record<string, unknown>) => {
 //   query.isDeleted = false;
@@ -205,62 +246,93 @@ const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
     };
 });
 const getSingleUser = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(yield user_model_1.User.findOne({ _id: userId }));
     const result = yield user_model_1.User.aggregate([
         { $match: { _id: new mongoose_1.default.Types.ObjectId(userId) } },
+        // Lookup userAppData
+        {
+            $lookup: {
+                from: "userappdatas", // Collection name in MongoDB
+                localField: "_id",
+                foreignField: "userId",
+                as: "userAppData",
+            },
+        },
+        // Lookup userMealData and populate mealId
+        {
+            $lookup: {
+                from: "usermealplans",
+                localField: "_id",
+                foreignField: "userId",
+                as: "userMealData",
+            },
+        },
+        {
+            $lookup: {
+                from: "meals",
+                localField: "userMealData.mealId",
+                foreignField: "_id",
+                as: "meals",
+            },
+        },
+        // Lookup userBadgeData and populate badgeId
         {
             $lookup: {
                 from: "userbadges",
                 localField: "_id",
                 foreignField: "userId",
-                as: "badges",
+                as: "userBadgeData",
             },
         },
         {
             $lookup: {
                 from: "badges",
-                localField: "badges.badgeId",
+                localField: "userBadgeData.badgeId",
                 foreignField: "_id",
                 as: "badges",
             },
         },
+        // Unwind userAppData to avoid nested array (optional)
         {
-            $lookup: {
-                from: "userappdatas",
-                localField: "_id",
-                foreignField: "userId",
-                as: "appData",
+            $unwind: {
+                path: "$userAppData",
+                preserveNullAndEmptyArrays: true, // Keeps users even if no data
             },
         },
         {
-            $addFields: {
-                badges: { $arrayElemAt: ["$badges", 0] },
-                appData: { $arrayElemAt: ["$appData", 0] },
+            $unwind: {
+                path: "$badges",
+                preserveNullAndEmptyArrays: true, // Keeps users even if no data
             },
         },
+        // Group and format the final result
         {
             $project: {
-                isVerified: 1,
                 _id: 1,
-                role: 1,
-                isDeleted: 1,
-                isBlocked: 1,
-                name: 1,
-                image: 1,
                 email: 1,
-                isProfileUpdated: 1,
-                authentication: 1,
+                role: 1,
+                isVerified: 1,
+                name: 1,
                 dateOfBirth: 1,
-                diet: 1,
                 gender: 1,
                 height: 1,
                 weight: 1,
                 primaryGoal: 1,
-                movementDifficulty: 1,
-                medicalCondition: 1,
-                injury: 1,
+                diet: 1,
+                restriction: 1,
                 activityLevel: 1,
-                badges: 1,
-                appData: 1,
+                occupation: 1,
+                image: 1,
+                mobile: 1,
+                isProfileUpdated: 1,
+                isDeleted: 1,
+                isBlocked: 1,
+                fcmToken: 1,
+                movementDifficulty: 1,
+                injury: 1,
+                userAppData: 1,
+                userMealData: "$meals",
+                userBadgeData: "$badges",
             },
         },
     ]);

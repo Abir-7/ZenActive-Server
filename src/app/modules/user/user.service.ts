@@ -101,10 +101,10 @@ const updateUser = async (userId: string, userData: IUpdateUser) => {
     let appData;
 
     if (isProfileComplete && existingUser.role === "USER") {
-      const tdee = calculateTDEE(userData).toFixed(2);
+      const { tdee, dailyWorkoutTime } = calculateTDEE(userData);
       appData = await UserAppData.findOneAndUpdate(
         { userId },
-        { tdee },
+        { tdee: tdee.toFixed(2), workoutTime: dailyWorkoutTime },
         { upsert: true, new: true, session }
       );
     }
@@ -130,12 +130,12 @@ const updateUser = async (userId: string, userData: IUpdateUser) => {
       };
 
       // Calculate TDEE using the updated profile data.
-      const tdee = calculateTDEE(updatedProfile).toFixed(2);
+      const { tdee, dailyWorkoutTime } = calculateTDEE(updatedProfile);
 
       // Update the user's application data.
       appData = await UserAppData.findOneAndUpdate(
         { userId },
-        { tdee },
+        { tdee: tdee.toFixed(2), workoutTime: dailyWorkoutTime },
         { upsert: true, new: true, session }
       );
     }
@@ -399,10 +399,11 @@ const getSingleUser = async (userId: string) => {
         isDeleted: 1,
         isBlocked: 1,
         fcmToken: 1,
-
-        userAppData: 1, // Include userAppData
-        userMealData: "$meals", // Populated meals
-        userBadgeData: "$badges", // Populated badges
+        movementDifficulty: 1,
+        injury: 1,
+        userAppData: 1,
+        userMealData: "$meals",
+        userBadgeData: "$badges",
       },
     },
   ]);

@@ -12,7 +12,7 @@ const noRoute_1 = __importDefault(require("./app/middleware/noRoute"));
 const routes_1 = __importDefault(require("./app/routes"));
 const http_1 = __importDefault(require("http"));
 const corsOption = {
-    origin: ["http://localhost:3000", "http://192.168.10.32:5174"],
+    origin: ["*", "http://localhost:3000", "http://192.168.10.32:5174"],
     credentials: true,
     methods: ["GET", "PATCH", "POST", "DELETE", "PUT"],
 };

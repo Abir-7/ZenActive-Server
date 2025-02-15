@@ -33,9 +33,10 @@ const createWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     });
 }));
 const getAllWorkouts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield workout_service_1.WorkoutService.getAllWorkouts();
+    const result = yield workout_service_1.WorkoutService.getAllWorkouts(req.query);
     (0, sendResponse_1.default)(res, {
-        data: result,
+        data: result.result,
+        meta: result.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Workouts fetched successfully.",
@@ -49,6 +50,17 @@ const getWorkoutById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Workout fetched successfully.",
+    });
+}));
+const getWorkoutsExerciseById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { userId } = req.user;
+    const result = yield workout_service_1.WorkoutService.getWorkoutsExerciseById(new mongoose_1.Types.ObjectId(id), userId);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "User workout data fetched successfully.",
     });
 }));
 const updateWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -84,7 +96,7 @@ const deleteWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 }));
 const addExerciseToWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { workoutId, exerciseId } = req.body;
-    const result = yield workout_service_1.WorkoutService.addExerciseToWorkout(new mongoose_1.Types.ObjectId(workoutId), new mongoose_1.Types.ObjectId(exerciseId));
+    const result = yield workout_service_1.WorkoutService.addExerciseToWorkout(workoutId, exerciseId);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -94,7 +106,7 @@ const addExerciseToWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(v
 }));
 const removeExerciseFromWorkout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { workoutId, exerciseId } = req.body;
-    const result = yield workout_service_1.WorkoutService.removeExerciseFromWorkout(new mongoose_1.Types.ObjectId(workoutId), new mongoose_1.Types.ObjectId(exerciseId));
+    const result = yield workout_service_1.WorkoutService.removeExerciseFromWorkout(workoutId, exerciseId);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -110,4 +122,5 @@ exports.WorkoutController = {
     deleteWorkout,
     addExerciseToWorkout,
     removeExerciseFromWorkout,
+    getWorkoutsExerciseById,
 };

@@ -29,7 +29,6 @@ const editPost = async (postId: string, updatedData: IPost) => {
 };
 
 const getUserPosts = async (userId: string) => {
-  console.log(userId);
   const result = await Post.aggregate([
     { $match: { userId: new mongoose.Types.ObjectId(userId) } },
     {

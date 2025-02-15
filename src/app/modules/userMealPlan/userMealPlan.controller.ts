@@ -43,7 +43,7 @@ const getUserMealPlans = catchAsync(async (req: Request, res: Response) => {
 
 const updateUserMealPlan = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
-  console.log("hh");
+
   const mealPlan = await UserMealPlanService.updateUserMealPlan(
     userId,
     req.params?.mealId

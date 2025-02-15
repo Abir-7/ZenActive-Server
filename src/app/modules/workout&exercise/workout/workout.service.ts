@@ -6,6 +6,7 @@ import DailyExercise from "../../usersDailyExercise/dailyExercise.model";
 import AppError from "../../../errors/AppError";
 import status from "http-status";
 import Exercise from "../exercise/exercise.model";
+import QueryBuilder from "../../../builder/QueryBuilder";
 
 // Create a new workout
 const createWorkout = async (workoutData: IWorkout) => {
@@ -17,8 +18,16 @@ const createWorkout = async (workoutData: IWorkout) => {
 };
 
 // Get all workouts
-const getAllWorkouts = async () => {
-  return await Workout.find().populate("exercises").exec();
+const getAllWorkouts = async (query: Record<string, unknown>) => {
+  query.isDeleted = false;
+  const workout = new QueryBuilder(Workout.find().populate("exercises"), query)
+    .search(["name"])
+    .filter()
+    .sort()
+    .paginate();
+  const result = await workout.modelQuery;
+  const meta = await workout.countTotal();
+  return { result, meta };
 };
 
 //Get a workout by ID

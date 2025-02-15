@@ -23,15 +23,19 @@ const addComment = (commentData) => __awaiter(void 0, void 0, void 0, function* 
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Post not found to add comment.");
     }
     const comment = yield comment_model_1.default.create(commentData);
-    yield post_model_1.default.findByIdAndUpdate(commentData.postId, { $push: { comments: comment._id } }, { new: true });
     return comment;
 });
 // const getCommentById = async (commentId: string) => {
 //   return await Comment.findById(commentId).populate("postId userId").exec();
 // };
-// const getCommentsByPostId = async (postId: string) => {
-//   return await Comment.find({ postId }).populate("userId").exec();
-// };
+const getCommentsByPostId = (postId) => __awaiter(void 0, void 0, void 0, function* () {
+    return yield comment_model_1.default.find({ postId })
+        .populate({
+        path: "userId",
+        select: "name _id email image",
+    })
+        .exec();
+});
 const updateComment = (commentId, updateData, userId) => __awaiter(void 0, void 0, void 0, function* () {
     const updatedComment = yield comment_model_1.default.findOneAndUpdate({ _id: commentId, userId }, updateData, { new: true });
     if (!updatedComment) {
@@ -50,7 +54,7 @@ const deleteComment = (commentId) => __awaiter(void 0, void 0, void 0, function*
 exports.CommentService = {
     addComment,
     //getCommentById,
-    //getCommentsByPostId,
+    getCommentsByPostId,
     updateComment,
     deleteComment,
 };
