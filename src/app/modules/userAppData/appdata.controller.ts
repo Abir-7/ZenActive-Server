@@ -9,11 +9,22 @@ const addPoints = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "User app data updated successfully.",
+    message: "User app data points updated successfully.",
     data: result,
   });
 });
-
+const addWorkoutTime = catchAsync(async (req, res) => {
+  const { userId } = req.user;
+  const { time } = req.body;
+  const result = await AppDataService.addWorkoutTime(time, userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User app data workout time updated successfully.",
+    data: result,
+  });
+});
 export const AppDataController = {
   addPoints,
+  addWorkoutTime,
 };

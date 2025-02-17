@@ -14,6 +14,7 @@ const exerciseSchema = new Schema<IExercise>({
   image: { type: String, required: true },
   goal: { type: String, required: true },
   duration: { type: Number, required: true },
+  about: { type: String, required: true },
   isDeleted: { type: Boolean, default: false },
 });
 const Exercise = model<IExercise>("Exercise", exerciseSchema);

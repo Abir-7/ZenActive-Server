@@ -9,5 +9,6 @@ export interface IExercise {
   image: string;
   goal: string;
   duration: number;
+  about: string;
   isDeleted: boolean;
 }
