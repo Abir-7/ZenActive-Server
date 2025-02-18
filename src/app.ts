@@ -7,8 +7,14 @@ import router from "./app/routes";
 import http from "http";
 
 const corsOption = {
-  origin: ["*", "http://localhost:3000", "http://192.168.10.32:5174"],
+  origin: [
+    "*",
+    "http://localhost:3000",
+    "http://192.168.10.32:5174",
+    "http://192.168.10.18:3500",
+  ],
   credentials: true,
+
   methods: ["GET", "PATCH", "POST", "DELETE", "PUT"],
 };
 

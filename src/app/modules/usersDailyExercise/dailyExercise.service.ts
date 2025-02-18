@@ -23,6 +23,9 @@ const createDailyExercise = async (dailyExerciseData: IDailyExercise) => {
   }
 
   appData.points = appData?.points ? appData?.points : 0 + exerciseData.points;
+  appData.completedWorkoutTime = appData?.completedWorkoutTime
+    ? appData?.completedWorkoutTime
+    : 0 + exerciseData.duration;
   await appData.save();
   const dailyExercise = await DailyExercise.create(dailyExerciseData);
   return dailyExercise;

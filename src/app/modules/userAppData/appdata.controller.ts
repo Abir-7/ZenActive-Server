@@ -16,6 +16,7 @@ const addPoints = catchAsync(async (req, res) => {
 const addWorkoutTime = catchAsync(async (req, res) => {
   const { userId } = req.user;
   const { time } = req.body;
+  console.log(time, "----------------->");
   const result = await AppDataService.addWorkoutTime(time, userId);
   sendResponse(res, {
     statusCode: 200,
