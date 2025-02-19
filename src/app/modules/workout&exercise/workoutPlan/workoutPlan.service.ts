@@ -4,6 +4,7 @@ import { IWorkoutPlan } from "./workoutPlan.interface";
 import httpStatus from "http-status";
 import { WorkoutPlan } from "./workoutPlan.model";
 import unlinkFile from "../../../utils/unlinkFiles";
+import UserWorkoutPlan from "../../userWorkoutPlan/userWorkoutPlan.model";
 
 const createWorkout = async (workoutData: IWorkoutPlan) => {
   if (workoutData.duration * 7 !== workoutData.workouts.length) {
@@ -62,15 +63,60 @@ export const updateWorkout = async (
   return updatedWorkout;
 };
 
-const getAllWorkouts = async () => {
-  const workouts = await WorkoutPlan.find({ isDeleted: false }).populate({
+const getAllWorkouts = async (userId: string) => {
+  // const workouts = await WorkoutPlan.find({ isDeleted: false }).populate({
+  //   path: "workouts",
+  //   populate: "exercises",
+  // });
+  // return workouts;
+
+  const workoutPlans = await WorkoutPlan.find({ isDeleted: false }).populate({
     path: "workouts",
     populate: "exercises",
   });
-  return workouts;
+
+  // For each workout plan, check if the user is enrolled and add the field
+  const workoutPlansWithStatus = await Promise.all(
+    workoutPlans.map(async (workoutPlan) => {
+      // Check if the user has an entry in UserWorkoutPlan with the current workout plan
+      const userWorkoutPlan = await UserWorkoutPlan.findOne({
+        userId,
+        workoutPlanId: workoutPlan._id,
+        isCompleted: "InProgress",
+      });
+
+      // If found, add isEnrolled as true, otherwise false
+      return {
+        ...workoutPlan.toObject(),
+        isEnrolled: userWorkoutPlan ? true : false,
+      };
+    })
+  );
+
+  return workoutPlansWithStatus;
 };
-const getSingleWorkout = async (workoutId: string) => {
-  const workout = await WorkoutPlan.findById(workoutId).populate({
+const getSingleWorkout = async (workoutPlanId: string, userId: string) => {
+  const userWorkoutPlan = await UserWorkoutPlan.findOne({
+    userId,
+    workoutPlanId: workoutPlanId,
+    isCompleted: "InProgress",
+  })
+    .populate({
+      path: "workoutPlanId",
+      select: "title _id duration workouts",
+      populate: {
+        path: "workouts",
+        select: "_id name description exercises",
+        populate: {
+          path: "exercises",
+        },
+      },
+    })
+    .lean();
+  if (userWorkoutPlan?._id) {
+    return userWorkoutPlan;
+  }
+  const workout = await WorkoutPlan.findById(workoutPlanId).populate({
     path: "workouts",
     populate: "exercises",
   });
@@ -80,6 +126,7 @@ const getSingleWorkout = async (workoutId: string) => {
   if (workout.isDeleted) {
     throw new AppError(httpStatus.BAD_REQUEST, "Workout is deleted.");
   }
+
   return workout;
 };
 

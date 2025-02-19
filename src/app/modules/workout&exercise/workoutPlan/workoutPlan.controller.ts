@@ -51,8 +51,7 @@ const updateWorkoutPlan = catchAsync(async (req, res) => {
 });
 
 const getAllWorkoutsPlan = catchAsync(async (req, res) => {
-  const result = await WorkoutPlanService.getAllWorkouts();
-
+  const result = await WorkoutPlanService.getAllWorkouts(req.user.userId);
   sendResponse(res, {
     data: result,
     success: true,
@@ -64,7 +63,7 @@ const getAllWorkoutsPlan = catchAsync(async (req, res) => {
 const getSingleWorkoutPlan = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  const result = await WorkoutPlanService.getSingleWorkout(id);
+  const result = await WorkoutPlanService.getSingleWorkout(id, req.user.userId);
 
   sendResponse(res, {
     data: result,

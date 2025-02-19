@@ -38,7 +38,7 @@ router.get(
 router.get(
   "/:id",
   auth("ADMIN", "USER"),
-  WorkoutPlanController.getSingleWorkoutPlan
+  WorkoutPlanController.getSingleWorkoutPlan // get workout detail..if user it will give workout plan data or user workout plan data
 );
 
 router.delete(
