@@ -1,15 +1,22 @@
 import { Schema, model, Types } from "mongoose";
-import { IFriend } from "./friendlist.interface";
+import { IUserConnection, status } from "./friendlist.interface";
 
-const friendSchema = new Schema<IFriend>(
+const friendSchema = new Schema<IUserConnection>(
   {
     senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     receiverId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     isAccepted: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: status,
+      default: null,
+    },
+    statusChangeBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
+
   { timestamps: true }
 );
 
-const Friend = model<IFriend>("Friend", friendSchema);
+const UserConnection = model<IUserConnection>("UserConnection", friendSchema);
 
-export default Friend;
+export default UserConnection;

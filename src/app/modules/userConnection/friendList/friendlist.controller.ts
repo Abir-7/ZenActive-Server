@@ -45,7 +45,7 @@ const removeFriend = catchAsync(async (req, res) => {
     data: updatedFriendList,
     success: true,
     statusCode: httpStatus.OK,
-    message: "Removed successfully.",
+    message: "User unfriend successfully.",
   });
 });
 
@@ -72,7 +72,7 @@ const getPendingList = catchAsync(async (req, res) => {
     data: friendList,
     success: true,
     statusCode: httpStatus.OK,
-    message: "Sugested Friend list fetched successfully.",
+    message: "Pending list fetched successfully.",
   });
 });
 
@@ -84,7 +84,35 @@ const getSugestedFriend = catchAsync(async (req, res) => {
     data: friendList,
     success: true,
     statusCode: httpStatus.OK,
-    message: "Sugested Friend list fetched successfully.",
+    message: "Sugested friend list fetched successfully.",
+  });
+});
+
+const addToBlock = catchAsync(async (req, res) => {
+  const { friendId } = req.body;
+  const userId = req.user.userId;
+  const result = await FriendListService.addToBlock(friendId, userId);
+
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User has been successfully added to the blocklist.",
+  });
+});
+
+const removeRequest = catchAsync(async (req, res) => {
+  const { friendId } = req.body;
+  const userId = req.user.userId;
+  const updatedFriendList = await FriendListService.removeRequest(
+    userId,
+    friendId
+  );
+  sendResponse(res, {
+    data: updatedFriendList,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User request removed successfully.",
   });
 });
 
@@ -95,4 +123,6 @@ export const FriendListController = {
   getSugestedFriend,
   acceteptRequest,
   getPendingList,
+  addToBlock,
+  removeRequest,
 };

@@ -1,3 +1,4 @@
+import status from "http-status";
 import AppError from "../../errors/AppError";
 import { User } from "../user/user.model";
 import Friend from "../userConnection/friendList/friendlist.model";
@@ -19,6 +20,8 @@ const createChat = async (chatData: IChat) => {
       { senderId: chatData?.senderId, receiverId: chatData.receiverId },
       { senderId: chatData.receiverId, receiverId: chatData.senderId },
     ],
+    isAccepted: true,
+    status: { $nin: status },
   });
 
   if (!isExist) {

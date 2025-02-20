@@ -51,7 +51,10 @@ const updateWorkoutPlan = catchAsync(async (req, res) => {
 });
 
 const getAllWorkoutsPlan = catchAsync(async (req, res) => {
-  const result = await WorkoutPlanService.getAllWorkouts(req.user.userId);
+  const result = await WorkoutPlanService.getAllWorkouts(
+    req.user.userId,
+    req.query
+  );
   sendResponse(res, {
     data: result,
     success: true,
@@ -64,6 +67,19 @@ const getSingleWorkoutPlan = catchAsync(async (req, res) => {
   const { id } = req.params;
 
   const result = await WorkoutPlanService.getSingleWorkout(id, req.user.userId);
+
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Workout plan is fetched successfully.",
+  });
+});
+
+const getSingleWorkoutPlanDefault = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const result = await WorkoutPlanService.getSingleWorkoutDefault(id);
 
   sendResponse(res, {
     data: result,
@@ -90,4 +106,5 @@ export const WorkoutPlanController = {
   getAllWorkoutsPlan,
   getSingleWorkoutPlan,
   deleteWorkoutPlan,
+  getSingleWorkoutPlanDefault,
 };

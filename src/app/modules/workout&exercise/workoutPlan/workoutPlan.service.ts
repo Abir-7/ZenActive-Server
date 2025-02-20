@@ -63,29 +63,25 @@ export const updateWorkout = async (
   return updatedWorkout;
 };
 
-const getAllWorkouts = async (userId: string) => {
-  // const workouts = await WorkoutPlan.find({ isDeleted: false }).populate({
-  //   path: "workouts",
-  //   populate: "exercises",
-  // });
-  // return workouts;
+const getAllWorkouts = async (
+  userId: string,
+  query: Record<string, unknown>
+) => {
+  query.isDeleted = false;
 
-  const workoutPlans = await WorkoutPlan.find({ isDeleted: false }).populate({
+  const workoutPlans = await WorkoutPlan.find(query).populate({
     path: "workouts",
     populate: "exercises",
   });
 
-  // For each workout plan, check if the user is enrolled and add the field
   const workoutPlansWithStatus = await Promise.all(
     workoutPlans.map(async (workoutPlan) => {
-      // Check if the user has an entry in UserWorkoutPlan with the current workout plan
       const userWorkoutPlan = await UserWorkoutPlan.findOne({
         userId,
         workoutPlanId: workoutPlan._id,
         isCompleted: "InProgress",
       });
 
-      // If found, add isEnrolled as true, otherwise false
       return {
         ...workoutPlan.toObject(),
         isEnrolled: userWorkoutPlan ? true : false,
@@ -95,6 +91,7 @@ const getAllWorkouts = async (userId: string) => {
 
   return workoutPlansWithStatus;
 };
+
 const getSingleWorkout = async (workoutPlanId: string, userId: string) => {
   const userWorkoutPlan = await UserWorkoutPlan.findOne({
     userId,
@@ -116,6 +113,20 @@ const getSingleWorkout = async (workoutPlanId: string, userId: string) => {
   if (userWorkoutPlan?._id) {
     return userWorkoutPlan;
   }
+  const workout = await WorkoutPlan.findById(workoutPlanId).populate({
+    path: "workouts",
+    populate: "exercises",
+  });
+  if (!workout) {
+    throw new AppError(httpStatus.NOT_FOUND, "Workout not found.");
+  }
+  if (workout.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Workout is deleted.");
+  }
+  return workout;
+};
+
+const getSingleWorkoutDefault = async (workoutPlanId: string) => {
   const workout = await WorkoutPlan.findById(workoutPlanId).populate({
     path: "workouts",
     populate: "exercises",
@@ -152,4 +163,5 @@ export const WorkoutPlanService = {
   getAllWorkouts,
   getSingleWorkout,
   deleteWorkout,
+  getSingleWorkoutDefault,
 };

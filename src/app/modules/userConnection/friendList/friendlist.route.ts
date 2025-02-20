@@ -20,10 +20,28 @@ router.patch(
 );
 
 router.patch(
+  "/unfriend",
+  validateRequest(zodFriendListSchema),
+  auth("USER"),
+  FriendListController.removeFriend
+);
+router.patch(
   "/remove",
   validateRequest(zodFriendListSchema),
   auth("USER"),
   FriendListController.removeFriend
+);
+router.patch(
+  "/remove-request",
+  validateRequest(zodFriendListSchema),
+  auth("USER"),
+  FriendListController.removeRequest
+);
+router.patch(
+  "/block",
+  validateRequest(zodFriendListSchema),
+  auth("USER"),
+  FriendListController.addToBlock
 );
 
 router.get("/", auth("USER"), FriendListController.getFriendList);

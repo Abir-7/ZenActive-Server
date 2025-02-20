@@ -36,6 +36,12 @@ router.get(
 );
 
 router.get(
+  "/default/:id",
+  auth("ADMIN", "USER"),
+  WorkoutPlanController.getSingleWorkoutPlanDefault // get workout detail..if user it will give workout plan data or user workout plan data
+);
+
+router.get(
   "/:id",
   auth("ADMIN", "USER"),
   WorkoutPlanController.getSingleWorkoutPlan // get workout detail..if user it will give workout plan data or user workout plan data

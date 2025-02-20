@@ -1,15 +1,16 @@
 import { Types } from "mongoose";
 
-import Friend from "./friendlist.model";
 import { User } from "../../user/user.model";
 import AppError from "../../../errors/AppError";
 import httpStatus from "http-status";
 import { Block } from "../blocklist/blockList.model";
+import UserConnection from "./friendlist.model";
+import { status } from "./friendlist.interface";
 const sendRequest = async (
   userId: Types.ObjectId,
   friendId: Types.ObjectId
 ) => {
-  const existingFriendList = await Friend.findOne({
+  const existingFriendList = await UserConnection.findOne({
     $or: [
       { senderId: userId, receiverId: friendId },
       { senderId: friendId, receiverId: userId },
@@ -22,7 +23,7 @@ const sendRequest = async (
   if (existingFriendList && !existingFriendList?.isAccepted) {
     throw new AppError(httpStatus.BAD_REQUEST, "Already sent request");
   }
-  const sendRequest = await Friend.create({
+  const sendRequest = await UserConnection.create({
     senderId: userId,
     receiverId: friendId,
   });
@@ -33,14 +34,14 @@ const acceteptRequest = async (
   userId: Types.ObjectId,
   friendId: Types.ObjectId
 ) => {
-  const friendList = await Friend.findOne({
+  const friendList = await UserConnection.findOne({
     senderId: friendId,
     receiverId: userId,
   });
   if (!friendList) {
     throw new AppError(httpStatus.BAD_REQUEST, "Connection not found");
   }
-  const acceptUserRequest = await Friend.findOneAndUpdate(
+  const acceptUserRequest = await UserConnection.findOneAndUpdate(
     {
       senderId: friendId,
       receiverId: userId,
@@ -51,33 +52,12 @@ const acceteptRequest = async (
   return acceptUserRequest;
 };
 
-const removeFriend = async (
-  userId: Types.ObjectId,
-  friendId: Types.ObjectId
-) => {
-  const friendList = await Friend.findOne({
-    $or: [
-      { senderId: userId, receiverId: friendId },
-      { senderId: friendId, receiverId: userId },
-    ],
-  });
-  if (!friendList) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Connection not found");
-  }
-  await Friend.findOneAndDelete({
-    $or: [
-      { senderId: userId, receiverId: friendId },
-      { senderId: friendId, receiverId: userId },
-    ],
-  });
-  return { message: "Removed" };
-};
-
 const getFriendList = async (userId: string) => {
-  const friendList = await Friend.find(
+  const friendList = await UserConnection.find(
     {
       $or: [{ senderId: userId }, { receiverId: userId }],
       isAccepted: true,
+      status: { $nin: status },
     },
     { senderId: 1, receiverId: 1 }
   )
@@ -101,7 +81,7 @@ const getFriendList = async (userId: string) => {
 };
 
 const getPendingList = async (userId: string, type: string) => {
-  const pendingRequests = await Friend.find({
+  const pendingRequests = await UserConnection.find({
     $or: [{ senderId: userId }, { receiverId: userId }],
     isAccepted: false,
   })
@@ -142,7 +122,7 @@ const getPendingList = async (userId: string, type: string) => {
 };
 
 const suggestedFriend = async (userId: string) => {
-  const userFriends = await Friend.find({
+  const userFriends = await UserConnection.find({
     $or: [{ senderId: userId }, { receiverId: userId }],
   });
 
@@ -166,6 +146,79 @@ const suggestedFriend = async (userId: string) => {
   return suggestedUsers;
 };
 
+const removeFriend = async (
+  userId: Types.ObjectId,
+  friendId: Types.ObjectId
+) => {
+  const friendList = await UserConnection.findOne({
+    $or: [
+      { senderId: userId, receiverId: friendId },
+      { senderId: friendId, receiverId: userId },
+    ],
+  });
+  if (!friendList) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Connection not found");
+  }
+  await UserConnection.findOneAndUpdate(
+    {
+      $or: [
+        { senderId: userId, receiverId: friendId },
+        { senderId: friendId, receiverId: userId },
+      ],
+    },
+    { status: "unfriend", statusChangeBy: userId },
+    { new: true }
+  );
+  return { message: "User Unfriend." };
+};
+
+const addToBlock = async (friendId: Types.ObjectId, userId: Types.ObjectId) => {
+  const friendList = await UserConnection.findOne({
+    $or: [
+      { senderId: userId, receiverId: friendId },
+      { senderId: friendId, receiverId: userId },
+    ],
+  });
+  if (!friendList) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Connection not found");
+  }
+  await UserConnection.findOneAndUpdate(
+    {
+      $or: [
+        { senderId: userId, receiverId: friendId },
+        { senderId: friendId, receiverId: userId },
+      ],
+    },
+    { status: "blocked", statusChangeBy: userId },
+    { new: true }
+  );
+  return { message: "User Blocked" };
+};
+
+const removeRequest = async (
+  userId: Types.ObjectId,
+  friendId: Types.ObjectId
+) => {
+  const friendList = await UserConnection.findOne({
+    $or: [
+      { senderId: userId, receiverId: friendId },
+      { senderId: friendId, receiverId: userId },
+    ],
+    isAccepted: false,
+  });
+  if (!friendList) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Connection not found");
+  }
+  await UserConnection.findOneAndDelete({
+    $or: [
+      { senderId: userId, receiverId: friendId },
+      { senderId: friendId, receiverId: userId },
+    ],
+    isAccepted: false,
+  });
+  return { message: "User Request Deleted" };
+};
+
 export const FriendListService = {
   sendRequest,
   removeFriend,
@@ -173,4 +226,6 @@ export const FriendListService = {
   suggestedFriend,
   acceteptRequest,
   getPendingList,
+  addToBlock,
+  removeRequest,
 };
