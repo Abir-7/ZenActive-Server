@@ -53,6 +53,83 @@ const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
 };
 
 // Update the present workout in a user's workout plan
+// const updatePresentWorkout = async (userId: string, planId: string) => {
+//   const progress = await UserWorkoutPlan.findOne({
+//     userId,
+//     workoutPlanId: planId,
+//   });
+
+//   if (!progress) {
+//     throw new Error("User progress not found");
+//   }
+//   const { currentWorkoutIndex, currentExerciseIndex } = progress;
+
+//   const plan = await WorkoutPlan.findById(planId).populate({
+//     path: "workouts",
+//     populate: {
+//       path: "exercises",
+//       model: "Exercise",
+//     },
+//   }); // Fetch the workout plan
+
+//   if (!plan) {
+//     throw new Error("Workout plan not found");
+//   }
+
+//   const currentWorkout = plan.workouts[currentWorkoutIndex];
+
+//   if (!currentWorkout) {
+//     throw new Error("CurrentWorkout Workout not found");
+//   }
+
+//   const workout = await Workout.findById(currentWorkout._id);
+
+//   if (!workout) {
+//     throw new Error("Workout not found");
+//   }
+
+//   // const currentExercise = workout.exercises[currentExerciseIndex];
+
+//   progress.completedExercises.push({
+//     workoutIndex: currentWorkoutIndex,
+//     exerciseIndex: currentExerciseIndex,
+//     completedAt: new Date(),
+//   });
+
+//   const appData = await UserAppData.findOne({
+//     userId: userId,
+//   });
+
+//   if (!appData) {
+//     throw new AppError(status.NOT_FOUND, "Appdata  not found.");
+//   }
+
+//   if (currentExerciseIndex + 1 < workout.exercises.length) {
+//     // If there are more exercises in the current workout
+//     progress.currentExerciseIndex += 1;
+//   } else {
+//     // Move to the next workout
+//     appData.points = (appData.points ? appData.points : 0) + workout.points;
+
+//     await appData.save();
+
+//     if (currentWorkoutIndex + 1 < plan.workouts.length) {
+//       progress.currentWorkoutIndex += 1;
+//       progress.currentExerciseIndex = 0; // Reset to the first exercise of the next workout
+//     } else {
+//       // If all workouts are completed, mark the plan as completed
+
+//       appData.points = (appData?.points ? appData.points : 0) + plan?.points;
+//       await appData.save();
+
+//       progress.isCompleted = "Completed";
+//       progress.endAt = new Date(Date.now());
+//     }
+//   }
+//   await progress.save();
+//   return progress;
+// };
+
 const updatePresentWorkout = async (userId: string, planId: string) => {
   const progress = await UserWorkoutPlan.findOne({
     userId,
@@ -62,7 +139,8 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
   if (!progress) {
     throw new Error("User progress not found");
   }
-  const { currentWorkoutIndex, currentExerciseIndex } = progress;
+  const { currentWorkoutIndex, currentExerciseIndex, completedExercises } =
+    progress;
 
   const plan = await WorkoutPlan.findById(planId).populate({
     path: "workouts",
@@ -88,7 +166,7 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
     throw new Error("Workout not found");
   }
 
-  // const currentExercise = workout.exercises[currentExerciseIndex];
+  const currentExercise = workout.exercises[currentExerciseIndex];
 
   progress.completedExercises.push({
     workoutIndex: currentWorkoutIndex,
@@ -101,16 +179,37 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
   });
 
   if (!appData) {
-    throw new AppError(status.NOT_FOUND, "Appdata  not found.");
+    throw new AppError(status.NOT_FOUND, "Appdata not found.");
   }
 
-  if (currentExerciseIndex + 1 < workout.exercises.length) {
-    // If there are more exercises in the current workout
-    progress.currentExerciseIndex += 1;
-  } else {
-    // Move to the next workout
-    appData.points = (appData.points ? appData.points : 0) + workout.points;
+  // Check if the user is trying to move to the next workout after completing all exercises in the current workout
+  if (currentExerciseIndex + 1 >= workout.exercises.length) {
+    // All exercises for the current workout are completed
+    const previousExercise = completedExercises[completedExercises.length - 1];
+    const previousCompletedAt = previousExercise
+      ? previousExercise.completedAt
+      : null;
 
+    const currentDate = new Date();
+    const previousDate = previousCompletedAt
+      ? new Date(previousCompletedAt)
+      : null;
+
+    const isSameDay =
+      previousDate &&
+      previousDate.getDate() === currentDate.getDate() &&
+      previousDate.getMonth() === currentDate.getMonth() &&
+      previousDate.getFullYear() === currentDate.getFullYear();
+
+    if (isSameDay) {
+      // If the previous exercise was completed on the same day
+      throw new Error(
+        "You cannot move to the next workout on the same day. Please wait for the next day."
+      );
+    }
+
+    // Proceed with moving to the next workout if it's not the same day
+    appData.points = (appData.points ? appData.points : 0) + workout.points;
     await appData.save();
 
     if (currentWorkoutIndex + 1 < plan.workouts.length) {
@@ -118,14 +217,17 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
       progress.currentExerciseIndex = 0; // Reset to the first exercise of the next workout
     } else {
       // If all workouts are completed, mark the plan as completed
-
       appData.points = (appData?.points ? appData.points : 0) + plan?.points;
       await appData.save();
 
       progress.isCompleted = "Completed";
       progress.endAt = new Date(Date.now());
     }
+  } else {
+    // Allow completing more exercises in the current workout
+    progress.currentExerciseIndex += 1;
   }
+
   await progress.save();
   return progress;
 };
@@ -171,12 +273,15 @@ const getActiveWorkoutPlan = async (userId: string, planId: string) => {
   // };
 };
 
-const giveFeedback = async (data: {
-  planId: string;
-  dificulty: string;
-  isAllExcerciseComplete: boolean;
-  challengesFace: string;
-}) => {};
+// const giveFeedback = async (data: {
+//   planId: string;
+//   dificulty: string;
+//   isAllExcerciseComplete: boolean;
+//   challengesFace: string;
+// }) => {
+// const result=await User
+
+// };
 
 export const UserWorkoutPlanService = {
   startWorkoutPlan,
