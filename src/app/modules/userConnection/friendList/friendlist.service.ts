@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import { User } from "../../user/user.model";
 import AppError from "../../../errors/AppError";
 import httpStatus from "http-status";
-import { Block } from "../blocklist/blockList.model";
+// import { Block } from "../blocklist/blockList.model";
 import UserConnection from "./friendlist.model";
 import { status } from "./friendlist.interface";
 const sendRequest = async (
@@ -57,7 +57,7 @@ const getFriendList = async (userId: string) => {
     {
       $or: [{ senderId: userId }, { receiverId: userId }],
       isAccepted: true,
-      status: { $nin: status },
+      status: null,
     },
     { senderId: 1, receiverId: 1 }
   )
@@ -84,6 +84,7 @@ const getPendingList = async (userId: string, type: string) => {
   const pendingRequests = await UserConnection.find({
     $or: [{ senderId: userId }, { receiverId: userId }],
     isAccepted: false,
+    status: null,
   })
     .populate({
       path: "senderId",
@@ -121,29 +122,28 @@ const getPendingList = async (userId: string, type: string) => {
   }
 };
 
-const suggestedFriend = async (userId: string) => {
-  const userFriends = await UserConnection.find({
-    $or: [{ senderId: userId }, { receiverId: userId }],
+const suggestedFriend = async (myUserId: string) => {
+  // Step 1: Find all users who are in a relationship with you (either as sender or receiver)
+  const relationships = await UserConnection.find({
+    $or: [{ senderId: myUserId }, { receiverId: myUserId }],
   });
 
-  // Get friend IDs
-  const friendIds = userFriends.map((friend) => {
-    return friend.senderId.toString() === userId
-      ? friend.receiverId
-      : friend.senderId;
+  // Extract the user IDs from the relationships
+  const relatedUserIds = relationships.map((rel) =>
+    rel.senderId.toString() === myUserId
+      ? rel.receiverId.toString()
+      : rel.senderId.toString()
+  );
+
+  // Add your own ID to the relatedUserIds array
+  relatedUserIds.push(myUserId);
+
+  // Step 2: Find all users who are not in the relatedUserIds list
+  const suggestedFriends = await User.find({
+    _id: { $nin: relatedUserIds },
   });
 
-  // Exclude friends and blocked users from suggestion
-  const blockedUsers = await Block.findOne({ userId });
-  const blockedUserIds = blockedUsers ? blockedUsers.blockedUser : [];
-
-  // Find other users who are not friends or blocked
-  const suggestedUsers = await User.find({
-    _id: { $ne: userId, $nin: [...friendIds, ...blockedUserIds] },
-    role: "USER",
-  }).select("_id email image name");
-
-  return suggestedUsers;
+  return suggestedFriends;
 };
 
 const removeFriend = async (
@@ -166,7 +166,7 @@ const removeFriend = async (
         { senderId: friendId, receiverId: userId },
       ],
     },
-    { status: "unfriend", statusChangeBy: userId },
+    { status: "unfriend", statusChangeBy: userId, isAccepted: false },
     { new: true }
   );
   return { message: "User Unfriend." };

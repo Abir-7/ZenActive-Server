@@ -6,7 +6,7 @@ import { MealRoute } from "../modules/meal/meal.route";
 import { ChallengeRoute } from "../modules/challenge( maybe not needed)/challenge.route";
 import { BadgeRoute } from "../modules/badge/badge.route";
 
-import { BlockRoute } from "../modules/userConnection/blocklist/blocklist.route";
+// import { BlockRoute } from "../modules/userConnection/blocklist/blocklist.route";
 import { FriendListRoute } from "../modules/userConnection/friendList/friendlist.route";
 import { UserMealPlanRoute } from "../modules/userMealPlan/userMealPlan.route";
 import { PostRoute } from "../modules/blog/post/post.route";
@@ -40,7 +40,7 @@ const apiRoutes = [
   { path: "/challenge", route: ChallengeRoute },
   { path: "/badge", route: BadgeRoute },
   // { path: "/package", route: PackageRoute },
-  { path: "/block-list", route: BlockRoute },
+  // { path: "/block-list", route: BlockRoute },
   { path: "/friend", route: FriendListRoute },
   { path: "/meal-plan", route: UserMealPlanRoute },
   { path: "/app-data", route: AppDataRoute },
