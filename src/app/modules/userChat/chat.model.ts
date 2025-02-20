@@ -4,12 +4,14 @@ import { IChat } from "./chat.interface";
 const chatSchema = new Schema<IChat>(
   {
     senderId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
+      ref: "User",
     },
     receiverId: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
+      ref: "User",
     },
     message: {
       type: String,

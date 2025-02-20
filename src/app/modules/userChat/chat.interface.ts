@@ -1,5 +1,7 @@
+import { Types } from "mongoose";
+
 export interface IChat {
-  senderId: string;
-  receiverId: string;
+  senderId: Types.ObjectId;
+  receiverId: Types.ObjectId;
   message: string;
 }

@@ -189,7 +189,7 @@ const addToBlock = async (friendId: Types.ObjectId, userId: Types.ObjectId) => {
         { senderId: friendId, receiverId: userId },
       ],
     },
-    { status: "blocked", statusChangeBy: userId },
+    { status: "blocked", statusChangeBy: userId, isAccepted: false },
     { new: true }
   );
   return { message: "User Blocked" };

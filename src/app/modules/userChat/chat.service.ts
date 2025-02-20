@@ -41,15 +41,34 @@ const getChatsBetweenUsers = async (userId: string, friendId: string) => {
         { senderId: friendId, receiverId: userId },
       ],
     })
-      .sort({ createdAt: 1 })
-      .exec(),
-
+      .populate({
+        path: "senderId",
+        select: "name email _id image",
+      })
+      .populate({
+        path: "receiverId",
+        select: "name email _id image",
+      })
+      .lean(),
     UserConnection.findOne({
       $or: [
         { senderId: userId, receiverId: friendId },
         { senderId: friendId, receiverId: userId },
       ],
-    }).select("senderId receiverId status"),
+    })
+      .select("senderId receiverId status isAccepted statusChangeBy")
+      .populate({
+        path: "statusChangeBy",
+        select: "name email _id image",
+      })
+      .populate({
+        path: "senderId",
+        select: "name email _id image",
+      })
+      .populate({
+        path: "receiverId",
+        select: "name email _id image",
+      }),
   ]);
 
   return { userChat, userFriendShipStatus };
