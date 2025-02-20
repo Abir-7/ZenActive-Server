@@ -8,4 +8,5 @@ export interface IWorkoutPlan {
   points: number;
   isDeleted: boolean;
   image: string;
+  about: string;
 }

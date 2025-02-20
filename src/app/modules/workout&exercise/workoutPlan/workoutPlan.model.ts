@@ -11,6 +11,7 @@ const WorkoutPlanSchema = new Schema<IWorkoutPlan>(
     points: { type: Number, required: true },
     isDeleted: { type: Boolean, default: false },
     image: { type: String, required: true },
+    about: { type: String, required: true },
   },
   { timestamps: true }
 );

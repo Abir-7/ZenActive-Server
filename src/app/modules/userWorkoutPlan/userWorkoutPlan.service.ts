@@ -6,9 +6,6 @@ import { WorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.model";
 import Workout from "../workout&exercise/workout/workout.model";
 import { UserAppData } from "../userAppData/appdata.model";
 import status from "http-status";
-import IWorkout from "../workout&exercise/workout/workout.interface";
-import { IWorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.interface";
-import { IUserWorkoutPlan } from "./userWorkoutPlan.interface";
 
 const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
   const workoutPlan = await WorkoutPlan.findOne({
