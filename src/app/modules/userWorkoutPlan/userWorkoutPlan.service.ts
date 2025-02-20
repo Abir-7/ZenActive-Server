@@ -8,6 +8,7 @@ import { UserAppData } from "../userAppData/appdata.model";
 import status from "http-status";
 
 const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
+  console.log(workoutPlanId, "------------------->>");
   const workoutPlan = await WorkoutPlan.findOne({
     _id: workoutPlanId,
   }).populate({
@@ -17,6 +18,7 @@ const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
       model: "Exercise",
     },
   });
+
   if (!workoutPlan) {
     throw new AppError(404, "Workout plan not found.");
   }
@@ -35,6 +37,7 @@ const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
 
   const isExist = await UserWorkoutPlan.findOne({
     workoutPlanId,
+    userId: userId,
     isCompleted: "InProgress",
   });
 
