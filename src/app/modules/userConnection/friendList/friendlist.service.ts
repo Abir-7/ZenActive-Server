@@ -122,7 +122,7 @@ const getPendingList = async (userId: string, type: string) => {
   }
 };
 
-const suggestedFriend = async (myUserId: string) => {
+const suggestedFriend = async (myUserId: string, email: string) => {
   // Step 1: Find all users who are in a relationship with you (either as sender or receiver)
   const relationships = await UserConnection.find({
     $or: [{ senderId: myUserId }, { receiverId: myUserId }],
@@ -138,10 +138,18 @@ const suggestedFriend = async (myUserId: string) => {
   // Add your own ID to the relatedUserIds array
   relatedUserIds.push(myUserId);
 
-  // Step 2: Find all users who are not in the relatedUserIds list
-  const suggestedFriends = await User.find({
+  const query: any = {
     _id: { $nin: relatedUserIds },
-  });
+    role: "USER",
+  };
+
+  // Add the email condition if an email is provided
+  if (email) {
+    query.email = { $regex: email, $options: "i" }; // Case-insensitive search by email
+  }
+
+  // Step 2: Find all users who are not in the relatedUserIds list
+  const suggestedFriends = await User.find(query);
 
   return suggestedFriends;
 };

@@ -6,6 +6,7 @@ export interface IPost {
 
   userId: Types.ObjectId;
   groupId: Types.ObjectId | null;
+  image: string | null;
   isGroup: boolean;
   isDelete: boolean;
 }

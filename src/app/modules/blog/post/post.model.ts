@@ -9,6 +9,7 @@ const postSchema: Schema = new Schema<IPost>(
     groupId: { type: Schema.Types.ObjectId, ref: "Group", default: null },
     isGroup: { type: Boolean, default: false },
     isDelete: { type: Boolean, default: false },
+    image: { type: String, default: null },
   },
   {
     timestamps: true,

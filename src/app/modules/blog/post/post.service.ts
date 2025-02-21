@@ -4,8 +4,10 @@ import { IPost } from "./post.interface";
 import Post from "./post.model";
 import Like from "../likes/like.model";
 import Friend from "../../userConnection/friendList/friendlist.model";
+import unlinkFile from "../../../utils/unlinkFiles";
 
 const createPost = async (data: Partial<IPost>) => {
+  console.log(data);
   let post: IPost;
   if (data.groupId) {
     post = await Post.create({ ...data, isGroup: true });
@@ -16,9 +18,18 @@ const createPost = async (data: Partial<IPost>) => {
   return post;
 };
 
-const editPost = async (postId: string, updatedData: IPost) => {
+const editPost = async (postId: string, updatedData: Partial<IPost>) => {
+  console.log(postId, "------------->");
+  const isExistpost = await Post.findOne({ _id: postId, isDelete: false });
+  console.log(isExistpost);
+  if (isExistpost?.image) {
+    if (updatedData.image) {
+      unlinkFile(isExistpost?.image);
+    }
+  }
+
   const post = await Post.findOneAndUpdate(
-    { postId, isDelete: false },
+    { _id: postId, isDelete: false },
     updatedData,
     { new: true }
   );

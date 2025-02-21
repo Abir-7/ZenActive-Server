@@ -5,6 +5,7 @@ import sendResponse from "../../../utils/sendResponse";
 
 // Add a friend to the user's friend list
 const addFriend = catchAsync(async (req, res) => {
+  console.log(req.body, "----->");
   const { friendId } = req.body;
   const userId = req.user.userId;
   const updatedFriendList = await FriendListService.sendRequest(
@@ -78,8 +79,11 @@ const getPendingList = catchAsync(async (req, res) => {
 
 const getSugestedFriend = catchAsync(async (req, res) => {
   const userId = req.user.userId;
-
-  const friendList = await FriendListService.suggestedFriend(userId);
+  const { email } = req.query;
+  const friendList = await FriendListService.suggestedFriend(
+    userId,
+    email as string
+  );
   sendResponse(res, {
     data: friendList,
     success: true,

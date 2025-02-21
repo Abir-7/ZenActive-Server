@@ -7,7 +7,14 @@ import httpStatus from "http-status";
 const createPost = catchAsync(async (req, res) => {
   const { userId } = req.user;
   const { text, groupId } = req.body;
-  const result = await PostService.createPost({ userId, text, groupId });
+
+  let image = null;
+
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
+  }
+
+  const result = await PostService.createPost({ userId, text, groupId, image });
   sendResponse(res, {
     data: result,
     success: true,
@@ -20,7 +27,22 @@ const createPost = catchAsync(async (req, res) => {
 const editPost = catchAsync(async (req, res) => {
   const { postId } = req.params;
 
-  const result = await PostService.editPost(postId, req.body);
+  let image = null;
+  let value = null;
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
+  }
+
+  if (image) {
+    value = {
+      ...req.body,
+      image,
+    };
+  } else {
+    value = req.body;
+  }
+
+  const result = await PostService.editPost(postId, value);
   sendResponse(res, {
     data: result,
     success: true,
