@@ -7,12 +7,11 @@ import unlinkFile from "../../../utils/unlinkFiles";
 import UserWorkoutPlan from "../../userWorkoutPlan/userWorkoutPlan.model";
 
 const createWorkout = async (workoutData: IWorkoutPlan) => {
-  if (workoutData.duration * 7 !== workoutData.workouts.length) {
+  console.log(workoutData);
+  if (workoutData.duration !== workoutData.workouts.length) {
     throw new AppError(
       500,
-      `day:${workoutData.duration * 7} not equal workouts:${
-        workoutData.workouts.length
-      } in numbner`
+      `day:${workoutData.duration} not equal workouts:${workoutData.workouts.length} in numbner`
     );
   }
 

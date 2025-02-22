@@ -7,7 +7,6 @@ import Friend from "../../userConnection/friendList/friendlist.model";
 import unlinkFile from "../../../utils/unlinkFiles";
 
 const createPost = async (data: Partial<IPost>) => {
-  console.log(data);
   let post: IPost;
   if (data.groupId) {
     post = await Post.create({ ...data, isGroup: true });
@@ -19,9 +18,8 @@ const createPost = async (data: Partial<IPost>) => {
 };
 
 const editPost = async (postId: string, updatedData: Partial<IPost>) => {
-  console.log(postId, "------------->");
   const isExistpost = await Post.findOne({ _id: postId, isDelete: false });
-  console.log(isExistpost);
+
   if (isExistpost?.image) {
     if (updatedData.image) {
       unlinkFile(isExistpost?.image);

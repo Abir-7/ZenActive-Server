@@ -81,6 +81,7 @@ const getFriendList = async (userId: string) => {
 };
 
 const getPendingList = async (userId: string, type: string) => {
+  console.log(userId, type);
   const pendingRequests = await UserConnection.find({
     $or: [{ senderId: userId }, { receiverId: userId }],
     isAccepted: false,
@@ -227,6 +228,105 @@ const removeRequest = async (
   return { message: "User Request Deleted" };
 };
 
+async function getFriendListWithLastMessage(userId: Types.ObjectId) {
+  const friendListWithMessages = await UserConnection.aggregate([
+    {
+      $match: {
+        $or: [{ senderId: userId }, { receiverId: userId }],
+        isAccepted: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "users", // Assuming 'users' is the collection name for the User model
+        let: { senderId: "$senderId", receiverId: "$receiverId" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  { $eq: ["$_id", "$$senderId"] },
+                  { $eq: ["$_id", "$$receiverId"] },
+                ],
+              },
+            },
+          },
+          {
+            $project: {
+              name: 1,
+              email: 1,
+              image: 1,
+              _id: 1,
+            },
+          },
+        ],
+        as: "friendDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$friendDetails",
+      },
+    },
+    {
+      $lookup: {
+        from: "chats",
+        let: { senderId: "$senderId", receiverId: "$receiverId" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  {
+                    $and: [
+                      { $eq: ["$senderId", "$$senderId"] },
+                      { $eq: ["$receiverId", "$$receiverId"] },
+                    ],
+                  },
+                  {
+                    $and: [
+                      { $eq: ["$senderId", "$$receiverId"] },
+                      { $eq: ["$receiverId", "$$senderId"] },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+          { $sort: { createdAt: -1 } }, // Sort messages by most recent
+          { $limit: 1 }, // Get only the latest message
+        ],
+        as: "lastMessage",
+      },
+    },
+    {
+      $unwind: {
+        path: "$lastMessage",
+        preserveNullAndEmptyArrays: true, // Include friends even if there's no message
+      },
+    },
+    {
+      $project: {
+        friendDetails: 1,
+        lastMessage: 1,
+      },
+    },
+    {
+      $match: {
+        lastMessage: { $ne: null }, // Exclude friends with no messages
+        "friendDetails._id": { $ne: userId }, // Exclude the user from the friend list
+      },
+    },
+    {
+      $sort: {
+        "lastMessage.createdAt": -1, // Sort by the last message's createdAt time in descending order
+      },
+    },
+  ]);
+
+  return friendListWithMessages;
+}
+
 export const FriendListService = {
   sendRequest,
   removeFriend,
@@ -236,4 +336,5 @@ export const FriendListService = {
   getPendingList,
   addToBlock,
   removeRequest,
+  getFriendListWithLastMessage,
 };

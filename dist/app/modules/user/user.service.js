@@ -246,7 +246,6 @@ const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
     };
 });
 const getSingleUser = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(yield user_model_1.User.findOne({ _id: userId }));
     const result = yield user_model_1.User.aggregate([
         { $match: { _id: new mongoose_1.default.Types.ObjectId(userId) } },
         // Lookup userAppData

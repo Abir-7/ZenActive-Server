@@ -11,5 +11,6 @@ const WorkoutPlanSchema = new mongoose_1.Schema({
     points: { type: Number, required: true },
     isDeleted: { type: Boolean, default: false },
     image: { type: String, required: true },
+    about: { type: String, required: true },
 }, { timestamps: true });
 exports.WorkoutPlan = (0, mongoose_1.model)("WorkoutPlan", WorkoutPlanSchema);

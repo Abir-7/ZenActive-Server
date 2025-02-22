@@ -21,7 +21,11 @@ const http_status_1 = __importDefault(require("http-status"));
 const createPost = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.user;
     const { text, groupId } = req.body;
-    const result = yield post_service_1.PostService.createPost({ userId, text, groupId });
+    let image = null;
+    if (req.files && "image" in req.files && req.files.image[0]) {
+        image = `/images/${req.files.image[0].filename}`;
+    }
+    const result = yield post_service_1.PostService.createPost({ userId, text, groupId, image });
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -32,7 +36,18 @@ const createPost = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 // Edit Post
 const editPost = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { postId } = req.params;
-    const result = yield post_service_1.PostService.editPost(postId, req.body);
+    let image = null;
+    let value = null;
+    if (req.files && "image" in req.files && req.files.image[0]) {
+        image = `/images/${req.files.image[0].filename}`;
+    }
+    if (image) {
+        value = Object.assign(Object.assign({}, req.body), { image });
+    }
+    else {
+        value = req.body;
+    }
+    const result = yield post_service_1.PostService.editPost(postId, value);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

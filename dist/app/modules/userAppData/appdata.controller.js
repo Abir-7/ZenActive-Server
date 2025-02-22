@@ -23,10 +23,22 @@ const addPoints = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
-        message: "User app data updated successfully.",
+        message: "User app data points updated successfully.",
+        data: result,
+    });
+}));
+const addWorkoutTime = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.user;
+    const { time } = req.body;
+    const result = yield appdata_service_1.AppDataService.addWorkoutTime(time, userId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "User app data workout time updated successfully.",
         data: result,
     });
 }));
 exports.AppDataController = {
     addPoints,
+    addWorkoutTime,
 };

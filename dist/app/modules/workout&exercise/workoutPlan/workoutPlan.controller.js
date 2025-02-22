@@ -53,7 +53,7 @@ const updateWorkoutPlan = (0, catchAsync_1.default)((req, res) => __awaiter(void
     });
 }));
 const getAllWorkoutsPlan = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield workoutPlan_service_1.WorkoutPlanService.getAllWorkouts();
+    const result = yield workoutPlan_service_1.WorkoutPlanService.getAllWorkouts(req.user.userId, req.query);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -63,7 +63,17 @@ const getAllWorkoutsPlan = (0, catchAsync_1.default)((req, res) => __awaiter(voi
 }));
 const getSingleWorkoutPlan = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const result = yield workoutPlan_service_1.WorkoutPlanService.getSingleWorkout(id);
+    const result = yield workoutPlan_service_1.WorkoutPlanService.getSingleWorkout(id, req.user.userId);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Workout plan is fetched successfully.",
+    });
+}));
+const getSingleWorkoutPlanDefault = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const result = yield workoutPlan_service_1.WorkoutPlanService.getSingleWorkoutDefault(id);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -87,4 +97,5 @@ exports.WorkoutPlanController = {
     getAllWorkoutsPlan,
     getSingleWorkoutPlan,
     deleteWorkoutPlan,
+    getSingleWorkoutPlanDefault,
 };

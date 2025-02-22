@@ -6,7 +6,6 @@ import AppError from "../../errors/AppError";
 import { UserAppData } from "../userAppData/appdata.model";
 
 const createDailyExercise = async (dailyExerciseData: IDailyExercise) => {
-  console.log("object");
   const exerciseData = await Exercise.findOne({
     _id: dailyExerciseData.exerciseId,
   });
@@ -22,7 +21,7 @@ const createDailyExercise = async (dailyExerciseData: IDailyExercise) => {
   if (!appData) {
     throw new AppError(httpStatus.NOT_FOUND, "Appdata  not found.");
   }
-  console.log(appData?.completedWorkoutTime, exerciseData.duration);
+
   appData.points = appData?.points
     ? appData?.points + exerciseData.points
     : 0 + exerciseData.points;

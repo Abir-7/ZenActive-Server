@@ -18,6 +18,7 @@ const comment_model_1 = __importDefault(require("../comments/comment.model"));
 const post_model_1 = __importDefault(require("./post.model"));
 const like_model_1 = __importDefault(require("../likes/like.model"));
 const friendlist_model_1 = __importDefault(require("../../userConnection/friendList/friendlist.model"));
+const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const createPost = (data) => __awaiter(void 0, void 0, void 0, function* () {
     let post;
     if (data.groupId) {
@@ -29,7 +30,13 @@ const createPost = (data) => __awaiter(void 0, void 0, void 0, function* () {
     return post;
 });
 const editPost = (postId, updatedData) => __awaiter(void 0, void 0, void 0, function* () {
-    const post = yield post_model_1.default.findOneAndUpdate({ postId, isDelete: false }, updatedData, { new: true });
+    const isExistpost = yield post_model_1.default.findOne({ _id: postId, isDelete: false });
+    if (isExistpost === null || isExistpost === void 0 ? void 0 : isExistpost.image) {
+        if (updatedData.image) {
+            (0, unlinkFiles_1.default)(isExistpost === null || isExistpost === void 0 ? void 0 : isExistpost.image);
+        }
+    }
+    const post = yield post_model_1.default.findOneAndUpdate({ _id: postId, isDelete: false }, updatedData, { new: true });
     if (!post) {
         throw new Error("Post not found.");
     }

@@ -18,7 +18,7 @@ const createWorkout = async (workoutData: IWorkout) => {
 };
 
 // Get all workouts
-const getAllWorkouts = async (query: Record<string, unknown>) => {
+const getAllWorkouts = async (query: Record<string, unknown> = {}) => {
   query.isDeleted = false;
   const workout = new QueryBuilder(Workout.find().populate("exercises"), query)
     .search(["name"])

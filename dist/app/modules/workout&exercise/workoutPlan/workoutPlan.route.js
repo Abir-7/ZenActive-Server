@@ -15,6 +15,9 @@ const router = (0, express_1.Router)();
 router.post("/create-workout-plan", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(workoutPlan_validation_1.zodWorkoutPlanSchema), workoutPlan_controller_1.WorkoutPlanController.createWorkoutPlan);
 router.patch("/:id", (0, auth_1.default)("ADMIN"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), (0, validator_1.default)(workoutPlan_validation_1.zodUpdateWorkoutPlanSchema.unwrap()), workoutPlan_controller_1.WorkoutPlanController.updateWorkoutPlan);
 router.get("/", (0, auth_1.default)("ADMIN", "USER"), workoutPlan_controller_1.WorkoutPlanController.getAllWorkoutsPlan);
-router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), workoutPlan_controller_1.WorkoutPlanController.getSingleWorkoutPlan);
+router.get("/default/:id", (0, auth_1.default)("ADMIN", "USER"), workoutPlan_controller_1.WorkoutPlanController.getSingleWorkoutPlanDefault // get workout detail..if user it will give workout plan data or user workout plan data
+);
+router.get("/:id", (0, auth_1.default)("ADMIN", "USER"), workoutPlan_controller_1.WorkoutPlanController.getSingleWorkoutPlan // get workout detail..if user it will give workout plan data or user workout plan data
+);
 router.delete("/delete/:id", (0, auth_1.default)("ADMIN"), workoutPlan_controller_1.WorkoutPlanController.deleteWorkoutPlan);
 exports.WorkoutPlanRoute = router;

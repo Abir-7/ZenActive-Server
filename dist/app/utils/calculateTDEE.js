@@ -72,7 +72,7 @@ const calculateTDEE = (userData) => {
             // No specific adjustment
             break;
     }
-    const dailyWorkoutTime = baseWorkoutTime + workoutTimeAdjustment;
+    const dailyWorkoutTime = (baseWorkoutTime + workoutTimeAdjustment) * 60;
     return { tdee: Math.round(adjustedTDEE), dailyWorkoutTime };
 };
 exports.calculateTDEE = calculateTDEE;

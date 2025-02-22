@@ -25,6 +25,16 @@ const addPoints = (point, userId) => __awaiter(void 0, void 0, void 0, function*
     yield appData.save();
     return appData;
 });
+const addWorkoutTime = (time, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const appData = yield appdata_model_1.UserAppData.findOne({ userId });
+    if (!appData) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "User app data not found.");
+    }
+    appData.completedWorkoutTime = ((appData === null || appData === void 0 ? void 0 : appData.completedWorkoutTime) || 0) + time;
+    yield appData.save();
+    return appData;
+});
 exports.AppDataService = {
     addPoints,
+    addWorkoutTime,
 };

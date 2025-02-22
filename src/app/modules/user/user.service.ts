@@ -311,8 +311,6 @@ const getAllUsers = async (query: {
 };
 
 const getSingleUser = async (userId: string) => {
-  console.log(await User.findOne({ _id: userId }));
-
   const result = await User.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(userId) } },
 

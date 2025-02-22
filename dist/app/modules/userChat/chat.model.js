@@ -4,12 +4,14 @@ exports.Chat = void 0;
 const mongoose_1 = require("mongoose");
 const chatSchema = new mongoose_1.Schema({
     senderId: {
-        type: String,
+        type: mongoose_1.Schema.Types.ObjectId,
         required: true,
+        ref: "User",
     },
     receiverId: {
-        type: String,
+        type: mongoose_1.Schema.Types.ObjectId,
         required: true,
+        ref: "User",
     },
     message: {
         type: String,

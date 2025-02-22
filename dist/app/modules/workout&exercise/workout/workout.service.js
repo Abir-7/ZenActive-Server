@@ -29,7 +29,7 @@ const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, functio
     return yield workout.save();
 });
 // Get all workouts
-const getAllWorkouts = (query) => __awaiter(void 0, void 0, void 0, function* () {
+const getAllWorkouts = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}) {
     query.isDeleted = false;
     const workout = new QueryBuilder_1.default(workout_model_1.default.find().populate("exercises"), query)
         .search(["name"])

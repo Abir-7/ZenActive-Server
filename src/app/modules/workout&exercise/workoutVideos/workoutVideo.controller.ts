@@ -43,7 +43,6 @@ const createWorkoutVideo = catchAsync(async (req: Request, res: Response) => {
     await getVideoDurationInSeconds(req.files.media[0].path)
       .then((durations: number) => {
         duration = durations;
-        console.log(`Video Duration: ${durations} seconds`);
       })
       .catch((error: any) => {
         throw new Error("Failed to get durattion");

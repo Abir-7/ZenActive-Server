@@ -2,10 +2,10 @@ import httpStatus from "http-status";
 import catchAsync from "../../../utils/catchAsync";
 import { FriendListService } from "./friendlist.service";
 import sendResponse from "../../../utils/sendResponse";
+import mongoose from "mongoose";
 
 // Add a friend to the user's friend list
 const addFriend = catchAsync(async (req, res) => {
-  console.log(req.body, "----->");
   const { friendId } = req.body;
   const userId = req.user.userId;
   const updatedFriendList = await FriendListService.sendRequest(
@@ -120,6 +120,19 @@ const removeRequest = catchAsync(async (req, res) => {
   });
 });
 
+const getFriendListWithLastMessage = catchAsync(async (req, res) => {
+  const userId = req.user?.userId;
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const updatedFriendList =
+    await FriendListService.getFriendListWithLastMessage(userObjectId);
+  sendResponse(res, {
+    data: updatedFriendList,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Friend with last message fetched successfully.",
+  });
+});
+
 export const FriendListController = {
   addFriend,
   removeFriend,
@@ -129,4 +142,5 @@ export const FriendListController = {
   getPendingList,
   addToBlock,
   removeRequest,
+  getFriendListWithLastMessage,
 };

@@ -76,7 +76,7 @@ const getExerciseById = async (exerciseId: string) => {
   const now = new Date();
   const startOfDay = new Date(now.setHours(0, 0, 0, 0)); // Start of today
   const endOfDay = new Date(now.setHours(23, 59, 59, 999)); // End of today
-  console.log(exerciseId);
+
   const [participantCount, exercise] = await Promise.all([
     DailyExercise.countDocuments({
       exerciseId,

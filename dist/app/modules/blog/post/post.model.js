@@ -7,6 +7,7 @@ const postSchema = new mongoose_1.Schema({
     groupId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Group", default: null },
     isGroup: { type: Boolean, default: false },
     isDelete: { type: Boolean, default: false },
+    image: { type: String, default: null },
 }, {
     timestamps: true,
     // toJSON: { virtuals: true },

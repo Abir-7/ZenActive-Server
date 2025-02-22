@@ -31,7 +31,12 @@ const createDailyExercise = (dailyExerciseData) => __awaiter(void 0, void 0, voi
     if (!appData) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Appdata  not found.");
     }
-    appData.points = (appData === null || appData === void 0 ? void 0 : appData.points) ? appData === null || appData === void 0 ? void 0 : appData.points : 0 + exerciseData.points;
+    appData.points = (appData === null || appData === void 0 ? void 0 : appData.points)
+        ? (appData === null || appData === void 0 ? void 0 : appData.points) + exerciseData.points
+        : 0 + exerciseData.points;
+    appData.completedWorkoutTime = (appData === null || appData === void 0 ? void 0 : appData.completedWorkoutTime)
+        ? (appData === null || appData === void 0 ? void 0 : appData.completedWorkoutTime) + exerciseData.duration
+        : 0 + exerciseData.duration;
     yield appData.save();
     const dailyExercise = yield dailyExercise_model_1.default.create(dailyExerciseData);
     return dailyExercise;

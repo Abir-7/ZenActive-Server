@@ -43,6 +43,11 @@ router.patch(
   auth("USER"),
   FriendListController.addToBlock
 );
+router.get(
+  "/with-last-message",
+  auth("USER"),
+  FriendListController.getFriendListWithLastMessage
+);
 
 router.get("/", auth("USER"), FriendListController.getFriendList);
 router.get("/pending", auth("USER"), FriendListController.getPendingList);

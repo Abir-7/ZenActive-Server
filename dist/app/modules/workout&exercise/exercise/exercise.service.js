@@ -80,8 +80,17 @@ const getAllExercise = (userRole, userId) => __awaiter(void 0, void 0, void 0, f
 });
 // Get an exercise by ID
 const getExerciseById = (exerciseId) => __awaiter(void 0, void 0, void 0, function* () {
+    const now = new Date();
+    const startOfDay = new Date(now.setHours(0, 0, 0, 0)); // Start of today
+    const endOfDay = new Date(now.setHours(23, 59, 59, 999)); // End of today
     const [participantCount, exercise] = yield Promise.all([
-        dailyExercise_model_1.default.countDocuments({ exerciseId }),
+        dailyExercise_model_1.default.countDocuments({
+            exerciseId,
+            completedDate: {
+                $gte: startOfDay,
+                $lt: endOfDay,
+            },
+        }),
         exercise_model_1.default.findById(exerciseId).exec(),
     ]);
     if (!exercise) {

@@ -1,6 +1,8 @@
 import { Server } from "socket.io";
 import { ChatService } from "../modules/userChat/chat.service";
 import { IChat } from "../modules/userChat/chat.interface";
+import { handleSendMessage } from "./userMessage/message";
+import { Types } from "mongoose";
 
 export const users = new Map();
 let io: Server; // Store io instance globally
@@ -13,20 +15,24 @@ const setupSocket = (server: any) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-
     socket.on("register", (userId) => {
       users.set(userId, socket.id);
-      console.log(`User ${userId} connected with socket ID: ${socket.id}`);
-
       io.emit("onlineUsers", Array.from(users.keys()));
     });
+
+    socket.on(
+      "sendMessage",
+      (data: { senderId: string; receiverId: string; message: string }) => {
+        const { senderId, receiverId, message } = data;
+        senderId;
+        handleSendMessage({ senderId, receiverId, message });
+      }
+    );
 
     socket.on("disconnect", () => {
       users.forEach((socketId, userId) => {
         if (socketId === socket.id) {
           users.delete(userId);
-          console.log(`User ${userId} disconnected`);
         }
       });
     });

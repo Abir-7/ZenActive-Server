@@ -17,9 +17,11 @@ const AppError_1 = __importDefault(require("../../../errors/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
 const workoutPlan_model_1 = require("./workoutPlan.model");
 const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
+const userWorkoutPlan_model_1 = __importDefault(require("../../userWorkoutPlan/userWorkoutPlan.model"));
 const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, function* () {
-    if (workoutData.duration * 7 !== workoutData.workouts.length) {
-        throw new AppError_1.default(500, `day:${workoutData.duration * 7} not equal workouts:${workoutData.workouts.length} in numbner`);
+    console.log(workoutData);
+    if (workoutData.duration !== workoutData.workouts.length) {
+        throw new AppError_1.default(500, `day:${workoutData.duration} not equal workouts:${workoutData.workouts.length} in numbner`);
     }
     const workout = yield workoutPlan_model_1.WorkoutPlan.create(workoutData);
     if (!workout) {
@@ -50,15 +52,57 @@ const updateWorkout = (workoutId, workoutData) => __awaiter(void 0, void 0, void
     return updatedWorkout;
 });
 exports.updateWorkout = updateWorkout;
-const getAllWorkouts = () => __awaiter(void 0, void 0, void 0, function* () {
-    const workouts = yield workoutPlan_model_1.WorkoutPlan.find({ isDeleted: false }).populate({
+const getAllWorkouts = (userId, query) => __awaiter(void 0, void 0, void 0, function* () {
+    query.isDeleted = false;
+    const workoutPlans = yield workoutPlan_model_1.WorkoutPlan.find(query).populate({
         path: "workouts",
         populate: "exercises",
     });
-    return workouts;
+    const workoutPlansWithStatus = yield Promise.all(workoutPlans.map((workoutPlan) => __awaiter(void 0, void 0, void 0, function* () {
+        const userWorkoutPlan = yield userWorkoutPlan_model_1.default.findOne({
+            userId,
+            workoutPlanId: workoutPlan._id,
+            isCompleted: "InProgress",
+        });
+        return Object.assign(Object.assign({}, workoutPlan.toObject()), { isEnrolled: userWorkoutPlan ? true : false });
+    })));
+    return workoutPlansWithStatus;
 });
-const getSingleWorkout = (workoutId) => __awaiter(void 0, void 0, void 0, function* () {
-    const workout = yield workoutPlan_model_1.WorkoutPlan.findById(workoutId).populate({
+const getSingleWorkout = (workoutPlanId, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const userWorkoutPlan = yield userWorkoutPlan_model_1.default.findOne({
+        userId,
+        workoutPlanId: workoutPlanId,
+        isCompleted: "InProgress",
+    })
+        .populate({
+        path: "workoutPlanId",
+        select: "title _id duration workouts",
+        populate: {
+            path: "workouts",
+            select: "_id name description exercises",
+            populate: {
+                path: "exercises",
+            },
+        },
+    })
+        .lean();
+    if (userWorkoutPlan === null || userWorkoutPlan === void 0 ? void 0 : userWorkoutPlan._id) {
+        return userWorkoutPlan;
+    }
+    const workout = yield workoutPlan_model_1.WorkoutPlan.findById(workoutPlanId).populate({
+        path: "workouts",
+        populate: "exercises",
+    });
+    if (!workout) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Workout not found.");
+    }
+    if (workout.isDeleted) {
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Workout is deleted.");
+    }
+    return workout;
+});
+const getSingleWorkoutDefault = (workoutPlanId) => __awaiter(void 0, void 0, void 0, function* () {
+    const workout = yield workoutPlan_model_1.WorkoutPlan.findById(workoutPlanId).populate({
         path: "workouts",
         populate: "exercises",
     });
@@ -87,4 +131,5 @@ exports.WorkoutPlanService = {
     getAllWorkouts,
     getSingleWorkout,
     deleteWorkout: exports.deleteWorkout,
+    getSingleWorkoutDefault,
 };

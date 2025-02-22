@@ -20,6 +20,7 @@ const workout_model_1 = __importDefault(require("../workout&exercise/workout/wor
 const appdata_model_1 = require("../userAppData/appdata.model");
 const http_status_1 = __importDefault(require("http-status"));
 const startWorkoutPlan = (userId, workoutPlanId) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(workoutPlanId, "------------------->>");
     const workoutPlan = yield workoutPlan_model_1.WorkoutPlan.findOne({
         _id: workoutPlanId,
     }).populate({
@@ -43,6 +44,7 @@ const startWorkoutPlan = (userId, workoutPlanId) => __awaiter(void 0, void 0, vo
     };
     const isExist = yield userWorkoutPlan_model_1.default.findOne({
         workoutPlanId,
+        userId: userId,
         isCompleted: "InProgress",
     });
     if (isExist) {
@@ -90,6 +92,16 @@ const updatePresentWorkout = (userId, planId) => __awaiter(void 0, void 0, void 
     });
     if (!appData) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Appdata  not found.");
+    }
+    if ((progress === null || progress === void 0 ? void 0 : progress.completedExercises.length) >= 2) {
+        const lastTwo = progress === null || progress === void 0 ? void 0 : progress.completedExercises.slice(-2); // Get the last two elements
+        const [first, second] = lastTwo;
+        const firstDate = first.completedAt.toISOString().split("T")[0]; // Extract date part
+        const secondDate = second.completedAt.toISOString().split("T")[0];
+        if (firstDate === secondDate &&
+            first.workoutIndex !== second.workoutIndex) {
+            throw new Error("You have to do these exercises tomorrow.");
+        }
     }
     if (currentExerciseIndex + 1 < workout.exercises.length) {
         // If there are more exercises in the current workout
@@ -151,7 +163,14 @@ const getActiveWorkoutPlan = (userId, planId) => __awaiter(void 0, void 0, void 
     //   ),
     // };
 });
-const giveFeedback = (data) => __awaiter(void 0, void 0, void 0, function* () { });
+// const giveFeedback = async (data: {
+//   planId: string;
+//   dificulty: string;
+//   isAllExcerciseComplete: boolean;
+//   challengesFace: string;
+// }) => {
+// const result=await User
+// };
 exports.UserWorkoutPlanService = {
     startWorkoutPlan,
     updatePresentWorkout,

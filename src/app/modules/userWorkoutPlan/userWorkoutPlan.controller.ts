@@ -10,7 +10,7 @@ import sendResponse from "../../utils/sendResponse";
 const startWorkoutPlan = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { workoutPlanId } = req.body;
-  console.log(req.body);
+
   const result = await UserWorkoutPlanService.startWorkoutPlan(
     userId,
     workoutPlanId

@@ -17,6 +17,7 @@ const http_status_1 = __importDefault(require("http-status"));
 const catchAsync_1 = __importDefault(require("../../../utils/catchAsync"));
 const friendlist_service_1 = require("./friendlist.service");
 const sendResponse_1 = __importDefault(require("../../../utils/sendResponse"));
+const mongoose_1 = __importDefault(require("mongoose"));
 // Add a friend to the user's friend list
 const addFriend = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { friendId } = req.body;
@@ -48,7 +49,7 @@ const removeFriend = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         data: updatedFriendList,
         success: true,
         statusCode: http_status_1.default.OK,
-        message: "Removed successfully.",
+        message: "User unfriend successfully.",
     });
 }));
 const getFriendList = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -69,17 +70,52 @@ const getPendingList = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         data: friendList,
         success: true,
         statusCode: http_status_1.default.OK,
-        message: "Sugested Friend list fetched successfully.",
+        message: "Pending list fetched successfully.",
     });
 }));
 const getSugestedFriend = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user.userId;
-    const friendList = yield friendlist_service_1.FriendListService.suggestedFriend(userId);
+    const { email } = req.query;
+    const friendList = yield friendlist_service_1.FriendListService.suggestedFriend(userId, email);
     (0, sendResponse_1.default)(res, {
         data: friendList,
         success: true,
         statusCode: http_status_1.default.OK,
-        message: "Sugested Friend list fetched successfully.",
+        message: "Sugested friend list fetched successfully.",
+    });
+}));
+const addToBlock = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { friendId } = req.body;
+    const userId = req.user.userId;
+    const result = yield friendlist_service_1.FriendListService.addToBlock(friendId, userId);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "User has been successfully added to the blocklist.",
+    });
+}));
+const removeRequest = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { friendId } = req.body;
+    const userId = req.user.userId;
+    const updatedFriendList = yield friendlist_service_1.FriendListService.removeRequest(userId, friendId);
+    (0, sendResponse_1.default)(res, {
+        data: updatedFriendList,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "User request removed successfully.",
+    });
+}));
+const getFriendListWithLastMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+    const userObjectId = new mongoose_1.default.Types.ObjectId(userId);
+    const updatedFriendList = yield friendlist_service_1.FriendListService.getFriendListWithLastMessage(userObjectId);
+    (0, sendResponse_1.default)(res, {
+        data: updatedFriendList,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Friend with last message fetched successfully.",
     });
 }));
 exports.FriendListController = {
@@ -89,4 +125,7 @@ exports.FriendListController = {
     getSugestedFriend,
     acceteptRequest,
     getPendingList,
+    addToBlock,
+    removeRequest,
+    getFriendListWithLastMessage,
 };
