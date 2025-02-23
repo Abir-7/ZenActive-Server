@@ -5,49 +5,6 @@ import Workout from "../workout&exercise/workout/workout.model";
 import { WorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.model";
 import { Types } from "mongoose";
 
-// System Prompt
-export const SYSTEM_PROMPT = `
-You are an AI assistant responsible for managing a MongoDB database.
-Your role is to handle CRUD operations for multiple collections in a structured and valid manner.
-
-## Available Operations:
-- getAllWorkouts(): Retrieve all available workouts.
-- createWorkoutPlans({
-    name: string;
-    description?: string;
-    duration: number (convert week to days);
-    workouts: Types.ObjectId[] (**If 84 days, workouts will be 84, workout IDs can be repeated**);
-    points: number;
-    image: string;
-    about: string;
-  }): Create a new workout plan ensuring correct workout count per duration.
-
-## Special Rules for Workout Plans:
-- Each workout plan must have **exactly one workout per day**.
-- The **number of workouts must match the duration**.
-- Fetch available workouts and adjust the count if necessary.
-
-## Response Format:
-{
-  "type": "plan" | "action" | "observation" | "output",
-  "plan"?: "explanation of what you will do",
-  "function"?: "name of the function to call",
-  "input"?: { ... },
-  "observation"?: "result of a tool call",
-  "output"?: "final message to the user"
-}
-
-**Ensure all responses are valid JSON and execute the appropriate tools correctly.**
-**Always return the response from the tool to confirm the action was successful.**
-
-`;
-
-// Messages history
-export const messages: { role: string; content: string }[] = [
-  { role: "system", content: SYSTEM_PROMPT },
-];
-
-// Tools for database operations
 export const tools = {
   getAllWorkouts: async () => {
     return await Workout.find({ isDeleted: false });
@@ -105,6 +62,62 @@ export const tools = {
     }
   },
 };
+
+// System Prompt
+const SYSTEM_PROMPT = `
+You are an AI To-Do List Assistant operating in these states: START, PLAN, ACTION, OBSERVATION, OUTPUT.
+
+Follow these steps:
+- Wait for the user's prompt.
+- PLAN using available tools.
+- SEND the PLAN.
+- Execute ACTION using tools.
+- Wait for OBSERVATION.
+- Respond in OUTPUT.
+
+### **Workout Schema**
+Workout DB Schema:
+{
+  name: string;
+  description?: string;
+  exercises: Types.ObjectId[];
+  points: number;
+  image: string;
+  isDeleted: boolean;
+}
+
+WorkoutPlan DB Schema:
+{
+  name: string;
+  description?: string;
+  duration: number;
+  workouts: [Types.ObjectId];
+  points: number;
+  isDeleted: boolean;
+  image: string;
+  about: string;
+}
+
+### **Available Tools**
+- getAllWorkouts(): Fetch all workouts.
+- createWorkoutPlan(plan: WorkoutPlanSchema): Save the workout plan.
+
+### **Example Interaction**
+START
+{ "type": "user", "user": "Make a workout plan for 1 week" }
+{ "type": "plan", "plan": "Fetch all available workouts using getAllWorkouts()" }
+{ "type": "action", "function": "getAllWorkouts", "input": {} }
+{ "type": "observation", "observation": "[{workout1}, {workout2}, ...]" }
+{ "type": "plan", "plan": "Distribute workouts across 7 days ensuring each day has at least one workout." }
+{ "type": "action", "function": "createWorkoutPlan", "input": "{ generatedWorkoutPlan }" }
+{ "type": "observation", "observation": "{ workoutPlanId }" }
+{ "type": "output", "output": "Your 1-week workout plan has been created successfully!" }
+`;
+
+// Messages history
+export const messages: { role: string; content: string }[] = [
+  { role: "system", content: SYSTEM_PROMPT },
+];
 
 // Function to interact with Gemini API
 async function getGeminiResponse(messages: object[]): Promise<any> {
