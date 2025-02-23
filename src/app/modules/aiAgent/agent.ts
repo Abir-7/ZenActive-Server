@@ -1,221 +1,253 @@
-// import { WorkoutService } from "../workout&exercise/workout/workout.service";
-// import { createWorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.controller";
-// import { WorkoutPlanService } from "../workout&exercise/workoutPlan/workoutPlan.service";
-
-// const tools = {
-//   getAllWorkout: WorkoutService.getAllWorkouts,
-//   createWorkoutPlan: WorkoutPlanService.createWorkout,
-// };
-
-// const SYSTEM_PROMPT = `You are an AI To-Do List Assistant. You can manage workout plans by adding, viewing, updating, and deleting.
-
-// You are an AI Assistant with START, PLAN, ACTION, Observation, and Output State. Wait for the user prompt and first PLAN using available tools. After Planning, Take the action with appropriate tools and wait for Observation based on Action. Once you get the observations, Return the AI response based on START prompt and observations.
-
-// workout schema:
-//   {name: string;
-//   description?: string;
-//   exercises: Types.ObjectId[];
-//   points: number;
-//   image: string;
-// }
-
-// workout plan schema:
-// name: string;
-//    description?: string;
-//    duration: number;
-//    workouts: [Types.ObjectId];
-//    points: number;
-//    isDeleted: boolean;
-//    image: string;
-//    about: string;
-
-// Available Tools:
-// -  getAllWorkout(): Returns all the workout from Database
-// -  createWorkoutPlan(  {duration: number;
-//   workouts: [Types.ObjectId];
-//   points: number;
-//   image: string;
-//   about: string;}): Creates workout plan
-
-// Example:
-// START
-// PLAN: The user wants to create a workout plan for 8 week using available workout from getAllWorkout(). The plan will be described as a full-body workout.
-
-// ACTION: Creating workout plan with available workouts , given (name ,description,duration,points,about,image)
-
-// Observation: The workout plan is created successfully with the given details.
-
-// Output: The workout plan is ready, and it has been created successfully with a 30-minute duration, including exercises A, B, and C, worth 50 points, and described as "Full-body workout."
-
-// START
-// { "type": "user", "user": "Create a full body workout plan for 7week  with available workouts and given (description,name,points,about,image)}
-
-// { "type": "plan", "plan": "I will gather all available workout using getAllWorkout() and then create a workout plan with the provided data " }
-
-// { "type": "action", "function": "createWorkoutPlan", "input": "{name: string;
-//    description?: string;
-//    duration: number;
-//    workouts: [Types.ObjectId];
-//    points: number;
-//    isDeleted: boolean;
-//    image: string;
-//    about: string; }" }
-
-// { "type": "observation", "observation": "Workout plan created successfully." }
-// { "type": "output", "output": "Your 7weeke workout plan has been created successfully, give the response
-
-// `;
-
-// import { OpenAIClient } from 'openai';
-
-// const client = new OpenAIClient({
-//   apiKey: 'your-api-key-here',
-// });
-
-// const messages = [{ role: 'system', content: SYSTEM_PROMPT }];
-
-// while (true) {
-//     const query = readlineSync.question('>> ');
-//     const userMessage = {
-//         type: 'user',
-//         user: query,
-//     };
-//     messages.push({ role: 'user', content: JSON.stringify(userMessage) });
-
-//     while (true) {
-//         const chat = await client.chat.completions.create({
-//             model: 'gpt-4o',
-//             messages: messages,
-//             response_format: { type: 'json_object' },
-//         });
-//         const result = chat.choices[0].message.content;
-//         messages.push({ role: 'assistant', content: result });
-
-//         const action = JSON.parse(result);
-
-//         if (action.type === 'output') {
-//             console.log('●: ${action.output}');
-//             break;
-//         } else if (action.type === 'action') {
-//             const fn = tools[action.function as keyof typeof tools];
-//             if (!fn) throw new Error('Invalid Tool Call');
-//             const observation = fn(action.input);
-//             const observationMessage = {
-//                 type: 'observation',
-//                 observation: observation,
-//             };
-//             messages.push({
-//                 role: 'developer',
-//                 content: JSON.stringify(observationMessage),
-//             })
-//         }
-//     }
-
-//    }
-
-import { WorkoutPlanService } from "../workout&exercise/workoutPlan/workoutPlan.service";
-import { WorkoutService } from "../workout&exercise/workout/workout.service";
-
 const GEMINI_API_KEY = "AIzaSyCP7WPliATqWAZnEBCgGS6Xm7XVWteSShM";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-const tools = {
-  getAllWorkout: WorkoutService.getAllWorkouts,
-  createWorkoutPlan: WorkoutPlanService.createWorkout,
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import Workout from "../workout&exercise/workout/workout.model";
+import { WorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.model";
+import { Types } from "mongoose";
+
+// System Prompt
+export const SYSTEM_PROMPT = `
+You are an AI assistant responsible for managing a MongoDB database.
+Your role is to handle CRUD operations for multiple collections in a structured and valid manner.
+
+## Available Operations:
+- getAllWorkouts(): Retrieve all available workouts.
+- createWorkoutPlans({
+    name: string;
+    description?: string;
+    duration: number (convert week to days);
+    workouts: Types.ObjectId[] (**If 84 days, workouts will be 84, workout IDs can be repeated**);
+    points: number;
+    image: string;
+    about: string;
+  }): Create a new workout plan ensuring correct workout count per duration.
+
+## Special Rules for Workout Plans:
+- Each workout plan must have **exactly one workout per day**.
+- The **number of workouts must match the duration**.
+- Fetch available workouts and adjust the count if necessary.
+
+## Response Format:
+{
+  "type": "plan" | "action" | "observation" | "output",
+  "plan"?: "explanation of what you will do",
+  "function"?: "name of the function to call",
+  "input"?: { ... },
+  "observation"?: "result of a tool call",
+  "output"?: "final message to the user"
+}
+
+**Ensure all responses are valid JSON and execute the appropriate tools correctly.**
+**Always return the response from the tool to confirm the action was successful.**
+
+`;
+
+// Messages history
+export const messages: { role: string; content: string }[] = [
+  { role: "system", content: SYSTEM_PROMPT },
+];
+
+// Tools for database operations
+export const tools = {
+  getAllWorkouts: async () => {
+    return await Workout.find({ isDeleted: false });
+  },
+
+  createWorkoutPlans: async (data: {
+    name: string;
+    description?: string;
+    duration: number;
+    workouts: Types.ObjectId[];
+    points: number;
+    image: string;
+    about: string;
+  }) => {
+    try {
+      if (data.duration < 1) {
+        throw new Error("Duration must be at least 1 day.");
+      }
+
+      const allWorkouts = await Workout.find({ isDeleted: false });
+
+      if (allWorkouts.length === 0) {
+        throw new Error("No available workouts found.");
+      }
+
+      // Ensure workouts match the duration
+      if (data.workouts.length !== data.duration) {
+        console.warn(
+          `⚠️ Workout count (${data.workouts.length}) does not match duration (${data.duration}). Adjusting...`
+        );
+
+        // Assign workouts in a loop to match the duration exactly
+        const selectedWorkouts: Types.ObjectId[] = [];
+        for (let i = 0; i < data.duration; i++) {
+          selectedWorkouts.push(allWorkouts[i % allWorkouts.length]._id);
+        }
+
+        data.workouts = selectedWorkouts;
+      }
+
+      console.log("📌 Creating Workout Plan with:", data);
+
+      // Create the workout plan in MongoDB
+      const newPlan = await WorkoutPlan.create(data);
+
+      if (!newPlan) {
+        throw new Error("Failed to create Workout Plan.");
+      }
+
+      console.log("✅ Workout Plan Saved:", newPlan);
+      return newPlan;
+    } catch (error) {
+      console.error("❌ Error in createWorkoutPlans:", error);
+      throw new Error("Error creating workout plan.");
+    }
+  },
 };
 
-const SYSTEM_PROMPT = `You are an AI To-Do List Assistant. You can manage workout plans by adding, viewing, updating, and deleting.
+// Function to interact with Gemini API
+async function getGeminiResponse(messages: object[]): Promise<any> {
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const prompt = JSON.stringify(messages);
+  const result = await model.generateContent(prompt);
 
-You are an AI Assistant with START, PLAN, ACTION, Observation, and Output State. Wait for the user prompt and first PLAN using available tools. After Planning, Take the action with appropriate tools and wait for Observation based on Action. Once you get the observations, Return the AI response based on START prompt and observations.
-
-workout schema:
-  {name: string;
-  description?: string;
-  exercises: Types.ObjectId[]; 
-  points: number;
-  image: string;
+  return result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
 }
 
-workout plan schema:
-name: string;
-   description?: string;
-   duration: number;
-   workouts: [Types.ObjectId];
-   points: number;
-   isDeleted: boolean;
-   image: string;
-   about: string;
+// Extract JSON safely from AI response
+function extractJSON(text: string): any {
+  try {
+    const start = text.indexOf("{");
+    if (start === -1) return null;
 
-Available Tools:
-- getAllWorkout(): Returns all the workout from Database
-- createWorkoutPlan( {duration: number; workouts: [Types.ObjectId]; points: number; image: string; about: string;}): Creates workout plan`;
+    let braceCount = 0;
+    let inString = false;
+    let escaped = false;
 
-const messages = [{ role: "system", content: SYSTEM_PROMPT }];
+    for (let i = start; i < text.length; i++) {
+      const char = text[i];
+      if (char === '"' && !escaped) inString = !inString;
+      if (!inString) {
+        if (char === "{") braceCount++;
+        else if (char === "}") braceCount--;
+        if (braceCount === 0) {
+          const jsonString = text.substring(start, i + 1);
 
-async function getGeminiResponse(messages: object[]) {
-  const response = await fetch(GEMINI_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
-            {
-              text: `
- how are u?
-          `,
-            },
-          ],
-        },
-      ],
-    }),
+          // ✅ Clean JSON from AI response before parsing
+          const cleanedJSON = jsonString
+            .replace(/\n/g, "") // Remove new lines
+            .replace(/\t/g, "") // Remove tabs
+            .replace(/\r/g, "") // Remove carriage returns
+            .replace(/,\s*}/g, "}"); // Remove trailing commas before closing brace
+
+          return JSON.parse(cleanedJSON);
+        }
+      }
+      escaped = char === "\\" && !escaped;
+    }
+  } catch (error: any) {
+    console.error("❌ JSON Parsing Error:", error.message);
+    console.error("🔍 Raw AI Response:", text);
+    return null;
+  }
+  return null;
+}
+
+// Process user query and ensure multiple tools can be used if needed
+export async function processQuery(userInput: string): Promise<void> {
+  messages.push({
+    role: "user",
+    content: JSON.stringify({ type: "user", user: userInput }),
   });
 
-  const data = await response.json();
-  console.log(data, "---------kk----");
-  return data;
-}
+  let finished = false;
 
-import readlineSync from "readline-sync";
-async function processUserQuery() {
-  while (true) {
-    const query = readlineSync.question(">> ");
-    const userMessage = {
-      type: "user",
-      user: query,
-    };
-    messages.push({ role: "user", content: JSON.stringify(userMessage) });
+  while (!finished) {
+    try {
+      const result = await getGeminiResponse(messages);
 
-    while (true) {
-      try {
-        const result = await getGeminiResponse(messages);
-        console.log(result, "gg---->");
-        // const action = JSON.parse(result.choices[0].message.content);
-
-        // if (action.type === "output") {
-        //   console.log(`●: ${action.output}`);
-        // } else if (action.type === "action") {
-        //   const fn = tools[action.function as keyof typeof tools];
-        //   if (!fn) throw new Error("Invalid Tool Call");
-        //   console.log(fn, "----fn");
-        //   const observation = await fn(action.input);
-        //   const observationMessage = {
-        //     type: "observation",
-        //     observation: observation,
-        //   };
-
-        //   messages.push({
-        //     role: "developer",
-        //     content: JSON.stringify(observationMessage),
-        //   });
-        // }
-      } catch (error) {
-        console.log("object -->", error);
+      if (!result) {
+        console.error("⚠️ No response received from Gemini AI");
+        break;
       }
+
+      console.log("🔍 Raw AI Response:", result);
+
+      // Try extracting JSON
+      let parsedResponse = extractJSON(result);
+      if (!parsedResponse) {
+        console.error("❌ Failed to extract JSON from AI response.");
+        break;
+      }
+
+      if (!Array.isArray(parsedResponse)) {
+        parsedResponse = [parsedResponse]; // Ensure it's always an array
+      }
+
+      for (const action of parsedResponse) {
+        switch (action.type) {
+          case "plan":
+            console.log(`Plan: ${action.plan}`);
+            messages.push({
+              role: "assistant",
+              content: JSON.stringify(action),
+            });
+            break;
+          case "action":
+            if (action.function) {
+              const fn = tools[action.function as keyof typeof tools];
+
+              if (!fn) {
+                console.error("Invalid function call:", action.function);
+                messages.push({
+                  role: "assistant",
+                  content: JSON.stringify({
+                    type: "error",
+                    message: `Invalid function: ${action.function}`,
+                  }),
+                });
+                continue;
+              }
+
+              try {
+                console.log(`Executing function: ${action.function}`);
+                const observation = await fn(action.input);
+                console.log("✅ Tool Response:", observation);
+
+                messages.push({
+                  role: "assistant",
+                  content: JSON.stringify({ type: "observation", observation }),
+                });
+              } catch (error: any) {
+                console.error("Error executing function:", error);
+                messages.push({
+                  role: "assistant",
+                  content: JSON.stringify({
+                    type: "error",
+                    message: error.message,
+                  }),
+                });
+              }
+            }
+            break;
+          case "output":
+            console.log(`Final Output: ${action.output}`);
+            messages.push({
+              role: "assistant",
+              content: JSON.stringify(action),
+            });
+            finished = true;
+            break;
+          default:
+            console.error("Unknown action type:", action.type);
+            break;
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error processing query:", error);
+      finished = true;
     }
   }
 }
-
-processUserQuery();

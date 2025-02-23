@@ -18,7 +18,7 @@ const http_status_1 = __importDefault(require("http-status"));
 const workoutPlan_model_1 = require("./workoutPlan.model");
 const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const userWorkoutPlan_model_1 = __importDefault(require("../../userWorkoutPlan/userWorkoutPlan.model"));
-const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, function* () {
+const createWorkoutPlan = (workoutData) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(workoutData);
     if (workoutData.duration !== workoutData.workouts.length) {
         throw new AppError_1.default(500, `day:${workoutData.duration} not equal workouts:${workoutData.workouts.length} in numbner`);
@@ -127,7 +127,7 @@ const deleteWorkout = (workoutId) => __awaiter(void 0, void 0, void 0, function*
 exports.deleteWorkout = deleteWorkout;
 exports.WorkoutPlanService = {
     updateWorkout: exports.updateWorkout,
-    createWorkout,
+    createWorkoutPlan,
     getAllWorkouts,
     getSingleWorkout,
     deleteWorkout: exports.deleteWorkout,

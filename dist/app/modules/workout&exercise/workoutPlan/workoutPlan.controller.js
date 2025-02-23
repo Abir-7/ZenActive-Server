@@ -23,7 +23,7 @@ exports.createWorkoutPlan = (0, catchAsync_1.default)((req, res) => __awaiter(vo
         image = `/images/${req.files.image[0].filename}`;
     }
     const value = Object.assign(Object.assign({}, req.body), { image });
-    const result = yield workoutPlan_service_1.WorkoutPlanService.createWorkout(value);
+    const result = yield workoutPlan_service_1.WorkoutPlanService.createWorkoutPlan(value);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

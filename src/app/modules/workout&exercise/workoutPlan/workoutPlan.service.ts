@@ -6,7 +6,7 @@ import { WorkoutPlan } from "./workoutPlan.model";
 import unlinkFile from "../../../utils/unlinkFiles";
 import UserWorkoutPlan from "../../userWorkoutPlan/userWorkoutPlan.model";
 
-const createWorkout = async (workoutData: IWorkoutPlan) => {
+const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
   console.log(workoutData);
   if (workoutData.duration !== workoutData.workouts.length) {
     throw new AppError(
@@ -158,7 +158,7 @@ export const deleteWorkout = async (workoutId: string) => {
 
 export const WorkoutPlanService = {
   updateWorkout,
-  createWorkout,
+  createWorkoutPlan,
   getAllWorkouts,
   getSingleWorkout,
   deleteWorkout,

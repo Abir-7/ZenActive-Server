@@ -9,14 +9,18 @@ export const handleSendMessage = (data: {
   receiverId: string;
   message: string;
 }) => {
-  const receiverSocketId = users.get(data.receiverId);
-  if (receiverSocketId) {
-    io.emit(`receiver-${data.receiverId}`, {
-      senderId: data.senderId,
-      receiverId: data.receiverId,
-      content: data.message,
-    });
-  }
+  //sender
+  io.emit(`receiver-${data.senderId}`, {
+    senderId: data.senderId,
+    receiverId: data.receiverId,
+    content: data.message,
+  });
+  //receiver
+  io.emit(`receiver-${data.receiverId}`, {
+    senderId: data.senderId,
+    receiverId: data.receiverId,
+    content: data.message,
+  });
 
   if (data.message && data.receiverId && data.senderId) {
     ChatService.createChat({

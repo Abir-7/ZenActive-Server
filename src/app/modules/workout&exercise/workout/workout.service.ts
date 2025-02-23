@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import IWorkout from "./workout.interface";
 import Workout from "./workout.model";
 import unlinkFile from "../../../utils/unlinkFiles";
-import DailyExercise from "../../usersDailyExercise/dailyExercise.model";
+
 import AppError from "../../../errors/AppError";
 import status from "http-status";
 import Exercise from "../exercise/exercise.model";
