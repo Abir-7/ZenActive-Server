@@ -5,17 +5,33 @@ import httpStatus from "http-status";
 import { WorkoutPlan } from "./workoutPlan.model";
 import unlinkFile from "../../../utils/unlinkFiles";
 import UserWorkoutPlan from "../../userWorkoutPlan/userWorkoutPlan.model";
+import Exercise from "../exercise/exercise.model";
+import { getGeminiResponse } from "../../../utils/getGeminiResponse";
+import Workout from "../workout/workout.model";
+import { getJson } from "../../../utils/getJson";
 
 const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
-  console.log(workoutData);
-  if (workoutData.duration !== workoutData.workouts.length) {
+  const allWorkout = JSON.stringify(await Workout.find({ isDeleted: false }));
+
+  const workouts = await getGeminiResponse(
+    `${allWorkout} this is all workouts. i want to make array with these workout id based on workout plan name. name is ${workoutData.name}. 
+    example-- workouts:[id1,id2.....] 
+    you can repete id if need. ** make sure array lenth must have to equal ${workoutData.duration} , give valid json**
+    `
+  );
+
+  const json = await getJson(workouts);
+
+  const data = { ...json, ...workoutData };
+  console.log(data);
+  if (data.duration !== data?.workouts?.length) {
     throw new AppError(
       500,
-      `day:${workoutData.duration} not equal workouts:${workoutData.workouts.length} in numbner`
+      `day:${workoutData?.duration} not equal workouts:${workoutData?.workouts?.length} in numbner`
     );
   }
 
-  const workout = await WorkoutPlan.create(workoutData);
+  const workout = await WorkoutPlan.create(data);
 
   if (!workout) {
     unlinkFile(workoutData.image);

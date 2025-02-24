@@ -6,9 +6,7 @@ export const zodWorkoutPlanSchema = z.object({
     duration: z
       .number()
       .positive({ message: "Duration must be a positive number" }),
-    workouts: z.array(
-      z.string().min(1, { message: "Exercise name is required" })
-    ),
+
     points: z
       .number()
       .positive({ message: "Reward points must be a positive number" }),

@@ -1,4 +1,4 @@
-export function extractJSON(text: string): any {
+export async function getJson(text: string): Promise<any> {
   try {
     const start = text.indexOf("{");
     if (start === -1) return null;
@@ -23,7 +23,7 @@ export function extractJSON(text: string): any {
             .replace(/\r/g, "") // Remove carriage returns
             .replace(/,\s*}/g, "}"); // Remove trailing commas before closing brace
 
-          return JSON.parse(cleanedJSON);
+          return await Promise.resolve(JSON.parse(cleanedJSON));
         }
       }
       escaped = char === "\\" && !escaped;
