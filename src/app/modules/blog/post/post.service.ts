@@ -5,11 +5,17 @@ import Post from "./post.model";
 import Like from "../likes/like.model";
 import Friend from "../../userConnection/friendList/friendlist.model";
 import unlinkFile from "../../../utils/unlinkFiles";
+import { UserGroup } from "../../socialGroup/UsersGroup/userGroup.model";
 
 const createPost = async (data: Partial<IPost>) => {
   let post: IPost;
   if (data.groupId) {
     post = await Post.create({ ...data, isGroup: true });
+
+    await UserGroup.findOneAndUpdate(
+      { groupId: data.groupId, userId: data.userId },
+      { $inc: { previousTotalPost: 1 } }
+    );
   } else {
     post = await Post.create({ ...data, isGroup: false });
   }

@@ -19,47 +19,15 @@ export const tools = {
     image: string;
     about: string;
   }) => {
-    try {
-      if (data.duration < 1) {
-        throw new Error("Duration must be at least 1 day.");
-      }
+    // Create the workout plan in MongoDB
+    const newPlan = await WorkoutPlan.create(data);
 
-      const allWorkouts = await Workout.find({ isDeleted: false });
-
-      if (allWorkouts.length === 0) {
-        throw new Error("No available workouts found.");
-      }
-
-      // Ensure workouts match the duration
-      if (data.workouts.length !== data.duration) {
-        console.warn(
-          `⚠️ Workout count (${data.workouts.length}) does not match duration (${data.duration}). Adjusting...`
-        );
-
-        // Assign workouts in a loop to match the duration exactly
-        const selectedWorkouts: Types.ObjectId[] = [];
-        for (let i = 0; i < data.duration; i++) {
-          selectedWorkouts.push(allWorkouts[i % allWorkouts.length]._id);
-        }
-
-        data.workouts = selectedWorkouts;
-      }
-
-      console.log("📌 Creating Workout Plan with:", data);
-
-      // Create the workout plan in MongoDB
-      const newPlan = await WorkoutPlan.create(data);
-
-      if (!newPlan) {
-        throw new Error("Failed to create Workout Plan.");
-      }
-
-      console.log("✅ Workout Plan Saved:", newPlan);
-      return newPlan;
-    } catch (error) {
-      console.error("❌ Error in createWorkoutPlans:", error);
-      throw new Error("Error creating workout plan.");
+    if (!newPlan) {
+      throw new Error("Failed to create Workout Plan.");
     }
+
+    console.log("✅ Workout Plan Saved:", newPlan);
+    return newPlan;
   },
 };
 
@@ -100,18 +68,21 @@ WorkoutPlan DB Schema:
 
 ### **Available Tools**
 - getAllWorkouts(): Fetch all workouts.
-- createWorkoutPlan(plan: WorkoutPlanSchema): Save the workout plan.
+- createWorkoutPlans(plan: WorkoutPlanSchema): Save the workout plan.
 
+ ** create data only one time**
+ 
 ### **Example Interaction**
 START
 { "type": "user", "user": "Make a workout plan for 1 week" }
 { "type": "plan", "plan": "Fetch all available workouts using getAllWorkouts()" }
 { "type": "action", "function": "getAllWorkouts", "input": {} }
+ { "type": "plan", "plan": "Distribute workouts across 7 days ensuring each day has exactly one workout.  example: '8week = 56 day then workouts arry will with 56 workout id'" }
 { "type": "observation", "observation": "[{workout1}, {workout2}, ...]" }
-{ "type": "plan", "plan": "Distribute workouts across 7 days ensuring each day has at least one workout." }
-{ "type": "action", "function": "createWorkoutPlan", "input": "{ generatedWorkoutPlan }" }
-{ "type": "observation", "observation": "{ workoutPlanId }" }
+{ "type": "action", "function": "createWorkoutPlans", "input": "{ generatedWorkoutPlan }" }
+{ "type": "observation", "observation": "{ _id }" }
 { "type": "output", "output": "Your 1-week workout plan has been created successfully!" }
+
 `;
 
 // Messages history
@@ -168,7 +139,6 @@ function extractJSON(text: string): any {
   return null;
 }
 
-// Process user query and ensure multiple tools can be used if needed
 export async function processQuery(userInput: string): Promise<void> {
   messages.push({
     role: "user",
@@ -188,7 +158,7 @@ export async function processQuery(userInput: string): Promise<void> {
 
       console.log("🔍 Raw AI Response:", result);
 
-      // Try extracting JSON
+      // Extract JSON from AI response
       let parsedResponse = extractJSON(result);
       if (!parsedResponse) {
         console.error("❌ Failed to extract JSON from AI response.");
@@ -196,45 +166,40 @@ export async function processQuery(userInput: string): Promise<void> {
       }
 
       if (!Array.isArray(parsedResponse)) {
-        parsedResponse = [parsedResponse]; // Ensure it's always an array
+        parsedResponse = [parsedResponse]; // Ensure it is always an array
       }
 
       for (const action of parsedResponse) {
         switch (action.type) {
           case "plan":
-            console.log(`Plan: ${action.plan}`);
+            console.log(`📝 Plan: ${action.plan}`);
             messages.push({
               role: "assistant",
               content: JSON.stringify(action),
             });
             break;
+
           case "action":
-            if (action.function) {
-              const fn = tools[action.function as keyof typeof tools];
-
-              if (!fn) {
-                console.error("Invalid function call:", action.function);
-                messages.push({
-                  role: "assistant",
-                  content: JSON.stringify({
-                    type: "error",
-                    message: `Invalid function: ${action.function}`,
-                  }),
-                });
-                continue;
-              }
-
+            if (
+              action.function &&
+              tools[action.function as keyof typeof tools]
+            ) {
               try {
-                console.log(`Executing function: ${action.function}`);
-                const observation = await fn(action.input);
+                console.log(`🚀 Executing function: ${action.function}`);
+                const observation = await tools[
+                  action.function as keyof typeof tools
+                ](action.input || {});
                 console.log("✅ Tool Response:", observation);
 
                 messages.push({
                   role: "assistant",
-                  content: JSON.stringify({ type: "observation", observation }),
+                  content: JSON.stringify({
+                    type: "observation",
+                    observation,
+                  }),
                 });
               } catch (error: any) {
-                console.error("Error executing function:", error);
+                console.error("❌ Error executing function:", error);
                 messages.push({
                   role: "assistant",
                   content: JSON.stringify({
@@ -243,18 +208,37 @@ export async function processQuery(userInput: string): Promise<void> {
                   }),
                 });
               }
+            } else {
+              console.error("❌ Invalid function call:", action.function);
+              messages.push({
+                role: "assistant",
+                content: JSON.stringify({
+                  type: "error",
+                  message: `Invalid function: ${action.function}`,
+                }),
+              });
             }
             break;
+
+          case "observation":
+            console.log("📡 Observation:", action.observation);
+            messages.push({
+              role: "assistant",
+              content: JSON.stringify(action),
+            });
+            break;
+
           case "output":
-            console.log(`Final Output: ${action.output}`);
+            console.log(`🎯 Final Output: ${action.output}`);
             messages.push({
               role: "assistant",
               content: JSON.stringify(action),
             });
             finished = true;
             break;
+
           default:
-            console.error("Unknown action type:", action.type);
+            console.error("❌ Unknown action type:", action.type);
             break;
         }
       }

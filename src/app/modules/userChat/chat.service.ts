@@ -29,18 +29,28 @@ const createChat = async (chatData: IChat) => {
     throw new AppError(404, "You are not friends.");
   }
 
-  const chat = new Chat(chatData);
+  const chat = new Chat({ ...chatData, seenBy: [chatData.senderId] });
   return await chat.save();
 };
 
-const getChatsBetweenUsers = async (userId: string, friendId: string) => {
-  const [userChat, userFriendShipStatus] = await Promise.all([
+const getChatsBetweenUsers = async (
+  userId: string,
+  friendId: string,
+  page: number = 1,
+  limit: number = 20
+) => {
+  const skip = (page - 1) * limit;
+
+  const [userChat, total] = await Promise.all([
     Chat.find({
       $or: [
         { senderId: userId, receiverId: friendId },
         { senderId: friendId, receiverId: userId },
       ],
     })
+      .sort({ createdAt: -1 }) // Sort by latest messages first
+      .skip(skip)
+      .limit(limit)
       .populate({
         path: "senderId",
         select: "name email _id image",
@@ -50,30 +60,57 @@ const getChatsBetweenUsers = async (userId: string, friendId: string) => {
         select: "name email _id image",
       })
       .lean(),
-    UserConnection.findOne({
+
+    Chat.countDocuments({
       $or: [
         { senderId: userId, receiverId: friendId },
         { senderId: friendId, receiverId: userId },
       ],
-    })
-      .select("senderId receiverId status isAccepted statusChangeBy")
-      .populate({
-        path: "statusChangeBy",
-        select: "name email _id image",
-      })
-      .populate({
-        path: "senderId",
-        select: "name email _id image",
-      })
-      .populate({
-        path: "receiverId",
-        select: "name email _id image",
-      }),
+    }),
   ]);
 
-  return { userChat, userFriendShipStatus };
-};
+  const userFriendShipStatus = await UserConnection.findOne({
+    $or: [
+      { senderId: userId, receiverId: friendId },
+      { senderId: friendId, receiverId: userId },
+    ],
+  })
+    .select("senderId receiverId status isAccepted statusChangeBy")
+    .populate({
+      path: "statusChangeBy",
+      select: "name email _id image",
+    })
+    .populate({
+      path: "senderId",
+      select: "name email _id image",
+    })
+    .populate({
+      path: "receiverId",
+      select: "name email _id image",
+    });
 
+  // Update chats where userId is not in seenBy
+  await Chat.updateMany(
+    {
+      $or: [
+        { senderId: userId, receiverId: friendId },
+        { senderId: friendId, receiverId: userId },
+      ],
+      seenBy: { $ne: userId },
+    },
+    { $push: { seenBy: userId } }
+  );
+
+  // Create meta data
+  const meta = {
+    limit,
+    page,
+    total,
+    totalPage: Math.ceil(total / limit),
+  };
+
+  return { userChat, userFriendShipStatus, meta };
+};
 export const ChatService = {
   createChat,
   getChatsBetweenUsers,

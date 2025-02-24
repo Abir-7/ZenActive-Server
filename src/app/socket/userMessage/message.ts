@@ -27,6 +27,7 @@ export const handleSendMessage = (data: {
       senderId: new Types.ObjectId(data.senderId),
       receiverId: new Types.ObjectId(data.receiverId),
       message: data.message,
+      seenBy: [new Types.ObjectId(data.senderId)],
     });
   }
 };

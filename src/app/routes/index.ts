@@ -12,7 +12,7 @@ import { UserMealPlanRoute } from "../modules/userMealPlan/userMealPlan.route";
 import { PostRoute } from "../modules/blog/post/post.route";
 import { CommentRoute } from "../modules/blog/comments/comment.route";
 import { LikeRoute } from "../modules/blog/likes/like.router";
-import { GroupRoute } from "../modules/socialGroup/group.route";
+
 import { AppDataRoute } from "../modules/userAppData/appdata.route";
 
 import { ChatRouter } from "../modules/userChat/chat.route";
@@ -28,6 +28,8 @@ import { SubscriptionRoute } from "../modules/payment/subscription/subscription.
 import { PrivacyTermsAboutUsRoute } from "../modules/privacy & terms & about us/privacy_terms_aboutus.route";
 import { DailyExerciseRoutes } from "../modules/usersDailyExercise/dailyExercise.route";
 import { WorkoutVideoRoutes } from "../modules/workout&exercise/workoutVideos/workoutVideo.route";
+import { GroupRoute } from "../modules/socialGroup/Group/group.route";
+import { UserGroupRoute } from "../modules/socialGroup/UsersGroup/userGroup.route";
 
 const router = Router();
 
@@ -45,6 +47,7 @@ const apiRoutes = [
   { path: "/meal-plan", route: UserMealPlanRoute },
   { path: "/app-data", route: AppDataRoute },
   { path: "/group", route: GroupRoute },
+  { path: "/user-group", route: UserGroupRoute },
   { path: "/post", route: PostRoute },
   { path: "/comment", route: CommentRoute },
   { path: "/like", route: LikeRoute },

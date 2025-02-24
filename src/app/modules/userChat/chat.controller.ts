@@ -4,7 +4,7 @@ import httpStatus from "http-status";
 import { ChatService } from "./chat.service";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
-import { handleSendMessage } from "../../socket/userMessage/message";
+
 import { Types } from "mongoose";
 
 // Create a new chat message
@@ -19,6 +19,7 @@ const createChat = catchAsync(async (req: Request, res: Response) => {
     senderId,
     receiverId,
     message,
+    seenBy: [],
   });
   sendResponse(res, {
     data: result,
@@ -32,9 +33,19 @@ const createChat = catchAsync(async (req: Request, res: Response) => {
 const getChatsBetweenUsers = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { friendId } = req.params;
-  const result = await ChatService.getChatsBetweenUsers(userId, friendId);
+  const { page, limit } = req.query;
+  const result = await ChatService.getChatsBetweenUsers(
+    userId,
+    friendId,
+    Number(page),
+    Number(limit)
+  );
   sendResponse(res, {
-    data: result,
+    data: {
+      userChat: result.userChat,
+      userFriendShipStatus: result.userFriendShipStatus,
+    },
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Chat messages fetched successfully.",

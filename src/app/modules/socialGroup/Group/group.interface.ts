@@ -5,7 +5,7 @@ export interface IGroup {
   type: GroupTypeArray;
   goal: string;
   admin: Types.ObjectId;
-  users: Types.ObjectId[];
+
   isDeleted: boolean;
   image: string;
 }

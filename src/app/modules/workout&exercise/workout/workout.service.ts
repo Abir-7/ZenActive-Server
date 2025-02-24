@@ -7,6 +7,7 @@ import AppError from "../../../errors/AppError";
 import status from "http-status";
 import Exercise from "../exercise/exercise.model";
 import QueryBuilder from "../../../builder/QueryBuilder";
+import { processQuery } from "../../aiAgent/agent";
 
 // Create a new workout
 const createWorkout = async (workoutData: IWorkout) => {
@@ -19,6 +20,8 @@ const createWorkout = async (workoutData: IWorkout) => {
 
 // Get all workouts
 const getAllWorkouts = async (query: Record<string, unknown> = {}) => {
+  // await processQuery("make a workout plan for 18 week name:Full Body");
+
   query.isDeleted = false;
   const workout = new QueryBuilder(Workout.find().populate("exercises"), query)
     .search(["name"])

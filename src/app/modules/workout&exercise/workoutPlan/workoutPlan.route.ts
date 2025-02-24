@@ -1,7 +1,7 @@
 import { Router } from "express";
 import auth from "../../../middleware/auth/auth";
 import fileUploadHandler from "../../../middleware/fileUploadHandler";
-import { AuthController } from "../../auth/auth.controller";
+
 import { WorkoutPlanController } from "./workoutPlan.controller";
 import { parseField } from "../../../middleware/parseDataMiddleware";
 import validateRequest from "../../../middleware/validator";
