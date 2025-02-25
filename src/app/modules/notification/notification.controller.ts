@@ -15,7 +15,7 @@ import catchAsync from "../../utils/catchAsync";
 // });
 
 const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId; // Assuming user ID is available in req.user
+  const userId = req.user?.userId;
   const result = await NotificationService.getAllNotifications(userId);
   sendResponse(res, {
     data: result,
