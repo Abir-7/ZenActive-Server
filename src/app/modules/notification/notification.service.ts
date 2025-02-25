@@ -9,6 +9,15 @@ import { Notification } from "./notification.model";
 const getAllNotifications = async (userId: string) => {
   console.log(userId);
   const notifications = await Notification.find({ receiverId: userId })
+    .populate({
+      path: "senderId",
+      select: "name _id email image",
+    })
+    .populate({
+      path: "receiverId",
+      select: "name _id email image",
+    })
+    .populate("groupId")
     .sort({ createdAt: -1 })
     .lean();
   return notifications;
