@@ -3,9 +3,11 @@ import { Group } from "../Group/group.model";
 import { UserGroup } from "./userGroup.model";
 import AppError from "../../../errors/AppError";
 import Post from "../../blog/post/post.model";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
+import UserConnection from "../../userConnection/friendList/friendlist.model";
+import { User } from "../../user/user.model";
 
-const getUserAllGroups = async (userId: string) => {
+const getUserAllGroups = async (userId: string, searchQuery?: string) => {
   const userGroups = await UserGroup.find({ userId })
     .populate("groupId")
     .lean();
@@ -42,6 +44,13 @@ const getUserAllGroups = async (userId: string) => {
       };
     })
   );
+
+  if (searchQuery) {
+    const searchRegex = new RegExp(searchQuery, "i"); // Case-insensitive search
+    return updatedGroups.filter((group) => searchRegex.test(group.name));
+  }
+
+  return updatedGroups;
 
   return updatedGroups;
 };
@@ -172,10 +181,39 @@ const leaveFromGroup = async (groupId: string, userId: string) => {
 
   return { message: "Successfully left the group." };
 };
+const inviteUserList = async (groupId: string, userId: string) => {
+  const userObjectId = new Types.ObjectId(userId);
+  const groupObjectId = new Types.ObjectId(groupId);
+
+  // Get user friends
+  const friends = await UserConnection.find({
+    $or: [{ senderId: userObjectId }, { receiverId: userObjectId }],
+    isAccepted: true,
+  });
+
+  const friendIds = friends.map((friend) =>
+    friend.senderId.equals(userObjectId) ? friend.receiverId : friend.senderId
+  );
+
+  // Get users who are already in the group
+  const groupMembers = await UserGroup.find({ groupId: groupObjectId }).select(
+    "userId"
+  );
+  console.log(groupId);
+  const groupMemberIds = groupMembers.map((member) => member.userId.toString());
+  console.log(groupMemberIds);
+  // Filter friends who are NOT in the group
+  const availableUsers = await User.find({
+    _id: { $in: friendIds, $nin: groupMemberIds },
+  }).select("email name image");
+
+  return availableUsers;
+};
 
 export const UserGroupService = {
   getUserAllGroups,
   addUserToGroup,
   removeUserFromGroup,
   leaveFromGroup,
+  inviteUserList,
 };

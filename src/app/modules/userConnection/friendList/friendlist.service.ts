@@ -52,7 +52,7 @@ const acceteptRequest = async (
   return acceptUserRequest;
 };
 
-const getFriendList = async (userId: string) => {
+const getFriendList = async (userId: string, searchText?: string) => {
   const friendList = await UserConnection.find(
     {
       $or: [{ senderId: userId }, { receiverId: userId }],
@@ -73,11 +73,23 @@ const getFriendList = async (userId: string) => {
     })
     .lean();
 
-  return friendList.map((friend) =>
+  // Extract only the friend data
+  let friends = friendList.map((friend) =>
     friend.senderId._id.toString() === userId
       ? friend.receiverId
       : friend.senderId
-  );
+  ) as any[];
+
+  // 🔍 Search by full name (case-insensitive)
+  if (searchText) {
+    const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
+    friends = friends.filter((friend) => {
+      const fullName = `${friend.name.firstName} ${friend.name.lastName}`;
+      return searchRegex.test(fullName);
+    });
+  }
+
+  return friends;
 };
 
 const getPendingList = async (userId: string, type: string) => {

@@ -17,7 +17,7 @@ const createGroup = catchAsync(async (req, res) => {
 });
 
 const getAllGroup = catchAsync(async (req, res) => {
-  const result = await GroupService.getAllGroup();
+  const result = await GroupService.getAllGroup(req.query.searchTerm as string);
   sendResponse(res, {
     data: result,
     success: true,

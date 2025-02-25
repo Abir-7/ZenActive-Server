@@ -10,6 +10,11 @@ router.get(
   auth("USER"),
   UserGroupController.getUserAllGroups
 );
+router.get(
+  "/invite-user-list/:groupId",
+  auth("USER"),
+  UserGroupController.inviteUserList
+);
 router.patch(
   "/join/:groupId",
   auth("USER"),

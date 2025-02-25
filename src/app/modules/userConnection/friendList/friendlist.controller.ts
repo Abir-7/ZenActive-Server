@@ -52,7 +52,10 @@ const removeFriend = catchAsync(async (req, res) => {
 
 const getFriendList = catchAsync(async (req, res) => {
   const userId = req.user.userId;
-  const friendList = await FriendListService.getFriendList(userId);
+  const friendList = await FriendListService.getFriendList(
+    userId,
+    req.query.searchTerm as string
+  );
   sendResponse(res, {
     data: friendList,
     success: true,
@@ -122,7 +125,7 @@ const removeRequest = catchAsync(async (req, res) => {
 
 const getFriendListWithLastMessage = catchAsync(async (req, res) => {
   const userId = req.user?.userId;
-  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const userObjectId = userId;
   const updatedFriendList =
     await FriendListService.getFriendListWithLastMessage(userObjectId);
   sendResponse(res, {

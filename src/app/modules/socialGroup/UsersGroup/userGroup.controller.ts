@@ -6,7 +6,10 @@ import { UserGroupService } from "./userGroup.service";
 const getUserAllGroups = catchAsync(async (req, res) => {
   console.log("object");
   const { userId } = req.user;
-  const result = await UserGroupService.getUserAllGroups(userId);
+  const result = await UserGroupService.getUserAllGroups(
+    userId,
+    req.query.searchTerm as string
+  );
   sendResponse(res, {
     data: result,
     success: true,
@@ -54,10 +57,23 @@ const leaveFromGroup = catchAsync(async (req, res) => {
     message: "User leaved from group successfully.",
   });
 });
+const inviteUserList = catchAsync(async (req, res) => {
+  const { groupId } = req.params;
+  const { userId } = req.user;
+
+  const result = await UserGroupService.inviteUserList(groupId, userId);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: status.OK,
+    message: "User list for invite is fetched successfully.",
+  });
+});
 
 export const UserGroupController = {
   getUserAllGroups,
   addUserToGroup,
   removeUserFromGroup,
   leaveFromGroup,
+  inviteUserList,
 };

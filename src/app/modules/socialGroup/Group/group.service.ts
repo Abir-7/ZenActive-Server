@@ -71,11 +71,15 @@ const deleteGroup = async (groupId: string, userId: string) => {
   }
   return { message: "Group deleted." };
 };
+const getAllGroup = async (searchText?: string) => {
+  const filter: any = { type: "Public" };
 
-const getAllGroup = async () => {
-  const groups = await Group.find({
-    type: "Public",
-  }).exec();
+  if (searchText) {
+    const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
+    filter.$or = [{ name: searchRegex }, { description: searchRegex }];
+  }
+
+  const groups = await Group.find(filter).lean();
   console.log(groups);
   return groups;
 };

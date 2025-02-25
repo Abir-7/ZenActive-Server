@@ -21,20 +21,22 @@ const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
   );
 
   const json = await getJson(workouts);
-
+  if (json.workouts) {
+    console.log(json.workouts);
+  }
   const data = { ...json, ...workoutData };
-  console.log(data);
-  if (data.duration !== data?.workouts?.length) {
+  console.log(data.workouts.length);
+  if (data.duration !== data.workouts.length) {
     throw new AppError(
       500,
-      `day:${workoutData?.duration} not equal workouts:${workoutData?.workouts?.length} in numbner`
+      `day:${workoutData?.duration} not equal workouts:${data.workouts.length} in numbner`
     );
   }
 
   const workout = await WorkoutPlan.create(data);
 
   if (!workout) {
-    unlinkFile(workoutData.image);
+    unlinkFile(data.image);
   }
 
   return workout;
