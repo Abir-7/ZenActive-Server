@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 import { User } from "../../user/user.model";
 import AppError from "../../../errors/AppError";
@@ -6,28 +6,58 @@ import httpStatus from "http-status";
 // import { Block } from "../blocklist/blockList.model";
 import UserConnection from "./friendlist.model";
 import { status } from "./friendlist.interface";
+import { Notification } from "../../notification/notification.model";
+import { NotificationType } from "../../notification/notification.interface";
+import { handleNotification } from "../../../socket/notification/handleNotification";
 const sendRequest = async (
   userId: Types.ObjectId,
   friendId: Types.ObjectId
 ) => {
-  const existingFriendList = await UserConnection.findOne({
-    $or: [
-      { senderId: userId, receiverId: friendId },
-      { senderId: friendId, receiverId: userId },
-    ],
-  });
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (existingFriendList && existingFriendList.isAccepted == true) {
-    throw new AppError(httpStatus.BAD_REQUEST, "You are already friend.");
+  try {
+    const existingFriendList = await UserConnection.findOne({
+      $or: [
+        { senderId: userId, receiverId: friendId },
+        { senderId: friendId, receiverId: userId },
+      ],
+    }).session(session);
+
+    if (existingFriendList) {
+      if (existingFriendList.isAccepted) {
+        throw new AppError(httpStatus.BAD_REQUEST, "You are already friends.");
+      }
+      throw new AppError(httpStatus.BAD_REQUEST, "Already sent request");
+    }
+
+    await Notification.create(
+      [
+        {
+          senderId: userId,
+          receiverId: friendId,
+          type: NotificationType.FRIEND_REQUEST,
+          message: "You have a new friend request",
+        },
+      ],
+      { session }
+    );
+
+    handleNotification("You have a new friend request", String(friendId));
+
+    const sendRequest = await UserConnection.create(
+      [{ senderId: userId, receiverId: friendId }],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+    return sendRequest[0];
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
-  if (existingFriendList && !existingFriendList?.isAccepted) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Already sent request");
-  }
-  const sendRequest = await UserConnection.create({
-    senderId: userId,
-    receiverId: friendId,
-  });
-  return sendRequest;
 };
 
 const acceteptRequest = async (

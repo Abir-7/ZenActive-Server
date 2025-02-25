@@ -4,7 +4,7 @@ import { WorkoutVideoService } from "./workoutVideo.service";
 import httpStatus from "http-status";
 import catchAsync from "../../../utils/catchAsync";
 import sendResponse from "../../../utils/sendResponse";
-const { getVideoDurationInSeconds } = require("get-video-duration");
+import getVideoDurationInSeconds from "get-video-duration";
 
 const getAllWorkoutVideos = catchAsync(async (req: Request, res: Response) => {
   const result = await WorkoutVideoService.getAllWorkoutVideos();

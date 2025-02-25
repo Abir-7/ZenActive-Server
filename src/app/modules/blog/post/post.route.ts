@@ -26,7 +26,16 @@ router.patch(
 );
 router.get("/user-post", auth("USER"), PostController.getUserPosts);
 router.get("/all-user-post", auth("USER"), PostController.getAllUserPosts);
-router.get("/group-post/:groupId", auth("USER"), PostController.getGroupPosts);
+router.get(
+  "/user-all-group-post",
+  auth("USER"),
+  PostController.getUserAllGroupPost
+);
+router.get(
+  "/group-post/:groupId",
+  auth("USER"),
+  PostController.getGroupsAllPosts
+);
 router.delete("/:postId", auth("USER"), PostController.deletePost);
 
 export const PostRoute = router;

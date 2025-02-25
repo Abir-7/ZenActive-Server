@@ -30,6 +30,7 @@ import { DailyExerciseRoutes } from "../modules/usersDailyExercise/dailyExercise
 import { WorkoutVideoRoutes } from "../modules/workout&exercise/workoutVideos/workoutVideo.route";
 import { GroupRoute } from "../modules/socialGroup/Group/group.route";
 import { UserGroupRoute } from "../modules/socialGroup/UsersGroup/userGroup.route";
+import { NotificationRoute } from "../modules/notification/notification.route";
 
 const router = Router();
 
@@ -60,6 +61,7 @@ const apiRoutes = [
   { path: "/subscription", route: SubscriptionRoute },
   { path: "/privacy&terms", route: PrivacyTermsAboutUsRoute },
   { path: "/daily-exercise", route: DailyExerciseRoutes },
+  { path: "/notification", route: NotificationRoute },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

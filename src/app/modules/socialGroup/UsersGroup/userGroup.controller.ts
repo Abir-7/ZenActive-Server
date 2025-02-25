@@ -70,10 +70,24 @@ const inviteUserList = catchAsync(async (req, res) => {
   });
 });
 
+const inviteUser = catchAsync(async (req, res) => {
+  const { groupId, receiverId } = req.body;
+  const { userId } = req.user;
+
+  const result = await UserGroupService.inviteUser(groupId, userId, receiverId);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: status.OK,
+    message: "Group invite send to user successfully.",
+  });
+});
+
 export const UserGroupController = {
   getUserAllGroups,
   addUserToGroup,
   removeUserFromGroup,
   leaveFromGroup,
   inviteUserList,
+  inviteUser,
 };

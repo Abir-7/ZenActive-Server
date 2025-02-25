@@ -6,53 +6,55 @@ import Post from "../../blog/post/post.model";
 import mongoose, { Types } from "mongoose";
 import UserConnection from "../../userConnection/friendList/friendlist.model";
 import { User } from "../../user/user.model";
+import { Notification } from "../../notification/notification.model";
+import { handleNotification } from "../../../socket/notification/handleNotification";
+import { NotificationType } from "../../notification/notification.interface";
 
 const getUserAllGroups = async (userId: string, searchQuery?: string) => {
   const userGroups = await UserGroup.find({ userId })
-    .populate("groupId")
+    .populate({
+      path: "groupId",
+      select: "name type goal admin image createdAt updatedAt",
+    })
     .lean();
 
-  const allGroups = await Group.find().lean();
-
   const updatedGroups = await Promise.all(
-    allGroups.map(async (group) => {
-      const userGroup = userGroups.find((ug) =>
-        ug.groupId._id.equals(group._id)
+    userGroups.map(async (userGroup) => {
+      const group = userGroup.groupId; // Extract the populated group
+      if (!group) return null;
+
+      const totalPostCount = await Post.countDocuments({ groupId: group._id });
+
+      const newPostCount = Math.max(
+        0,
+        totalPostCount - userGroup.previousTotalPost
       );
 
-      const totalPostCount = await Post.countDocuments({
-        groupId: group._id,
-      });
-
-      let newPostCount = 0;
-      if (userGroup) {
-        newPostCount = totalPostCount - userGroup.previousTotalPost;
-
-        // Update UserGroup if the user is part of the group
-        await UserGroup.updateOne(
-          { _id: userGroup._id },
-          {
-            newPost: newPostCount >= 0 ? newPostCount : 0,
-            previousTotalPost: totalPostCount, // Update previous count for next time
-          }
-        );
-      }
+      // Update the user's group data with the latest post count
+      await UserGroup.updateOne(
+        { _id: userGroup._id },
+        {
+          newPost: newPostCount,
+          previousTotalPost: totalPostCount,
+        }
+      );
 
       return {
         ...group,
-        newPost: newPostCount >= 0 ? newPostCount : 0,
+
+        newPost: newPostCount,
       };
     })
   );
 
+  const filteredGroups = updatedGroups.filter((group) => group !== null);
+
   if (searchQuery) {
-    const searchRegex = new RegExp(searchQuery, "i"); // Case-insensitive search
-    return updatedGroups.filter((group) => searchRegex.test(group.name));
+    const searchRegex = new RegExp(searchQuery, "i");
+    return filteredGroups.filter((group: any) => searchRegex.test(group.name));
   }
 
-  return updatedGroups;
-
-  return updatedGroups;
+  return filteredGroups;
 };
 
 const addUserToGroup = async (groupId: string, userId: string) => {
@@ -181,6 +183,7 @@ const leaveFromGroup = async (groupId: string, userId: string) => {
 
   return { message: "Successfully left the group." };
 };
+
 const inviteUserList = async (groupId: string, userId: string) => {
   const userObjectId = new Types.ObjectId(userId);
   const groupObjectId = new Types.ObjectId(groupId);
@@ -210,10 +213,40 @@ const inviteUserList = async (groupId: string, userId: string) => {
   return availableUsers;
 };
 
+const inviteUser = async (
+  groupId: string,
+  userId: string,
+  receiverId: string
+) => {
+  const sender = await User.findOne({ _id: userId });
+
+  const notification = await Notification.create({
+    senderId: userId,
+    receiverId,
+    groupId,
+    type: NotificationType.JOIN_GROUP_REQUEST,
+    message: `${
+      sender?.name?.firstName +
+      (sender?.name?.lastName ? " " + sender.name.lastName : "")
+    } requested you to join a group`,
+  });
+
+  handleNotification(
+    `${
+      sender?.name?.firstName +
+      (sender?.name?.lastName ? " " + sender.name.lastName : "")
+    } requested you to join a group`,
+    receiverId
+  );
+
+  return notification;
+};
+
 export const UserGroupService = {
   getUserAllGroups,
   addUserToGroup,
   removeUserFromGroup,
   leaveFromGroup,
   inviteUserList,
+  inviteUser,
 };

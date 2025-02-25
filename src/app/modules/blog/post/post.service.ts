@@ -153,20 +153,149 @@ const getAllUserPosts = async (userId: string) => {
   return posts;
 };
 
-const getGroupPosts = async (groupId: string) => {
-  return await Post.find({ isGroup: true, groupId, isDelete: false })
-    .populate({
-      path: "userId",
-      select: "_id email name",
-    })
-    .populate({
-      path: "comments",
-      model: mongoose.models.Comment || Comment,
-    })
-    .populate({
-      path: "likes",
-      model: mongoose.models.Like || Like,
-    });
+const getGroupsAllPosts = async (groupId: string) => {
+  return await Post.aggregate([
+    // Match only posts from the specified group
+    {
+      $match: {
+        isGroup: true,
+        groupId: new mongoose.Types.ObjectId(groupId),
+        isDelete: false,
+      },
+    },
+
+    // Lookup User details for post owner
+    {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+
+    { $unwind: "$user" }, // Convert user array into object
+    {
+      $project: {
+        _id: 1,
+        text: 1,
+        image: 1,
+        createdAt: 1,
+        "user._id": 1,
+        "user.email": 1,
+        "user.name": 1,
+        "user.image": 1,
+      },
+    },
+
+    // Lookup Likes
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "postId",
+        as: "likes",
+      },
+    },
+
+    // Lookup User details for Likes
+    {
+      $lookup: {
+        from: "users",
+        localField: "likes.userId",
+        foreignField: "_id",
+        as: "likesData",
+      },
+    },
+
+    {
+      $project: {
+        _id: 1,
+        text: 1,
+        image: 1,
+        createdAt: 1,
+        user: 1,
+        likes: {
+          $map: {
+            input: "$likesData",
+            as: "like",
+            in: {
+              _id: "$$like._id",
+              email: "$$like.email",
+              name: "$$like.name",
+              image: "$$like.image",
+            },
+          },
+        },
+      },
+    },
+
+    // Lookup Comments
+    {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "postId",
+        as: "comments",
+      },
+    },
+
+    // Lookup User details for Comments
+    {
+      $lookup: {
+        from: "users",
+        localField: "comments.userId",
+        foreignField: "_id",
+        as: "commentsData",
+      },
+    },
+
+    {
+      $project: {
+        _id: 1,
+        text: 1,
+        image: 1,
+        createdAt: 1,
+        user: 1,
+        likes: 1,
+        comments: {
+          $map: {
+            input: "$commentsData",
+            as: "comment",
+            in: {
+              _id: "$$comment._id",
+              email: "$$comment.email",
+              name: "$$comment.name",
+              image: "$$comment.image",
+              comment: {
+                $arrayElemAt: [
+                  "$comments.comment",
+                  { $indexOfArray: ["$comments.userId", "$$comment._id"] },
+                ],
+              },
+              createdAt: {
+                $arrayElemAt: [
+                  "$comments.createdAt",
+                  { $indexOfArray: ["$comments.userId", "$$comment._id"] },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+
+    // Ensure likes and comments are empty arrays if they are null
+    {
+      $addFields: {
+        likes: { $ifNull: ["$likes", []] },
+        comments: { $ifNull: ["$comments", []] },
+      },
+    },
+
+    // Sort by latest posts
+    { $sort: { createdAt: -1 } },
+  ]);
 };
 
 const deletePost = async (postId: string) => {
@@ -182,11 +311,129 @@ const deletePost = async (postId: string) => {
   return { message: "Post deleted" };
 };
 
+const getUserAllGroupPost = async (userId: string, page: number = 1) => {
+  try {
+    const limit = 15; // Number of posts per page
+    const skip = (page - 1) * limit; // Calculate offset
+
+    // Step 1: Get all group IDs where the user is a member
+    const userGroups = await UserGroup.find({ userId }).select("groupId");
+    const groupIds = userGroups.map((ug) => ug.groupId);
+
+    if (groupIds.length === 0)
+      return {
+        posts: [],
+        meta: {
+          limit,
+          page,
+          total: 0,
+          totalPage: 0,
+        },
+      };
+
+    // Step 2: Count total posts for pagination
+    const total = await Post.countDocuments({
+      groupId: { $in: groupIds },
+      isGroup: true,
+      isDelete: false,
+    });
+
+    const totalPage = Math.ceil(total / limit);
+
+    // Step 3: Aggregate posts with pagination
+    const posts = await Post.aggregate([
+      {
+        $match: {
+          groupId: { $in: groupIds },
+          isGroup: true,
+          isDelete: false,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $lookup: {
+          from: "groups",
+          localField: "groupId",
+          foreignField: "_id",
+          as: "group",
+        },
+      },
+      { $unwind: "$group" },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "postId",
+          as: "comments",
+        },
+      },
+      {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "postId",
+          as: "likes",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          text: 1,
+          image: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          "user._id": 1,
+          "user.name": 1,
+          "user.email": 1,
+          "user.image": 1,
+          "group._id": 1,
+          "group.name": 1,
+          "group.image": 1,
+          comments: {
+            _id: 1,
+            comment: 1,
+            createdAt: 1,
+            userId: 1,
+          },
+          likes: {
+            _id: 1,
+            userId: 1,
+          },
+        },
+      },
+      { $sort: { createdAt: -1 } }, // Sort by newest posts
+      { $skip: skip }, // Skip posts for previous pages
+      { $limit: limit }, // Limit results per page
+    ]);
+
+    return {
+      posts,
+      meta: {
+        limit,
+        page,
+        total,
+        totalPage,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching group posts:", error);
+    throw new Error("Failed to fetch group posts");
+  }
+};
 export const PostService = {
   createPost,
   editPost,
   getUserPosts,
-  getGroupPosts,
+  getGroupsAllPosts,
   deletePost,
   getAllUserPosts,
+  getUserAllGroupPost,
 };

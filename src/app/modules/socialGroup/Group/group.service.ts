@@ -71,17 +71,51 @@ const deleteGroup = async (groupId: string, userId: string) => {
   }
   return { message: "Group deleted." };
 };
-const getAllGroup = async (searchText?: string) => {
-  const filter: any = { type: "Public" };
+const getAllGroup = async (userId: string, searchText?: string) => {
+  try {
+    const filter: any = { type: "Public" };
 
-  if (searchText) {
-    const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
-    filter.$or = [{ name: searchRegex }, { description: searchRegex }];
+    if (searchText) {
+      const searchRegex = new RegExp(searchText, "i");
+      filter.$or = [{ name: searchRegex }, { goal: searchRegex }];
+    }
+
+    const groups = await Group.aggregate([
+      {
+        $match: filter, // Get only public groups
+      },
+      {
+        $lookup: {
+          from: "usergroups", // Join with UserGroup collection
+          localField: "_id",
+          foreignField: "groupId",
+          as: "members",
+        },
+      },
+      {
+        $addFields: {
+          totalMembers: { $size: "$members" }, // Count total members
+          userJoined: {
+            $in: [new mongoose.Types.ObjectId(userId), "$members.userId"],
+          }, // Check if user is a member
+        },
+      },
+      {
+        $match: { userJoined: false }, // Exclude groups where user has joined
+      },
+      {
+        $project: {
+          members: 0, // Exclude members array from response
+          userJoined: 0, // Remove extra field
+        },
+      },
+    ]);
+
+    return groups;
+  } catch (error) {
+    console.error("Error fetching groups:", error);
+    return [];
   }
-
-  const groups = await Group.find(filter).lean();
-  console.log(groups);
-  return groups;
 };
 
 const getSingleGroupData = async (groupId: string, userId: string) => {

@@ -15,6 +15,9 @@ router.get(
   auth("USER"),
   UserGroupController.inviteUserList
 );
+
+router.post("/invite-user", auth("USER"), UserGroupController.inviteUser);
+
 router.patch(
   "/join/:groupId",
   auth("USER"),
