@@ -18,12 +18,16 @@ const createGroup = catchAsync(async (req, res) => {
 
 const getAllGroup = catchAsync(async (req, res) => {
   const { userId } = req.user;
+  const { searchTerm, page = 1, limit = 25 } = req.query;
   const result = await GroupService.getAllGroup(
     userId,
-    req.query.searchTerm as string
+    searchTerm as string,
+    Number(page),
+    Number(limit)
   );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "All Public Group fetched successfully.",

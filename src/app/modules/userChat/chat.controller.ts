@@ -33,7 +33,7 @@ const createChat = catchAsync(async (req: Request, res: Response) => {
 const getChatsBetweenUsers = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { friendId } = req.params;
-  const { page, limit } = req.query;
+  const { page = 1, limit = 30 } = req.query;
   const result = await ChatService.getChatsBetweenUsers(
     userId,
     friendId,

@@ -6,12 +6,16 @@ import { UserGroupService } from "./userGroup.service";
 const getUserAllGroups = catchAsync(async (req, res) => {
   console.log("object");
   const { userId } = req.user;
+  const { page = 1, limit = 25, searchTerm } = req.query;
   const result = await UserGroupService.getUserAllGroups(
     userId,
-    req.query.searchTerm as string
+    searchTerm as string,
+    Number(page),
+    Number(limit)
   );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: status.OK,
     message: "Groups fetched successfully.",
@@ -60,10 +64,17 @@ const leaveFromGroup = catchAsync(async (req, res) => {
 const inviteUserList = catchAsync(async (req, res) => {
   const { groupId } = req.params;
   const { userId } = req.user;
-
-  const result = await UserGroupService.inviteUserList(groupId, userId);
+  const { searchTerm, page = 1, limit = 20 } = req.query;
+  const result = await UserGroupService.inviteUserList(
+    groupId,
+    userId,
+    searchTerm as string,
+    Number(page),
+    Number(limit)
+  );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: status.OK,
     message: "User list for invite is fetched successfully.",

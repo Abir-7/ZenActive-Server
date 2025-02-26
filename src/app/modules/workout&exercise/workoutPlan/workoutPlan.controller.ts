@@ -56,7 +56,8 @@ const getAllWorkoutsPlan = catchAsync(async (req, res) => {
     req.query
   );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "All workout plans fetched successfully.",

@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import Comment from "../comments/comment.model";
+
 import { IPost } from "./post.interface";
 import Post from "./post.model";
-import Like from "../likes/like.model";
+
 import Friend from "../../userConnection/friendList/friendlist.model";
 import unlinkFile from "../../../utils/unlinkFiles";
 import { UserGroup } from "../../socialGroup/UsersGroup/userGroup.model";
@@ -70,7 +70,13 @@ const getUserPosts = async (userId: string) => {
   return result;
 };
 
-const getAllUserPosts = async (userId: string) => {
+const getAllUserPosts = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 15
+) => {
+  const skip = (page - 1) * limit;
+
   const friends = await Friend.find({
     $or: [
       { senderId: userId, isAccepted: true },
@@ -84,28 +90,34 @@ const getAllUserPosts = async (userId: string) => {
   );
   friendIds.push(new mongoose.Types.ObjectId(userId));
 
+  // Get total count for pagination
+  const total = await Post.countDocuments({
+    userId: { $in: friendIds },
+    isDelete: false,
+    isGroup: false,
+  });
+  const totalPage = Math.ceil(total / limit);
+
   const posts = await Post.aggregate([
     {
       $match: {
-        userId: { $in: friendIds }, // Get posts from user and friends
-        isDelete: false, // Exclude deleted posts
+        userId: { $in: friendIds },
+        isDelete: false,
         isGroup: false,
       },
     },
     {
       $lookup: {
-        from: "users", // Join with users collection
+        from: "users",
         localField: "userId",
         foreignField: "_id",
         as: "userInfo",
       },
     },
-    {
-      $unwind: "$userInfo", // Convert array to object
-    },
+    { $unwind: "$userInfo" },
     {
       $lookup: {
-        from: "comments", // Join with comments
+        from: "comments",
         localField: "_id",
         foreignField: "postId",
         as: "comments",
@@ -113,7 +125,7 @@ const getAllUserPosts = async (userId: string) => {
     },
     {
       $lookup: {
-        from: "likes", // Join with likes
+        from: "likes",
         localField: "_id",
         foreignField: "postId",
         as: "likes",
@@ -122,7 +134,7 @@ const getAllUserPosts = async (userId: string) => {
     {
       $addFields: {
         isLiked: {
-          $in: [new mongoose.Types.ObjectId(userId), "$likes.userId"], // Check if the user liked the post
+          $in: [new mongoose.Types.ObjectId(userId), "$likes.userId"],
         },
       },
     },
@@ -145,16 +157,34 @@ const getAllUserPosts = async (userId: string) => {
         "userInfo.image": 1,
       },
     },
-    {
-      $sort: { createdAt: -1 }, // Sort by latest posts
-    },
+    { $sort: { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
   ]);
 
-  return posts;
+  return {
+    meta: { limit, page, total, totalPage },
+    data: posts,
+  };
 };
 
-const getGroupsAllPosts = async (groupId: string) => {
-  return await Post.aggregate([
+const getGroupsAllPosts = async (
+  groupId: string,
+  page: number = 1,
+  limit: number = 20
+) => {
+  const skip = (page - 1) * limit;
+
+  // Step 1: Count total posts for pagination
+  const total = await Post.countDocuments({
+    isGroup: true,
+    groupId: new mongoose.Types.ObjectId(groupId),
+    isDelete: false,
+  });
+  const totalPage = Math.ceil(total / limit);
+
+  // Step 2: Fetch posts with pagination
+  const posts = await Post.aggregate([
     // Match only posts from the specified group
     {
       $match: {
@@ -295,7 +325,16 @@ const getGroupsAllPosts = async (groupId: string) => {
 
     // Sort by latest posts
     { $sort: { createdAt: -1 } },
+
+    // Apply pagination
+    { $skip: skip },
+    { $limit: limit },
   ]);
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: posts,
+  };
 };
 
 const deletePost = async (postId: string) => {
@@ -313,7 +352,7 @@ const deletePost = async (postId: string) => {
 
 const getUserAllGroupPost = async (userId: string, page: number = 1) => {
   try {
-    const limit = 15; // Number of posts per page
+    const limit = 20; // Number of posts per page
     const skip = (page - 1) * limit; // Calculate offset
 
     // Step 1: Get all group IDs where the user is a member

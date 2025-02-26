@@ -1,13 +1,27 @@
 import { WorkoutVideo } from "./workoutVideo.model";
 import { IWorkoutVideo } from "./workoutVideo.interface";
-import createHttpError from "http-errors";
+
 import AppError from "../../../errors/AppError";
 import unlinkFile from "../../../utils/unlinkFiles";
 
-const getAllWorkoutVideos = async () => {
-  return await WorkoutVideo.find().exec();
-};
+const getAllWorkoutVideos = async (page: number = 1, limit: number = 20) => {
+  const skip = (page - 1) * limit;
 
+  // Step 1: Get total count for pagination
+  const total = await WorkoutVideo.countDocuments();
+  const totalPage = Math.ceil(total / limit);
+
+  // Step 2: Fetch paginated workout videos
+  const workoutVideos = await WorkoutVideo.find()
+    .skip(skip)
+    .limit(limit)
+    .exec();
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: workoutVideos,
+  };
+};
 const getSingleWorkoutVideos = async (id: string) => {
   const data = await WorkoutVideo.findOne({ _id: id }).exec();
   if (!data) {

@@ -82,7 +82,14 @@ const acceteptRequest = async (
   return acceptUserRequest;
 };
 
-const getFriendList = async (userId: string, searchText?: string) => {
+const getFriendList = async (
+  userId: string,
+  searchText?: string,
+  page: number = 1,
+  limit: number = 30
+) => {
+  const skip = (page - 1) * limit;
+
   const friendList = await UserConnection.find(
     {
       $or: [{ senderId: userId }, { receiverId: userId }],
@@ -101,6 +108,8 @@ const getFriendList = async (userId: string, searchText?: string) => {
       select: "_id email image name",
       options: { lean: true },
     })
+    .skip(skip) // Apply pagination at the database level
+    .limit(limit)
     .lean();
 
   // Extract only the friend data
@@ -114,16 +123,36 @@ const getFriendList = async (userId: string, searchText?: string) => {
   if (searchText) {
     const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
     friends = friends.filter((friend) => {
-      const fullName = `${friend.name.firstName} ${friend.name.lastName}`;
+      const fullName = `${friend.name?.firstName} ${friend?.name?.lastName}`;
       return searchRegex.test(fullName);
     });
   }
 
-  return friends;
+  // Get total count for pagination
+  const total = friends.length;
+  const totalPage = Math.ceil(total / limit);
+
+  // Apply pagination
+  const paginatedFriends = friends.slice(skip, skip + limit);
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: paginatedFriends,
+  };
 };
 
-const getPendingList = async (userId: string, type: string) => {
-  console.log(userId, type);
+const getPendingList = async (
+  userId: string,
+  type: string,
+  page: number = 1,
+  limit: number = 30
+) => {
+  if (!type) {
+    throw new AppError(httpStatus.BAD_REQUEST, "type query missing...");
+  }
+
+  const skip = (page - 1) * limit;
+
   const pendingRequests = await UserConnection.find({
     $or: [{ senderId: userId }, { receiverId: userId }],
     isAccepted: false,
@@ -141,31 +170,45 @@ const getPendingList = async (userId: string, type: string) => {
     })
     .lean();
 
-  if (!type) {
-    throw new AppError(httpStatus.BAD_REQUEST, "type query missing...");
-  }
+  let filteredList = [];
 
   if (type === "sendRequestList") {
-    return {
-      sendRequestList: pendingRequests
-        .filter((req) => req.senderId._id.toString() === userId)
-        .map((req) =>
-          req.senderId._id.toString() === userId ? req.receiverId : req.senderId
-        ),
-    };
+    filteredList = pendingRequests
+      .filter((req) => req.senderId._id.toString() === userId)
+      .map((req) =>
+        req.senderId._id.toString() === userId ? req.receiverId : req.senderId
+      );
+  } else if (type === "requestedList") {
+    filteredList = pendingRequests
+      .filter((req) => req.receiverId._id.toString() === userId)
+      .map((req) =>
+        req.senderId._id.toString() === userId ? req.receiverId : req.senderId
+      );
+  } else {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid type query...");
   }
-  if (type === "requestedList") {
-    return {
-      requestedList: pendingRequests
-        .filter((req) => req.receiverId._id.toString() === userId)
-        .map((req) =>
-          req.senderId._id.toString() === userId ? req.receiverId : req.senderId
-        ),
-    };
-  }
+
+  // Get total count for pagination
+  const total = filteredList.length;
+  const totalPage = Math.ceil(total / limit);
+
+  // Apply pagination
+  const paginatedList = filteredList.slice(skip, skip + limit);
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: paginatedList,
+  };
 };
 
-const suggestedFriend = async (myUserId: string, email: string) => {
+const suggestedFriend = async (
+  myUserId: string,
+  email: string,
+  page: number = 1,
+  limit: number = 30
+) => {
+  const skip = (page - 1) * limit;
+
   // Step 1: Find all users who are in a relationship with you (either as sender or receiver)
   const relationships = await UserConnection.find({
     $or: [{ senderId: myUserId }, { receiverId: myUserId }],
@@ -191,10 +234,20 @@ const suggestedFriend = async (myUserId: string, email: string) => {
     query.email = { $regex: email, $options: "i" }; // Case-insensitive search by email
   }
 
-  // Step 2: Find all users who are not in the relatedUserIds list
-  const suggestedFriends = await User.find(query);
+  // Step 2: Get total count for pagination
+  const total = await User.countDocuments(query);
+  const totalPage = Math.ceil(total / limit);
 
-  return suggestedFriends;
+  // Step 3: Find all users who are not in the relatedUserIds list
+  const suggestedFriends = await User.find(query)
+    .skip(skip)
+    .limit(limit)
+    .exec();
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: suggestedFriends,
+  };
 };
 
 const removeFriend = async (

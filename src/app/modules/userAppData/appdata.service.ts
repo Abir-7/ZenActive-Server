@@ -22,7 +22,33 @@ const addWorkoutTime = async (time: number, userId: string) => {
   return appData;
 };
 
+const getLeaderboard = async (page: number = 1, limit: number = 50) => {
+  const skip = (page - 1) * limit;
+
+  // Get total count for pagination
+  const total = await UserAppData.countDocuments();
+  const totalPage = Math.ceil(total / limit);
+
+  // Fetch leaderboard sorted by points in descending order
+  const leaderboard = await UserAppData.find()
+    .populate({
+      path: "userId",
+      select: "_id name email image",
+      options: { lean: true },
+    })
+    .sort({ points: -1 }) // Sorting by points (descending)
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: leaderboard,
+  };
+};
+
 export const AppDataService = {
   addPoints,
   addWorkoutTime,
+  getLeaderboard,
 };

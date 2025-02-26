@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 
 import httpStatus from "http-status";
-import { CommentService } from "./comment.service";
 import catchAsync from "../../../utils/catchAsync";
+
 import sendResponse from "../../../utils/sendResponse";
+import { CommentService } from "./comment.service";
 
 const createComment = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
@@ -14,6 +15,22 @@ const createComment = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: httpStatus.CREATED,
     message: "Comment successfully created.",
+  });
+});
+
+const createVideoComment = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user;
+  const { videoId, comment } = req.body;
+  const result = await CommentService.addVideoComment({
+    userId,
+    videoId,
+    comment,
+  });
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Video Comment successfully created.",
   });
 });
 
@@ -31,9 +48,34 @@ const createComment = catchAsync(async (req: Request, res: Response) => {
 const fetchCommentsByPostId = catchAsync(
   async (req: Request, res: Response) => {
     const { postId } = req.params;
-    const result = await CommentService.getCommentsByPostId(postId);
+    const { page = 1, limit = 15 } = req.query;
+    const result = await CommentService.getCommentsByPostId(
+      postId,
+      Number(page),
+      Number(limit)
+    );
     sendResponse(res, {
-      data: result,
+      data: result.data,
+      meta: result.meta,
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Comments fetched successfully.",
+    });
+  }
+);
+
+const fetchVideoCommentsByVideoId = catchAsync(
+  async (req: Request, res: Response) => {
+    const { videoId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+    const result = await CommentService.getVideoCommentsByVideoId(
+      videoId,
+      Number(page),
+      Number(limit)
+    );
+    sendResponse(res, {
+      data: result.data,
+      meta: result.meta,
       success: true,
       statusCode: httpStatus.OK,
       message: "Comments fetched successfully.",
@@ -72,4 +114,6 @@ export const CommentController = {
   fetchCommentsByPostId,
   editComment,
   removeComment,
+  createVideoComment,
+  fetchVideoCommentsByVideoId,
 };

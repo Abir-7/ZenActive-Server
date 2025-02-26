@@ -1,8 +1,10 @@
 import { Router } from "express";
-import auth from "../../../middleware/auth/auth";
+
 import { CommentController } from "./comment.controller";
+
+import { zodCommentSchema, zodVideoCommentSchema } from "./comment.validation";
 import validateRequest from "../../../middleware/validator";
-import { zodCommentSchema } from "./comment.validation";
+import auth from "../../../middleware/auth/auth";
 
 const router = Router();
 router.post(
@@ -11,7 +13,15 @@ router.post(
   auth("USER"),
   CommentController.createComment
 );
-// router.get("/comments/:id", CommentController.fetchCommentById);
+//
+router.post(
+  "/add-video-comment",
+  validateRequest(zodVideoCommentSchema),
+  auth("USER"),
+  CommentController.createVideoComment
+);
+router.get("/video/:videoId", CommentController.fetchVideoCommentsByVideoId);
+//
 router.get("/post/:postId", CommentController.fetchCommentsByPostId);
 
 router.patch("/:id", auth("USER"), CommentController.editComment);

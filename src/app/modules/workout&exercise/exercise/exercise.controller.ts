@@ -33,10 +33,16 @@ const createExercise = catchAsync(async (req: Request, res: Response) => {
 // Get all exercises
 const getAllExercise = catchAsync(async (req: Request, res: Response) => {
   const { userRole, userId } = req.user;
-
-  const result = await ExerciseService.getAllExercise(userRole, userId);
+  const { page = 1, limit = 15 } = req.query;
+  const result = await ExerciseService.getAllExercise(
+    userRole,
+    userId,
+    Number(page),
+    Number(limit)
+  );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Exercise fetched successfully.",

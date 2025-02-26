@@ -51,13 +51,18 @@ const removeFriend = catchAsync(async (req, res) => {
 });
 
 const getFriendList = catchAsync(async (req, res) => {
+  console.log("2222");
   const userId = req.user.userId;
+  const { page = 1, limit = 30 } = req.query;
   const friendList = await FriendListService.getFriendList(
     userId,
-    req.query.searchTerm as string
+    req.query.searchTerm as string,
+    Number(page),
+    Number(limit)
   );
   sendResponse(res, {
-    data: friendList,
+    data: friendList.data,
+    meta: friendList.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Friend list fetched successfully.",
@@ -67,13 +72,16 @@ const getFriendList = catchAsync(async (req, res) => {
 const getPendingList = catchAsync(async (req, res) => {
   const { type } = req.query;
   const userId = req.user.userId;
-
+  const { page = 1, limit = 30 } = req.query;
   const friendList = await FriendListService.getPendingList(
     userId,
-    type as string
+    type as string,
+    Number(page),
+    Number(limit)
   );
   sendResponse(res, {
-    data: friendList,
+    data: friendList.data,
+    meta: friendList.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Pending list fetched successfully.",
@@ -82,13 +90,16 @@ const getPendingList = catchAsync(async (req, res) => {
 
 const getSugestedFriend = catchAsync(async (req, res) => {
   const userId = req.user.userId;
-  const { email } = req.query;
+  const { email, page = 1, limit = 30 } = req.query;
   const friendList = await FriendListService.suggestedFriend(
     userId,
-    email as string
+    email as string,
+    Number(page),
+    Number(limit)
   );
   sendResponse(res, {
-    data: friendList,
+    data: friendList.data,
+    meta: friendList.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Sugested friend list fetched successfully.",

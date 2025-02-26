@@ -64,9 +64,15 @@ const getUserPosts = catchAsync(async (req, res) => {
 
 const getAllUserPosts = catchAsync(async (req, res) => {
   const { userId } = req.user;
-  const result = await PostService.getAllUserPosts(userId);
+  const { page = 1, limit = 15 } = req.query;
+  const result = await PostService.getAllUserPosts(
+    userId,
+    Number(page),
+    Number(limit)
+  );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Posts from users fetched successfully.",
@@ -75,9 +81,15 @@ const getAllUserPosts = catchAsync(async (req, res) => {
 
 const getGroupsAllPosts = catchAsync(async (req, res) => {
   const { groupId } = req.params;
-  const result = await PostService.getGroupsAllPosts(groupId);
+  const { page = 1, limit = 25 } = req.query;
+  const result = await PostService.getGroupsAllPosts(
+    groupId,
+    Number(page),
+    Number(limit)
+  );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Posts fetched successfully.",
@@ -88,10 +100,8 @@ const getUserAllGroupPost = catchAsync(async (req, res) => {
   console.log("--->");
 
   const { userId } = req.user;
-  const result = await PostService.getUserAllGroupPost(
-    userId,
-    Number(req.query.page ? req.query.page : 1)
-  );
+  const { page = 1 } = req.query;
+  const result = await PostService.getUserAllGroupPost(userId, Number(page));
   sendResponse(res, {
     data: result.posts,
     meta: result.meta,

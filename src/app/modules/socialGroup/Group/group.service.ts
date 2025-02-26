@@ -71,51 +71,61 @@ const deleteGroup = async (groupId: string, userId: string) => {
   }
   return { message: "Group deleted." };
 };
-const getAllGroup = async (userId: string, searchText?: string) => {
-  try {
-    const filter: any = { type: "Public" };
+const getAllGroup = async (
+  userId: string,
+  searchText?: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const skip = (page - 1) * limit;
+  const filter: any = { type: "Public" };
 
-    if (searchText) {
-      const searchRegex = new RegExp(searchText, "i");
-      filter.$or = [{ name: searchRegex }, { goal: searchRegex }];
-    }
-
-    const groups = await Group.aggregate([
-      {
-        $match: filter, // Get only public groups
-      },
-      {
-        $lookup: {
-          from: "usergroups", // Join with UserGroup collection
-          localField: "_id",
-          foreignField: "groupId",
-          as: "members",
-        },
-      },
-      {
-        $addFields: {
-          totalMembers: { $size: "$members" }, // Count total members
-          userJoined: {
-            $in: [new mongoose.Types.ObjectId(userId), "$members.userId"],
-          }, // Check if user is a member
-        },
-      },
-      {
-        $match: { userJoined: false }, // Exclude groups where user has joined
-      },
-      {
-        $project: {
-          members: 0, // Exclude members array from response
-          userJoined: 0, // Remove extra field
-        },
-      },
-    ]);
-
-    return groups;
-  } catch (error) {
-    console.error("Error fetching groups:", error);
-    return [];
+  if (searchText) {
+    const searchRegex = new RegExp(searchText, "i");
+    filter.$or = [{ name: searchRegex }, { goal: searchRegex }];
   }
+
+  // Get total count before pagination
+  const total = await Group.countDocuments(filter);
+  const totalPage = Math.ceil(total / limit);
+
+  const groups = await Group.aggregate([
+    {
+      $match: filter, // Get only public groups
+    },
+    {
+      $lookup: {
+        from: "usergroups", // Join with UserGroup collection
+        localField: "_id",
+        foreignField: "groupId",
+        as: "members",
+      },
+    },
+    {
+      $addFields: {
+        totalMembers: { $size: "$members" }, // Count total members
+        userJoined: {
+          $in: [new mongoose.Types.ObjectId(userId), "$members.userId"],
+        }, // Check if user is a member
+      },
+    },
+    {
+      $match: { userJoined: false }, // Exclude groups where user has joined
+    },
+    {
+      $project: {
+        members: 0, // Exclude members array from response
+        userJoined: 0, // Remove extra field
+      },
+    },
+    { $skip: skip }, // Apply pagination
+    { $limit: limit }, // Limit the number of results
+  ]);
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: groups,
+  };
 };
 
 const getSingleGroupData = async (groupId: string, userId: string) => {

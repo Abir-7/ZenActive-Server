@@ -1,5 +1,5 @@
-import mongoose, { model, Schema } from "mongoose";
-import { IComment } from "./comment.interface";
+import mongoose, { Schema } from "mongoose";
+import { IComment, IVideoComment } from "./comment.interface";
 
 const CommentSchema = new Schema<IComment>(
   {
@@ -10,6 +10,23 @@ const CommentSchema = new Schema<IComment>(
   { timestamps: true }
 );
 
-const Comment = mongoose.model<IComment>("Comment", CommentSchema);
+export const Comment = mongoose.model<IComment>("Comment", CommentSchema);
 
-export default Comment;
+//   -------------------------------------------------------------------------
+
+const VideoCommentSchema = new Schema<IVideoComment>(
+  {
+    videoId: {
+      type: Schema.Types.ObjectId,
+      ref: "WorkoutVideo",
+      required: true,
+    },
+    comment: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  },
+  { timestamps: true }
+);
+export const VideoComment = mongoose.model<IVideoComment>(
+  "VideoComment",
+  VideoCommentSchema
+);

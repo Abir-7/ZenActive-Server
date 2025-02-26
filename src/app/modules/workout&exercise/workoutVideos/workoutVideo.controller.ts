@@ -7,9 +7,14 @@ import sendResponse from "../../../utils/sendResponse";
 import getVideoDurationInSeconds from "get-video-duration";
 
 const getAllWorkoutVideos = catchAsync(async (req: Request, res: Response) => {
-  const result = await WorkoutVideoService.getAllWorkoutVideos();
+  const { page = 1, limit = 20 } = req.query;
+  const result = await WorkoutVideoService.getAllWorkoutVideos(
+    Number(page),
+    Number(limit)
+  );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Workout videos fetched successfully.",

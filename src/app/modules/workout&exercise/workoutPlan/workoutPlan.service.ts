@@ -86,27 +86,46 @@ const getAllWorkouts = async (
 ) => {
   query.isDeleted = false;
 
-  const workoutPlans = await WorkoutPlan.find(query).populate({
-    path: "workouts",
-    populate: "exercises",
+  const { isDeleted, duration, page = 1, limit = 15 } = query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  // Step 1: Get total count for pagination
+  const total = await WorkoutPlan.countDocuments({ duration, isDeleted });
+  const totalPage = Math.ceil(total / Number(limit));
+
+  // Step 2: Fetch paginated workout plans with populated exercises
+  const workoutPlans = await WorkoutPlan.find({ duration, isDeleted })
+    .populate({
+      path: "workouts",
+      populate: "exercises",
+    })
+    .skip(skip)
+    .limit(Number(limit));
+
+  // Step 3: Check if user is enrolled in each workout plan
+  const workoutPlanIds = workoutPlans.map((workout) => workout._id);
+  const userWorkoutPlans = await UserWorkoutPlan.find({
+    userId,
+    workoutPlanId: { $in: workoutPlanIds },
+    isCompleted: "InProgress",
   });
 
-  const workoutPlansWithStatus = await Promise.all(
-    workoutPlans.map(async (workoutPlan) => {
-      const userWorkoutPlan = await UserWorkoutPlan.findOne({
-        userId,
-        workoutPlanId: workoutPlan._id,
-        isCompleted: "InProgress",
-      });
+  const workoutPlansWithStatus = workoutPlans.map((workoutPlan) => {
+    const isEnrolled = userWorkoutPlans.some(
+      (userPlan) =>
+        userPlan.workoutPlanId.toString() === workoutPlan._id.toString()
+    );
 
-      return {
-        ...workoutPlan.toObject(),
-        isEnrolled: userWorkoutPlan ? true : false,
-      };
-    })
-  );
+    return {
+      ...workoutPlan.toObject(),
+      isEnrolled,
+    };
+  });
 
-  return workoutPlansWithStatus;
+  return {
+    meta: { limit: Number(limit), page: Number(page), total, totalPage },
+    data: workoutPlansWithStatus,
+  };
 };
 
 const getSingleWorkout = async (workoutPlanId: string, userId: string) => {

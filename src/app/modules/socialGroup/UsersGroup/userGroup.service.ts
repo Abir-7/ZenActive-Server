@@ -10,13 +10,27 @@ import { Notification } from "../../notification/notification.model";
 import { handleNotification } from "../../../socket/notification/handleNotification";
 import { NotificationType } from "../../notification/notification.interface";
 
-const getUserAllGroups = async (userId: string, searchQuery?: string) => {
+const getUserAllGroups = async (
+  userId: string,
+  searchQuery?: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const skip = (page - 1) * limit;
+
+  // Fetch user's groups with pagination
   const userGroups = await UserGroup.find({ userId })
     .populate({
       path: "groupId",
       select: "name type goal admin image createdAt updatedAt",
     })
+    .skip(skip)
+    .limit(limit)
     .lean();
+
+  // Get total count for pagination
+  const total = await UserGroup.countDocuments({ userId });
+  const totalPage = Math.ceil(total / limit);
 
   const updatedGroups = await Promise.all(
     userGroups.map(async (userGroup) => {
@@ -41,7 +55,6 @@ const getUserAllGroups = async (userId: string, searchQuery?: string) => {
 
       return {
         ...group,
-
         newPost: newPostCount,
       };
     })
@@ -49,12 +62,19 @@ const getUserAllGroups = async (userId: string, searchQuery?: string) => {
 
   const filteredGroups = updatedGroups.filter((group) => group !== null);
 
+  // Apply search filter if provided
+  let finalGroups = filteredGroups;
   if (searchQuery) {
     const searchRegex = new RegExp(searchQuery, "i");
-    return filteredGroups.filter((group: any) => searchRegex.test(group.name));
+    finalGroups = filteredGroups.filter((group: any) =>
+      searchRegex.test(group.name)
+    );
   }
 
-  return filteredGroups;
+  return {
+    meta: { limit, page, total, totalPage },
+    data: finalGroups,
+  };
 };
 
 const addUserToGroup = async (groupId: string, userId: string) => {
@@ -184,11 +204,18 @@ const leaveFromGroup = async (groupId: string, userId: string) => {
   return { message: "Successfully left the group." };
 };
 
-const inviteUserList = async (groupId: string, userId: string) => {
+const inviteUserList = async (
+  groupId: string,
+  userId: string,
+  searchText?: string,
+  page: number = 1,
+  limit: number = 10
+) => {
   const userObjectId = new Types.ObjectId(userId);
   const groupObjectId = new Types.ObjectId(groupId);
+  const skip = (page - 1) * limit;
 
-  // Get user friends
+  // Step 1: Get user friends
   const friends = await UserConnection.find({
     $or: [{ senderId: userObjectId }, { receiverId: userObjectId }],
     isAccepted: true,
@@ -198,19 +225,41 @@ const inviteUserList = async (groupId: string, userId: string) => {
     friend.senderId.equals(userObjectId) ? friend.receiverId : friend.senderId
   );
 
-  // Get users who are already in the group
+  // Step 2: Get users who are already in the group
   const groupMembers = await UserGroup.find({ groupId: groupObjectId }).select(
     "userId"
   );
-  console.log(groupId);
   const groupMemberIds = groupMembers.map((member) => member.userId.toString());
-  console.log(groupMemberIds);
-  // Filter friends who are NOT in the group
-  const availableUsers = await User.find({
-    _id: { $in: friendIds, $nin: groupMemberIds },
-  }).select("email name image");
 
-  return availableUsers;
+  // Step 3: Construct the query filter
+  const query: any = {
+    _id: { $in: friendIds, $nin: groupMemberIds },
+  };
+
+  // Step 4: Apply name or email search if provided
+  if (searchText) {
+    const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
+    query.$or = [
+      { "name.firstName": { $regex: searchRegex } }, // Search by first name
+      { "name.lastName": { $regex: searchRegex } }, // Search by last name
+      { email: { $regex: searchRegex } }, // Search by email
+    ];
+  }
+
+  // Step 5: Count total available friends who match the query
+  const total = await User.countDocuments(query);
+  const totalPage = Math.ceil(total / limit);
+
+  // Step 6: Fetch available users with pagination
+  const availableUsers = await User.find(query)
+    .select("email name image")
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    meta: { limit, page, total, totalPage },
+    data: availableUsers,
+  };
 };
 
 const inviteUser = async (

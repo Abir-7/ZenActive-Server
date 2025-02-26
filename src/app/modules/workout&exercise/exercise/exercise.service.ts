@@ -19,10 +19,28 @@ const createExercise = async (exerciseData: IExercise) => {
   return exercise;
 };
 
-const getAllExercise = async (userRole: string, userId: string) => {
+const getAllExercise = async (
+  userRole: string,
+  userId: string,
+  page: number = 1,
+  limit: number = 12
+) => {
+  const skip = (page - 1) * limit;
+
   if (userRole === "ADMIN") {
-    // For admin, return all active exercises.
-    return await Exercise.find({ isDeleted: false }).exec();
+    // Get total count for pagination
+    const total = await Exercise.countDocuments({ isDeleted: false });
+    const totalPage = Math.ceil(total / limit);
+
+    const exercises = await Exercise.find({ isDeleted: false })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    return {
+      meta: { limit, page, total, totalPage },
+      data: exercises,
+    };
   } else {
     // Calculate today's boundaries.
     const startOfToday = new Date();
@@ -30,13 +48,15 @@ const getAllExercise = async (userRole: string, userId: string) => {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    return await Exercise.aggregate([
-      // Only include active (not deleted) exercises.
+    // Get total count for pagination
+    const total = await Exercise.countDocuments({ isDeleted: false });
+    const totalPage = Math.ceil(total / limit);
+
+    const exercises = await Exercise.aggregate([
       { $match: { isDeleted: false } },
-      // Lookup daily exercise records for the current user and only for today.
       {
         $lookup: {
-          from: "dailyexercises", // Use your actual DailyExercise collection name.
+          from: "dailyexercises",
           let: { exerciseId: "$_id" },
           pipeline: [
             {
@@ -51,26 +71,25 @@ const getAllExercise = async (userRole: string, userId: string) => {
                 },
               },
             },
-            // Optionally, project only the fields you need.
             { $project: { _id: 1 } },
           ],
           as: "dailyExercise",
         },
       },
-      // Add the isCompleted field: true if there's at least one matching daily exercise.
       {
-        $addFields: {
-          isCompleted: { $gt: [{ $size: "$dailyExercise" }, 0] },
-        },
+        $addFields: { isCompleted: { $gt: [{ $size: "$dailyExercise" }, 0] } },
       },
-      // Optionally, remove the dailyExercise field from the output.
-      {
-        $project: { dailyExercise: 0 },
-      },
+      { $project: { dailyExercise: 0 } },
+      { $skip: skip },
+      { $limit: limit },
     ]);
+
+    return {
+      meta: { limit, page, total, totalPage },
+      data: exercises,
+    };
   }
 };
-
 // Get an exercise by ID
 const getExerciseById = async (exerciseId: string) => {
   const now = new Date();

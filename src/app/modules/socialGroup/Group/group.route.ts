@@ -25,7 +25,6 @@ router.patch(
   fileUploadHandler(),
   parseField("data"),
   validateRequest(zodUpdateGroupSchema),
-
   GroupController.updateGroup
 );
 

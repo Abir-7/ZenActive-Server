@@ -25,7 +25,22 @@ const addWorkoutTime = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getLeaderboard = catchAsync(async (req, res) => {
+  const { page = 1, limit = 50 } = req.query;
+  const result = await AppDataService.getLeaderboard(
+    Number(page),
+    Number(limit)
+  );
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User leaderboard fetched successfully.",
+    data: result.data,
+    meta: result.meta,
+  });
+});
 export const AppDataController = {
   addPoints,
   addWorkoutTime,
+  getLeaderboard,
 };

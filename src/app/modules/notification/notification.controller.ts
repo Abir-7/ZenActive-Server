@@ -16,9 +16,15 @@ import catchAsync from "../../utils/catchAsync";
 
 const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
-  const result = await NotificationService.getAllNotifications(userId);
+  const { page = 1, limit = 20 } = req.query;
+  const result = await NotificationService.getAllNotifications(
+    userId,
+    Number(page),
+    Number(limit)
+  );
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Notifications fetched successfully.",

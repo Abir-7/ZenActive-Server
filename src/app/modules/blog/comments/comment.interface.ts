@@ -5,3 +5,9 @@ export interface IComment {
   comment: string;
   userId: Types.ObjectId;
 }
+
+export interface IVideoComment {
+  videoId: Types.ObjectId;
+  comment: string;
+  userId: Types.ObjectId;
+}
