@@ -1,11 +1,14 @@
 import { Router } from "express";
 import auth from "../../middleware/auth/auth";
 import { UserWorkoutPlanController } from "./userWorkoutPlan.controller";
+import validateRequest from "../../middleware/validator";
+import { zodStartWorkoutPlanSchema } from "./userWorkoutPlan.validate";
 
 const router = Router();
 router.post(
   "/create-user-workout-plan",
   auth("USER"),
+  validateRequest(zodStartWorkoutPlanSchema),
   UserWorkoutPlanController.startWorkoutPlan
 );
 router.get(

@@ -52,8 +52,20 @@ const getChatsBetweenUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const chatWithFitbot = catchAsync(async (req: Request, res: Response) => {
+  const { prompt } = req.body;
+  const result = await ChatService.chatWithFitBot(prompt);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Ai Response fetched successfully.",
+  });
+});
+
 // Group all controller functions into an object
 export const ChatController = {
   createChat,
   getChatsBetweenUsers,
+  chatWithFitbot,
 };

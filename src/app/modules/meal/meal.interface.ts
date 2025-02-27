@@ -17,6 +17,5 @@ export interface IMeal {
   mealTime: TTime;
   amount: number;
 }
-
+export type TTime = (typeof Time)[number];
 export const Time = ["Breakfast", "Lunch", "Dinner", "Snacks"] as const;
-type TTime = (typeof Time)[number];

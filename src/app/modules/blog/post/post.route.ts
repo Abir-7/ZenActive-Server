@@ -21,7 +21,6 @@ router.patch(
   auth("USER"),
   fileUploadHandler(),
   parseField("data"),
-
   PostController.editPost
 );
 router.get("/user-post", auth("USER"), PostController.getUserPosts);

@@ -1,47 +1,40 @@
 import { z } from "zod";
+import { DietType } from "../user/user.interface";
 import { Time } from "./meal.interface";
 
-// Reusable schema for required nutritional information
-const NutritionalInfoSchema = z.object({
-  calories: z
-    .number({ required_error: "Calories is required" })
-    .min(0, { message: "Calories must be a positive number" }),
-  carbs: z
-    .number({ required_error: "Carbs is required" })
-    .min(0, { message: "Carbs must be a positive number" }),
-  proteins: z
-    .number({ required_error: "Proteins is required" })
-    .min(0, { message: "Proteins must be a positive number" }),
-  fats: z
-    .number({ required_error: "Fats is required" })
-    .min(0, { message: "Fats must be a positive number" }),
-});
-
-const BaseMealSchema = z.object({
-  mealName: z
-    .string({ required_error: "Meal name is required" })
-    .min(1, { message: "Meal name cannot be empty" }),
-  category: z
-    .string({ required_error: "Category is required" })
-    .min(1, { message: "Category cannot be empty" }),
-  mealTime: z
-    .enum(Time, { required_error: "Meal time is required" })
-    .refine((val) => ["Breakfast", "Lunch", "Dinner", "Snacks"].includes(val), {
-      message: "Invalid meal time",
-    }),
-});
-
 export const zodMealSchema = z.object({
-  body: BaseMealSchema.extend({
-    nutritionalInfo: NutritionalInfoSchema,
+  body: z.object({
+    mealName: z.string(),
+    category: z.string(),
+    suitableFor: z.array(z.nativeEnum(DietType)),
+    nutritionalInfo: z
+      .object({
+        calories: z.number(),
+        carbs: z.number(),
+        proteins: z.number(),
+        fats: z.number(),
+      })
+      .optional(),
+
+    mealTime: z.enum(Time).optional(),
+    amount: z.number().optional(),
   }),
 });
 
-// Schema for updating a meal
-const OptionalNutritionalInfoSchema = NutritionalInfoSchema.partial();
-
 export const zodUpdateMealSchema = z.object({
-  body: BaseMealSchema.partial().extend({
-    nutritionalInfo: OptionalNutritionalInfoSchema.optional(),
+  body: z.object({
+    mealName: z.string().optional(),
+    category: z.string().optional(),
+    suitableFor: z.array(z.nativeEnum(DietType)).optional(),
+    nutritionalInfo: z
+      .object({
+        calories: z.number().optional(),
+        carbs: z.number().optional(),
+        proteins: z.number().optional(),
+        fats: z.number().optional(),
+      })
+      .optional(),
+    mealTime: z.enum(Time).optional(),
+    amount: z.number().optional(),
   }),
 });

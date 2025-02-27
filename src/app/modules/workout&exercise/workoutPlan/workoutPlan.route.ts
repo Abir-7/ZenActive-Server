@@ -25,7 +25,7 @@ router.patch(
   auth("ADMIN"),
   fileUploadHandler(),
   parseField("data"),
-  // todo  zod validation
+  validateRequest(zodUpdateWorkoutPlanSchema),
   WorkoutPlanController.updateWorkoutPlan
 );
 

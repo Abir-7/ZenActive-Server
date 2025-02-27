@@ -52,4 +52,7 @@ export const config = {
     clientCertUrl: process.env.CLIENT_CERT_URL,
     universeDomain: process.env.UNIVERSE_DOMAIN,
   },
+  ai: {
+    gemini_api_key: process.env.GEMINI_API_LEY,
+  },
 };

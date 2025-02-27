@@ -5,33 +5,69 @@ import httpStatus from "http-status";
 import { WorkoutPlan } from "./workoutPlan.model";
 import unlinkFile from "../../../utils/unlinkFiles";
 import UserWorkoutPlan from "../../userWorkoutPlan/userWorkoutPlan.model";
-import Exercise from "../exercise/exercise.model";
+
 import { getGeminiResponse } from "../../../utils/getGeminiResponse";
 import Workout from "../workout/workout.model";
 import { getJson } from "../../../utils/getJson";
 
 const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
-  const allWorkout = JSON.stringify(await Workout.find({ isDeleted: false }));
+  workoutData.duration = workoutData.duration * 7;
 
-  const workouts = await getGeminiResponse(
-    `${allWorkout} this is all workouts. i want to make array with these workout id based on workout plan name. name is ${workoutData.name}. 
-    example-- workouts:[id1,id2.....] 
-    you can repete id if need. ** make sure array lenth must have to equal ${workoutData.duration} , give valid json**
-    `
-  );
+  const allWorkouts = await Workout.find({ isDeleted: false });
 
-  const json = await getJson(workouts);
-  if (json.workouts) {
-    console.log(json.workouts);
+  // Extract only necessary fields to reduce token usage
+  const availableWorkouts = allWorkouts.map((w) => ({
+    id: w._id,
+    name: w.name,
+  }));
+
+  const prompt = `
+    You are an AI that creates structured workout plans. Below is a list of available workouts:
+    ${JSON.stringify(availableWorkouts)}
+
+**workouts array must have exactly ${String(
+    Number(workoutData.duration) + 15
+  )} workoutId**
+
+    Create a workout plan with:
+    - Plan Name: "${workoutData.name}"
+    - Duration: ${workoutData.duration} days
+    - Workouts must be selected only from the provided list.
+    - **workouts array must have exactly ${String(
+      Number(workoutData.duration) + 15
+    )} workoutId**.
+    - Workouts can be repeated, but diversity is preferred.
+    - Return **only** a valid JSON object, without any extra text.
+
+    Example Response:
+    {
+      "workouts": ["id1", "id2", "id3", "id4", ..., "idN"]
+    }
+  `;
+
+  const workoutsResponse = await getGeminiResponse(prompt);
+
+  const json = await getJson(workoutsResponse);
+
+  if (json?.workouts?.length > workoutData.duration) {
+    console.log(json?.workouts.slice(0, workoutData.duration));
+
+    json.workouts = json?.workouts.slice(0, workoutData.duration);
   }
-  const data = { ...json, ...workoutData };
-  console.log(data.workouts.length);
-  if (data.duration !== data.workouts.length) {
+  if (
+    !json ||
+    !Array.isArray(json.workouts) ||
+    json.workouts.length !== workoutData.duration
+  ) {
     throw new AppError(
       500,
-      `day:${workoutData?.duration} not equal workouts:${data.workouts.length} in numbner`
+      `Invalid workout plan: Expected ${workoutData.duration} workouts, got ${
+        json?.workouts?.length || 0
+      }`
     );
   }
+
+  const data = { ...json, ...workoutData };
 
   const workout = await WorkoutPlan.create(data);
 
@@ -89,12 +125,18 @@ const getAllWorkouts = async (
   const { isDeleted, duration, page = 1, limit = 15 } = query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  // Step 1: Get total count for pagination
-  const total = await WorkoutPlan.countDocuments({ duration, isDeleted });
+  // Step 1: Build query filter
+  const filter: Record<string, unknown> = { isDeleted };
+  if (duration) {
+    filter.duration = duration;
+  }
+
+  // Step 2: Get total count for pagination
+  const total = await WorkoutPlan.countDocuments(filter);
   const totalPage = Math.ceil(total / Number(limit));
 
-  // Step 2: Fetch paginated workout plans with populated exercises
-  const workoutPlans = await WorkoutPlan.find({ duration, isDeleted })
+  // Step 3: Fetch paginated workout plans with populated exercises
+  const workoutPlans = await WorkoutPlan.find(filter)
     .populate({
       path: "workouts",
       populate: "exercises",
@@ -102,7 +144,7 @@ const getAllWorkouts = async (
     .skip(skip)
     .limit(Number(limit));
 
-  // Step 3: Check if user is enrolled in each workout plan
+  // Step 4: Check if user is enrolled in each workout plan
   const workoutPlanIds = workoutPlans.map((workout) => workout._id);
   const userWorkoutPlans = await UserWorkoutPlan.find({
     userId,

@@ -3,6 +3,8 @@ import { WorkoutVideoController } from "./workoutVideo.controller";
 import auth from "../../../middleware/auth/auth";
 import fileUploadHandler from "../../../middleware/fileUploadHandler";
 import { parseField } from "../../../middleware/parseDataMiddleware";
+import validateRequest from "../../../middleware/validator";
+import { zodWorkoutVideoSchema } from "./workoutVideo.validation";
 
 const router = express.Router();
 
@@ -21,6 +23,7 @@ router.post(
   auth("ADMIN"),
   fileUploadHandler(),
   parseField("data"),
+  validateRequest(zodWorkoutVideoSchema),
   WorkoutVideoController.createWorkoutVideo
 );
 router.patch(

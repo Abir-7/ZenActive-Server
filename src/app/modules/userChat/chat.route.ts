@@ -9,6 +9,7 @@ router.get(
   auth("USER"),
   ChatController.getChatsBetweenUsers
 );
+router.post("/chat-with-fitbot/", auth("USER"), ChatController.chatWithFitbot);
 router.post("/:friendId", auth("USER"), ChatController.createChat);
 
 export const ChatRouter = router;

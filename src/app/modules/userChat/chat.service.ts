@@ -5,6 +5,7 @@ import Friend from "../userConnection/friendList/friendlist.model";
 import { IChat } from "./chat.interface";
 import { Chat } from "./chat.model";
 import UserConnection from "../userConnection/friendList/friendlist.model";
+import { getGeminiResponse } from "../../utils/getGeminiResponse";
 
 const createChat = async (chatData: IChat) => {
   const [isSenderExist, isReceiverExist] = await Promise.all([
@@ -111,7 +112,26 @@ const getChatsBetweenUsers = async (
 
   return { userChat, userFriendShipStatus, meta };
 };
+
+const chatWithFitBot = async (prompt: string): Promise<string> => {
+  try {
+    const workoutsResponse = await getGeminiResponse(prompt);
+
+    // Extract text if the response is structured
+    const responseText =
+      typeof workoutsResponse === "string"
+        ? workoutsResponse
+        : JSON.stringify(workoutsResponse, null, 2); // Convert object to readable text if necessary
+
+    return responseText;
+  } catch (error) {
+    console.error("Error fetching response from Gemini:", error);
+    return "Sorry, I couldn't process your request. Please try again.";
+  }
+};
+
 export const ChatService = {
   createChat,
   getChatsBetweenUsers,
+  chatWithFitBot,
 };

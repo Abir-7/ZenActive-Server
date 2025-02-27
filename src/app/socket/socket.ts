@@ -23,10 +23,6 @@ const setupSocket = (server: any) => {
     socket.on(
       "sendMessage",
       (data: { senderId: string; receiverId: string; message: string }) => {
-        console.log(
-          data,
-          "-------------------------------------------------------------------------------------->"
-        );
         const { senderId, receiverId, message } = data;
         senderId;
         handleSendMessage({ senderId, receiverId, message });

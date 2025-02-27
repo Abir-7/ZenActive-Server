@@ -13,7 +13,7 @@ router.post(
   auth("USER"),
   CommentController.createComment
 );
-//
+//  video comment-------------
 router.post(
   "/add-video-comment",
   validateRequest(zodVideoCommentSchema),
@@ -21,7 +21,7 @@ router.post(
   CommentController.createVideoComment
 );
 router.get("/video/:videoId", CommentController.fetchVideoCommentsByVideoId);
-//
+//------------------------------
 router.get("/post/:postId", CommentController.fetchCommentsByPostId);
 
 router.patch("/:id", auth("USER"), CommentController.editComment);
