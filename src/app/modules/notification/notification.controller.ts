@@ -31,17 +31,18 @@ const getAllNotifications = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const updateNotification = catchAsync(async (req: Request, res: Response) => {
-//   const { id } = req.params;
-//   const result = await NotificationService.updateNotification(id, req.body);
-//   sendResponse(res, {
-//     data: result,
-//     success: true,
-//     statusCode: httpStatus.OK,
-//     message: "Notification updated successfully.",
-//   });
-// });
+const updateNotification = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await NotificationService.updateNotification(id);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Notification updated successfully.",
+  });
+});
 
 export const NotificationController = {
   getAllNotifications,
+  updateNotification,
 };

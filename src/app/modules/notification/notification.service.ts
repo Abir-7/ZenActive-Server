@@ -14,11 +14,15 @@ const getAllNotifications = async (
   const skip = (page - 1) * limit;
 
   // Step 1: Count total notifications for pagination
-  const total = await Notification.countDocuments({ receiverId: userId });
+  const total = await Notification.countDocuments({
+    receiverId: userId,
+  });
   const totalPage = Math.ceil(total / limit);
 
   // Step 2: Fetch notifications with pagination
-  const notifications = await Notification.find({ receiverId: userId })
+  const notifications = await Notification.find({
+    receiverId: userId,
+  })
     .populate({
       path: "senderId",
       select: "name _id email image",
@@ -39,16 +43,18 @@ const getAllNotifications = async (
   };
 };
 
-// const updateNotification = async (
-//   id: string,
-//   updateData: Partial<INotification>
-// ) => {
-//   const notification = await Notification.findByIdAndUpdate(id, updateData, {
-//     new: true,
-//   });
-//   return notification;
-// };
+const updateNotification = async (id: string) => {
+  const notification = await Notification.findByIdAndUpdate(
+    id,
+    { isRead: true },
+    {
+      new: true,
+    }
+  );
+  return notification;
+};
 
 export const NotificationService = {
   getAllNotifications,
+  updateNotification,
 };

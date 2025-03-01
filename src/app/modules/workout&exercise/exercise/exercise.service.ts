@@ -1,20 +1,76 @@
+import path from "path";
 import mongoose, { Types } from "mongoose";
 import AppError from "../../../errors/AppError";
 import unlinkFile from "../../../utils/unlinkFiles";
-import { User } from "../../user/user.model";
+
 import DailyExercise from "../../usersDailyExercise/dailyExercise.model";
 import { IExercise } from "./exercise.interface";
 import Exercise from "./exercise.model";
 import status from "http-status";
+import { Request } from "express";
+
+import { cloudinaryInstance } from "../../../utils/cloudinary/cloudinary";
+import { extractPublicId } from "../../../utils/cloudinary/getPublicID";
+import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
+import getVideoDurationInSeconds from "get-video-duration";
 
 // Create a new exercise
-const createExercise = async (exerciseData: IExercise) => {
+const createExercise = async (req: Request) => {
+  let video = null;
+  let image = null;
+  if (req.files && "media" in req.files && req.files.media[0]) {
+    // const s3Url = await uploadFileToS3(filePath, file.filename);
+    // if (s3Url) {
+    //   video = s3Url;
+    // } else {
+    //   throw new AppError(500, "Video upload faield");
+    // }
+
+    const pathLink = `/medias/${req.files.media[0].filename}`;
+    const file = req.files.media[0];
+    const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
+
+    try {
+      const uploadResult = await cloudinaryInstance.uploader.upload(filePath, {
+        public_id: file.filename.split(".")[0].trim(),
+        folder: "videos",
+        resource_type: "video",
+        eager: [
+          {
+            width: 1280,
+            height: 720,
+            crop: "scale",
+            quality: "auto",
+          },
+        ],
+        eager_async: true,
+      });
+      video = uploadResult.secure_url; // Cloudinary URL
+
+      // Delete local file after upload
+      unlinkFile(pathLink);
+    } catch (error) {
+      // console.log(error);
+      unlinkFile(pathLink);
+      throw new AppError(500, "Video upload to Cloudinary failed");
+    }
+  }
+
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
+  }
+  const value = {
+    ...req.body,
+    video,
+    image,
+  } as IExercise;
+
   const exercise = await Exercise.create({
-    ...exerciseData,
-    duration: Number(exerciseData.duration * 60),
+    ...value,
+    duration: Number(value.duration * 60),
   });
-  if (!exercise && exerciseData.image) {
-    unlinkFile(exerciseData.image);
+  if (!exercise && value.image) {
+    unlinkFile(value.image);
   }
   return exercise;
 };
@@ -115,23 +171,75 @@ const getExerciseById = async (exerciseId: string) => {
 };
 
 // Update an exercise by ID
-const updateExercise = async (
-  exerciseId: string,
-  updateData: Partial<IExercise>
-) => {
+const updateExercise = async (exerciseId: string, req: Request) => {
   const isExist = await Exercise.findById(exerciseId);
 
   if (!isExist?._id) {
     throw new AppError(404, "Workout not found.");
   }
 
-  if (updateData.image) {
-    unlinkFile(isExist.image as string);
+  let video = null;
+  let image = null;
+  let duration = null;
+  if (req.files && "media" in req.files && req.files.media[0]) {
+    const pathLink = `/medias/${req.files.media[0].filename}`;
+    const file = req.files.media[0];
+    const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
+    console.log(file.filename.split(".")[0]);
+    try {
+      const uploadResult = await cloudinaryInstance.uploader.upload(filePath, {
+        public_id: file.filename.split(".")[0].trim(),
+        folder: "videos",
+        resource_type: "video",
+        eager: [
+          {
+            width: 1280,
+            height: 720,
+            crop: "scale",
+            quality: "auto",
+          },
+        ],
+        eager_async: true,
+      });
+
+      video = uploadResult.secure_url; // Cloudinary URL
+
+      await getVideoDurationInSeconds(req.files.media[0].path)
+        .then((durations: number) => {
+          duration = durations;
+        })
+        .catch((error: any) => {
+          throw new Error("Failed to get duration");
+        });
+
+      // Delete local file after upload
+      unlinkFile(pathLink);
+
+      const videoLink = isExist.video;
+      const publicId = extractPublicId(videoLink);
+      await deleteCloudinaryVideo(publicId, "video");
+    } catch (error) {
+      // console.log(error);
+      unlinkFile(pathLink);
+      throw new AppError(500, "Video upload to Cloudinary failed");
+    }
   }
-  if (updateData.video) {
-    unlinkFile(isExist.video as string);
+
+  if (req.files && "image" in req.files && req.files.image[0]) {
+    image = `/images/${req.files.image[0].filename}`;
   }
-  const updated = await Exercise.findByIdAndUpdate(exerciseId, updateData, {
+
+  let value = req.body as Partial<IExercise>;
+
+  if (image) {
+    value = { ...value, image };
+    unlinkFile(isExist.image);
+  }
+  if (video) {
+    value = { ...value, video };
+  }
+
+  const updated = await Exercise.findByIdAndUpdate(exerciseId, value, {
     new: true,
   }).exec();
 

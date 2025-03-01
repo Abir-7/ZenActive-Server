@@ -274,10 +274,10 @@ const inviteUser = async (
     receiverId,
     groupId,
     type: NotificationType.JOIN_GROUP_REQUEST,
-    message: `${
+    message: `\`${
       sender?.name?.firstName +
       (sender?.name?.lastName ? " " + sender.name.lastName : "")
-    } requested you to join a group`,
+    }\` requested you to join a group`,
   });
 
   handleNotification(

@@ -71,7 +71,7 @@ const fileUploadHandler = () => {
       if (file.mimetype === "video/mp4" || file.mimetype === "audio/mpeg") {
         cb(null, true);
       } else {
-        cb(new AppError(500, "Only .mp4, .mp3, file supported"));
+        cb(new AppError(500, "Only .mp4 file supported")); //, .mp3,
       }
     } else if (file.fieldname === "doc") {
       if (file.mimetype === "application/pdf") {

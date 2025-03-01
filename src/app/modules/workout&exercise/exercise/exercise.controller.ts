@@ -6,22 +6,7 @@ import sendResponse from "../../../utils/sendResponse";
 import { ExerciseService } from "./exercise.service";
 
 const createExercise = catchAsync(async (req: Request, res: Response) => {
-  let video = null;
-  let image = null;
-  if (req.files && "media" in req.files && req.files.media[0]) {
-    video = `/medias/${req.files.media[0].filename}`;
-  }
-
-  if (req.files && "image" in req.files && req.files.image[0]) {
-    image = `/images/${req.files.image[0].filename}`;
-  }
-  const value = {
-    ...req.body,
-    video,
-    image,
-  };
-
-  const result = await ExerciseService.createExercise(value);
+  const result = await ExerciseService.createExercise(req);
   sendResponse(res, {
     data: result,
     success: true,
@@ -64,24 +49,8 @@ const getExerciseById = catchAsync(async (req: Request, res: Response) => {
 // Update an exercise by ID
 const updateExercise = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const updateData = req.body;
 
-  let video = null;
-  let value = null;
-  if (req.files && "media" in req.files && req.files.media[0]) {
-    video = `/medias/${req.files.media[0].filename}`;
-  }
-
-  if (video) {
-    value = {
-      ...req.body,
-      video,
-    };
-  } else {
-    value = req.body;
-  }
-
-  const result = await ExerciseService.updateExercise(id, value);
+  const result = await ExerciseService.updateExercise(id, req);
   sendResponse(res, {
     data: result,
     success: true,

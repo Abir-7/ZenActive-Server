@@ -5,5 +5,6 @@ import auth from "../../middleware/auth/auth";
 const router = express.Router();
 
 router.get("/", auth("USER"), NotificationController.getAllNotifications);
+router.patch("/:id", auth("USER"), NotificationController.updateNotification);
 
 export const NotificationRoute = router;

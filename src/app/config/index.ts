@@ -55,4 +55,16 @@ export const config = {
   ai: {
     gemini_api_key: process.env.GEMINI_API_LEY,
   },
+
+  aws: {
+    aws_access_key: process.env.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key: process.env.AWS_SECRET_ACCESS_KEY,
+    aws_region: process.env.AWS_REGION,
+    aws_bucket_name: process.env.AWS_BUCKET_NAME,
+  },
+  cloudinary: {
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  },
 };

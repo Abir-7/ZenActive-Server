@@ -40,7 +40,7 @@ const addComment = async (commentData: IComment) => {
           receiverId: post.userId._id,
           type: NotificationType.COMMENT,
           postId: commentData.postId,
-          message: `${userName} commented on your post`,
+          message: `\`${userName}\` commented on your post`,
         },
       ],
       { session }

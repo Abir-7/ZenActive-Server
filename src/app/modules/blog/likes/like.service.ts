@@ -41,7 +41,7 @@ const toggleLike = async (postId: string, userId: string) => {
             receiverId: post.userId._id,
             type: NotificationType.LIKE,
             postId,
-            message: `${userName} likes your post`,
+            message: `\`${userName}\` likes your post`,
           },
         ],
         { session }

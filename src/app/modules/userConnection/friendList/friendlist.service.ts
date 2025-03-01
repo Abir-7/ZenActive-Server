@@ -13,6 +13,9 @@ const sendRequest = async (
   userId: Types.ObjectId,
   friendId: Types.ObjectId
 ) => {
+  const senderData = await User.findById(userId).select("name");
+  console.log(senderData);
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -37,7 +40,10 @@ const sendRequest = async (
           senderId: userId,
           receiverId: friendId,
           type: NotificationType.FRIEND_REQUEST,
-          message: "You have a new friend request",
+          message: `\`${
+            senderData?.name?.firstName +
+            (senderData?.name?.lastName ? " " + senderData.name.lastName : "")
+          }\` sent you a friend requiest.`,
         },
       ],
       { session }

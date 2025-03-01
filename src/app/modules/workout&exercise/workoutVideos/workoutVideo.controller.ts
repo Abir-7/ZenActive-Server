@@ -35,33 +35,7 @@ const getSingleWorkoutVideos = catchAsync(
   }
 );
 const createWorkoutVideo = catchAsync(async (req: Request, res: Response) => {
-  let image = null;
-  let video = null;
-  let duration = null;
-  if (req.files && "image" in req.files && req.files.image[0]) {
-    image = `/images/${req.files.image[0].filename}`;
-  }
-
-  if (req.files && "media" in req.files && req.files.media[0]) {
-    video = `/medias/${req.files.media[0].filename}`;
-
-    await getVideoDurationInSeconds(req.files.media[0].path)
-      .then((durations: number) => {
-        duration = durations;
-      })
-      .catch((error: any) => {
-        throw new Error("Failed to get durattion");
-      });
-  }
-
-  const value = {
-    ...req.body,
-    image,
-    video,
-    duration,
-  };
-
-  const result = await WorkoutVideoService.createWorkoutVideo(value);
+  const result = await WorkoutVideoService.createWorkoutVideo(req);
 
   sendResponse(res, {
     data: result,
@@ -73,36 +47,7 @@ const createWorkoutVideo = catchAsync(async (req: Request, res: Response) => {
 const updateWorkoutVideo = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  let image = null;
-  let video = null;
-  let value = null;
-  if (req.files && "image" in req.files && req.files.image[0]) {
-    image = `/images/${req.files.image[0].filename}`;
-  }
-  if (req.files && "media" in req.files && req.files.media[0]) {
-    video = `/medias/${req.files.media[0].filename}`;
-  }
-  if (image && video) {
-    value = {
-      ...req.body,
-      image,
-      video,
-    };
-  } else if (video) {
-    value = {
-      ...req.body,
-      video,
-    };
-  } else if (image) {
-    value = {
-      ...req.body,
-      image,
-    };
-  } else {
-    value = req.body;
-  }
-
-  const result = await WorkoutVideoService.updateWorkoutVideo(id, value);
+  const result = await WorkoutVideoService.updateWorkoutVideo(id, req);
   sendResponse(res, {
     data: result,
     success: true,
