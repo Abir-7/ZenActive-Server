@@ -45,9 +45,7 @@ const updateGroup = async (
     { _id: groupId, admin: userId, isDeleted: false },
     updateData,
     { new: true }
-  )
-    .populate({ path: "users", select: "name email _id image" })
-    .exec();
+  ).exec();
 
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, "Group update failed.");
