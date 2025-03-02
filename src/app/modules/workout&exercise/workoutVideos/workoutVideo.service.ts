@@ -70,6 +70,9 @@ const createWorkoutVideo = async (req: Request) => {
       });
 
       video = uploadResult.secure_url; // Cloudinary URL
+      if (uploadResult.eager[0].secure_url) {
+        video = uploadResult.eager[0].secure_url;
+      }
 
       await getVideoDurationInSeconds(req.files.media[0].path)
         .then((durations: number) => {
@@ -143,6 +146,9 @@ const updateWorkoutVideo = async (
 
       video = uploadResult.secure_url; // Cloudinary URL
 
+      if (uploadResult.eager[0].secure_url) {
+        video = uploadResult.eager[0].secure_url;
+      }
       await getVideoDurationInSeconds(req.files.media[0].path)
         .then((durations: number) => {
           duration = durations;
@@ -158,7 +164,6 @@ const updateWorkoutVideo = async (
       const publicId = extractPublicId(videoLink);
       await deleteCloudinaryVideo(publicId, "video");
     } catch (error) {
-      // console.log(error);
       unlinkFile(pathLink);
       throw new AppError(500, "Video upload to Cloudinary failed");
     }

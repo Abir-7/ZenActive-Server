@@ -18,6 +18,7 @@ import getVideoDurationInSeconds from "get-video-duration";
 const createExercise = async (req: Request) => {
   let video = null;
   let image = null;
+  let duration = null;
   if (req.files && "media" in req.files && req.files.media[0]) {
     // const s3Url = await uploadFileToS3(filePath, file.filename);
     // if (s3Url) {
@@ -46,6 +47,17 @@ const createExercise = async (req: Request) => {
         eager_async: true,
       });
       video = uploadResult.secure_url; // Cloudinary URL
+      if (uploadResult.eager[0].secure_url) {
+        video = uploadResult.eager[0].secure_url;
+      }
+
+      await getVideoDurationInSeconds(req.files.media[0].path)
+        .then((durations: number) => {
+          duration = durations;
+        })
+        .catch((error: any) => {
+          throw new Error("Failed to get duration");
+        });
 
       // Delete local file after upload
       unlinkFile(pathLink);
@@ -203,6 +215,10 @@ const updateExercise = async (exerciseId: string, req: Request) => {
       });
 
       video = uploadResult.secure_url; // Cloudinary URL
+
+      if (uploadResult.eager[0].secure_url) {
+        video = uploadResult.eager[0].secure_url;
+      }
 
       await getVideoDurationInSeconds(req.files.media[0].path)
         .then((durations: number) => {
