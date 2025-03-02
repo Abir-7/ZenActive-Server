@@ -20,7 +20,6 @@ const AppError_1 = __importDefault(require("../../../errors/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
 const exercise_model_1 = __importDefault(require("../exercise/exercise.model"));
 const QueryBuilder_1 = __importDefault(require("../../../builder/QueryBuilder"));
-const agent_1 = require("../../aiAgent/agent");
 // Create a new workout
 const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, function* () {
     const workout = new workout_model_1.default(workoutData);
@@ -31,7 +30,7 @@ const createWorkout = (workoutData) => __awaiter(void 0, void 0, void 0, functio
 });
 // Get all workouts
 const getAllWorkouts = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (query = {}) {
-    (0, agent_1.processUserQuery)("make 1 week workout plan");
+    // await processQuery("make a workout plan for 18 week name:Full Body");
     query.isDeleted = false;
     const workout = new QueryBuilder_1.default(workout_model_1.default.find().populate("exercises"), query)
         .search(["name"])

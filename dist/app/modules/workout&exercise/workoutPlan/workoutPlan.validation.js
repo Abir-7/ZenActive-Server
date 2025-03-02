@@ -2,35 +2,39 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.zodUpdateWorkoutPlanSchema = exports.zodWorkoutPlanSchema = void 0;
 const zod_1 = require("zod");
-exports.zodWorkoutPlanSchema = zod_1.z.object({
+exports.zodWorkoutPlanSchema = zod_1.z
+    .object({
     body: zod_1.z.object({
-        name: zod_1.z.string().min(1, { message: "Title is required" }),
+        name: zod_1.z.string().min(1, { message: "Name is required" }),
+        description: zod_1.z.string().min(1, { message: "Description is required" }),
         duration: zod_1.z
             .number()
             .positive({ message: "Duration must be a positive number" }),
-        workouts: zod_1.z.array(zod_1.z.string().min(1, { message: "Exercise name is required" })),
         points: zod_1.z
             .number()
             .positive({ message: "Reward points must be a positive number" }),
-        isDeleted: zod_1.z.boolean().optional().default(false),
+        about: zod_1.z.string().min(1, { message: "About section is required" }),
     }),
-});
-exports.zodUpdateWorkoutPlanSchema = zod_1.z
-    .object({
+})
+    .strict();
+exports.zodUpdateWorkoutPlanSchema = zod_1.z.object({
     body: zod_1.z.object({
-        name: zod_1.z.string().min(1, { message: "Title is required" }).optional(),
+        name: zod_1.z.string().min(1, { message: "Name is required" }).optional(),
+        description: zod_1.z
+            .string()
+            .min(1, { message: "Description is required" })
+            .optional(),
         duration: zod_1.z
             .number()
             .positive({ message: "Duration must be a positive number" })
-            .optional(),
-        workouts: zod_1.z
-            .array(zod_1.z.string().min(1, { message: "Exercise name is required" }))
             .optional(),
         points: zod_1.z
             .number()
             .positive({ message: "Reward points must be a positive number" })
             .optional(),
-        isDeleted: zod_1.z.boolean().optional(),
+        about: zod_1.z
+            .string()
+            .min(1, { message: "About section is required" })
+            .optional(),
     }),
-})
-    .optional();
+});

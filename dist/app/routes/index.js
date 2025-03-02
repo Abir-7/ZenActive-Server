@@ -12,7 +12,6 @@ const userMealPlan_route_1 = require("../modules/userMealPlan/userMealPlan.route
 const post_route_1 = require("../modules/blog/post/post.route");
 const comment_route_1 = require("../modules/blog/comments/comment.route");
 const like_router_1 = require("../modules/blog/likes/like.router");
-const group_route_1 = require("../modules/socialGroup/group.route");
 const appdata_route_1 = require("../modules/userAppData/appdata.route");
 const chat_route_1 = require("../modules/userChat/chat.route");
 const workoutPlan_route_1 = require("../modules/workout&exercise/workoutPlan/workoutPlan.route");
@@ -26,6 +25,9 @@ const subscription_route_1 = require("../modules/payment/subscription/subscripti
 const privacy_terms_aboutus_route_1 = require("../modules/privacy & terms & about us/privacy_terms_aboutus.route");
 const dailyExercise_route_1 = require("../modules/usersDailyExercise/dailyExercise.route");
 const workoutVideo_route_1 = require("../modules/workout&exercise/workoutVideos/workoutVideo.route");
+const group_route_1 = require("../modules/socialGroup/Group/group.route");
+const userGroup_route_1 = require("../modules/socialGroup/UsersGroup/userGroup.route");
+const notification_route_1 = require("../modules/notification/notification.route");
 const router = (0, express_1.Router)();
 const apiRoutes = [
     { path: "/user", route: user_route_1.UserRoute },
@@ -41,6 +43,7 @@ const apiRoutes = [
     { path: "/meal-plan", route: userMealPlan_route_1.UserMealPlanRoute },
     { path: "/app-data", route: appdata_route_1.AppDataRoute },
     { path: "/group", route: group_route_1.GroupRoute },
+    { path: "/user-group", route: userGroup_route_1.UserGroupRoute },
     { path: "/post", route: post_route_1.PostRoute },
     { path: "/comment", route: comment_route_1.CommentRoute },
     { path: "/like", route: like_router_1.LikeRoute },
@@ -53,6 +56,7 @@ const apiRoutes = [
     { path: "/subscription", route: subscription_route_1.SubscriptionRoute },
     { path: "/privacy&terms", route: privacy_terms_aboutus_route_1.PrivacyTermsAboutUsRoute },
     { path: "/daily-exercise", route: dailyExercise_route_1.DailyExerciseRoutes },
+    { path: "/notification", route: notification_route_1.NotificationRoute },
 ];
 apiRoutes.forEach((route) => router.use(route.path, route.route));
 exports.default = router;

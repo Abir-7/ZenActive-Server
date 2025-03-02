@@ -16,6 +16,7 @@ router.post("/create", (0, auth_1.default)("USER"), (0, fileUploadHandler_1.defa
 router.patch("/:postId", (0, auth_1.default)("USER"), (0, fileUploadHandler_1.default)(), (0, parseDataMiddleware_1.parseField)("data"), post_controller_1.PostController.editPost);
 router.get("/user-post", (0, auth_1.default)("USER"), post_controller_1.PostController.getUserPosts);
 router.get("/all-user-post", (0, auth_1.default)("USER"), post_controller_1.PostController.getAllUserPosts);
-router.get("/group-post/:groupId", (0, auth_1.default)("USER"), post_controller_1.PostController.getGroupPosts);
+router.get("/user-all-group-post", (0, auth_1.default)("USER"), post_controller_1.PostController.getUserAllGroupPost);
+router.get("/group-post/:groupId", (0, auth_1.default)("USER"), post_controller_1.PostController.getGroupsAllPosts);
 router.delete("/:postId", (0, auth_1.default)("USER"), post_controller_1.PostController.deletePost);
 exports.PostRoute = router;

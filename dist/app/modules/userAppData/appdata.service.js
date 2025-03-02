@@ -34,7 +34,29 @@ const addWorkoutTime = (time, userId) => __awaiter(void 0, void 0, void 0, funct
     yield appData.save();
     return appData;
 });
+const getLeaderboard = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
+    // Get total count for pagination
+    const total = yield appdata_model_1.UserAppData.countDocuments();
+    const totalPage = Math.ceil(total / limit);
+    // Fetch leaderboard sorted by points in descending order
+    const leaderboard = yield appdata_model_1.UserAppData.find()
+        .populate({
+        path: "userId",
+        select: "_id name email image",
+        options: { lean: true },
+    })
+        .sort({ points: -1 }) // Sorting by points (descending)
+        .skip(skip)
+        .limit(limit)
+        .lean();
+    return {
+        meta: { limit, page, total, totalPage },
+        data: leaderboard,
+    };
+});
 exports.AppDataService = {
     addPoints,
     addWorkoutTime,
+    getLeaderboard,
 };

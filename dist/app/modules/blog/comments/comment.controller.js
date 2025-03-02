@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommentController = void 0;
 const http_status_1 = __importDefault(require("http-status"));
-const comment_service_1 = require("./comment.service");
 const catchAsync_1 = __importDefault(require("../../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../../utils/sendResponse"));
+const comment_service_1 = require("./comment.service");
 const createComment = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.user;
     const { postId, comment } = req.body;
@@ -26,6 +26,21 @@ const createComment = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         success: true,
         statusCode: http_status_1.default.CREATED,
         message: "Comment successfully created.",
+    });
+}));
+const createVideoComment = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.user;
+    const { videoId, comment } = req.body;
+    const result = yield comment_service_1.CommentService.addVideoComment({
+        userId,
+        videoId,
+        comment,
+    });
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.CREATED,
+        message: "Video Comment successfully created.",
     });
 }));
 // const fetchCommentById = catchAsync(async (req: Request, res: Response) => {
@@ -40,9 +55,23 @@ const createComment = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 // });
 const fetchCommentsByPostId = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { postId } = req.params;
-    const result = yield comment_service_1.CommentService.getCommentsByPostId(postId);
+    const { page = 1, limit = 15 } = req.query;
+    const result = yield comment_service_1.CommentService.getCommentsByPostId(postId, Number(page), Number(limit));
     (0, sendResponse_1.default)(res, {
-        data: result,
+        data: result.data,
+        meta: result.meta,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Comments fetched successfully.",
+    });
+}));
+const fetchVideoCommentsByVideoId = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { videoId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+    const result = yield comment_service_1.CommentService.getVideoCommentsByVideoId(videoId, Number(page), Number(limit));
+    (0, sendResponse_1.default)(res, {
+        data: result.data,
+        meta: result.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Comments fetched successfully.",
@@ -76,4 +105,6 @@ exports.CommentController = {
     fetchCommentsByPostId,
     editComment,
     removeComment,
+    createVideoComment,
+    fetchVideoCommentsByVideoId,
 };

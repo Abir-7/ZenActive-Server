@@ -69,7 +69,7 @@ const fileUploadHandler = () => {
                 cb(null, true);
             }
             else {
-                cb(new AppError_1.default(500, "Only .mp4, .mp3, file supported"));
+                cb(new AppError_1.default(500, "Only .mp4 file supported")); //, .mp3,
             }
         }
         else if (file.fieldname === "doc") {

@@ -17,11 +17,12 @@ const workoutVideo_service_1 = require("./workoutVideo.service");
 const http_status_1 = __importDefault(require("http-status"));
 const catchAsync_1 = __importDefault(require("../../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../../utils/sendResponse"));
-const { getVideoDurationInSeconds } = require("get-video-duration");
 const getAllWorkoutVideos = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield workoutVideo_service_1.WorkoutVideoService.getAllWorkoutVideos();
+    const { page = 1, limit = 20 } = req.query;
+    const result = yield workoutVideo_service_1.WorkoutVideoService.getAllWorkoutVideos(Number(page), Number(limit));
     (0, sendResponse_1.default)(res, {
-        data: result,
+        data: result.data,
+        meta: result.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Workout videos fetched successfully.",
@@ -37,26 +38,7 @@ const getSingleWorkoutVideos = (0, catchAsync_1.default)((req, res) => __awaiter
     });
 }));
 const createWorkoutVideo = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let image = null;
-    let video = null;
-    let duration = null;
-    if (req.files && "image" in req.files && req.files.image[0]) {
-        image = `/images/${req.files.image[0].filename}`;
-    }
-    if (req.files && "media" in req.files && req.files.media[0]) {
-        video = `/medias/${req.files.media[0].filename}`;
-        yield getVideoDurationInSeconds(req.files.media[0].path)
-            .then((durations) => {
-            duration = durations;
-        })
-            .catch((error) => {
-            throw new Error("Failed to get durattion");
-        });
-    }
-    const value = Object.assign(Object.assign({}, req.body), { image,
-        video,
-        duration });
-    const result = yield workoutVideo_service_1.WorkoutVideoService.createWorkoutVideo(value);
+    const result = yield workoutVideo_service_1.WorkoutVideoService.createWorkoutVideo(req);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -66,29 +48,7 @@ const createWorkoutVideo = (0, catchAsync_1.default)((req, res) => __awaiter(voi
 }));
 const updateWorkoutVideo = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    let image = null;
-    let video = null;
-    let value = null;
-    if (req.files && "image" in req.files && req.files.image[0]) {
-        image = `/images/${req.files.image[0].filename}`;
-    }
-    if (req.files && "media" in req.files && req.files.media[0]) {
-        video = `/medias/${req.files.media[0].filename}`;
-    }
-    if (image && video) {
-        value = Object.assign(Object.assign({}, req.body), { image,
-            video });
-    }
-    else if (video) {
-        value = Object.assign(Object.assign({}, req.body), { video });
-    }
-    else if (image) {
-        value = Object.assign(Object.assign({}, req.body), { image });
-    }
-    else {
-        value = req.body;
-    }
-    const result = yield workoutVideo_service_1.WorkoutVideoService.updateWorkoutVideo(id, value);
+    const result = yield workoutVideo_service_1.WorkoutVideoService.updateWorkoutVideo(id, req);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

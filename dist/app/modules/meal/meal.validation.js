@@ -2,44 +2,39 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.zodUpdateMealSchema = exports.zodMealSchema = void 0;
 const zod_1 = require("zod");
+const user_interface_1 = require("../user/user.interface");
 const meal_interface_1 = require("./meal.interface");
-// Reusable schema for required nutritional information
-const NutritionalInfoSchema = zod_1.z.object({
-    calories: zod_1.z
-        .number({ required_error: "Calories is required" })
-        .min(0, { message: "Calories must be a positive number" }),
-    carbs: zod_1.z
-        .number({ required_error: "Carbs is required" })
-        .min(0, { message: "Carbs must be a positive number" }),
-    proteins: zod_1.z
-        .number({ required_error: "Proteins is required" })
-        .min(0, { message: "Proteins must be a positive number" }),
-    fats: zod_1.z
-        .number({ required_error: "Fats is required" })
-        .min(0, { message: "Fats must be a positive number" }),
-});
-const BaseMealSchema = zod_1.z.object({
-    mealName: zod_1.z
-        .string({ required_error: "Meal name is required" })
-        .min(1, { message: "Meal name cannot be empty" }),
-    category: zod_1.z
-        .string({ required_error: "Category is required" })
-        .min(1, { message: "Category cannot be empty" }),
-    mealTime: zod_1.z
-        .enum(meal_interface_1.Time, { required_error: "Meal time is required" })
-        .refine((val) => ["Breakfast", "Lunch", "Dinner", "Snacks"].includes(val), {
-        message: "Invalid meal time",
-    }),
-});
 exports.zodMealSchema = zod_1.z.object({
-    body: BaseMealSchema.extend({
-        nutritionalInfo: NutritionalInfoSchema,
+    body: zod_1.z.object({
+        mealName: zod_1.z.string(),
+        category: zod_1.z.string(),
+        suitableFor: zod_1.z.array(zod_1.z.nativeEnum(user_interface_1.DietType)),
+        nutritionalInfo: zod_1.z
+            .object({
+            calories: zod_1.z.number(),
+            carbs: zod_1.z.number(),
+            proteins: zod_1.z.number(),
+            fats: zod_1.z.number(),
+        })
+            .optional(),
+        mealTime: zod_1.z.enum(meal_interface_1.Time).optional(),
+        amount: zod_1.z.number().optional(),
     }),
 });
-// Schema for updating a meal
-const OptionalNutritionalInfoSchema = NutritionalInfoSchema.partial();
 exports.zodUpdateMealSchema = zod_1.z.object({
-    body: BaseMealSchema.partial().extend({
-        nutritionalInfo: OptionalNutritionalInfoSchema.optional(),
+    body: zod_1.z.object({
+        mealName: zod_1.z.string().optional(),
+        category: zod_1.z.string().optional(),
+        suitableFor: zod_1.z.array(zod_1.z.nativeEnum(user_interface_1.DietType)).optional(),
+        nutritionalInfo: zod_1.z
+            .object({
+            calories: zod_1.z.number().optional(),
+            carbs: zod_1.z.number().optional(),
+            proteins: zod_1.z.number().optional(),
+            fats: zod_1.z.number().optional(),
+        })
+            .optional(),
+        mealTime: zod_1.z.enum(meal_interface_1.Time).optional(),
+        amount: zod_1.z.number().optional(),
     }),
 });

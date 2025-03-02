@@ -13,24 +13,92 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExerciseService = void 0;
+const path_1 = __importDefault(require("path"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const AppError_1 = __importDefault(require("../../../errors/AppError"));
 const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const dailyExercise_model_1 = __importDefault(require("../../usersDailyExercise/dailyExercise.model"));
 const exercise_model_1 = __importDefault(require("./exercise.model"));
 const http_status_1 = __importDefault(require("http-status"));
+const cloudinary_1 = require("../../../utils/cloudinary/cloudinary");
+const getPublicID_1 = require("../../../utils/cloudinary/getPublicID");
+const deleteFile_1 = require("../../../utils/cloudinary/deleteFile");
+const get_video_duration_1 = __importDefault(require("get-video-duration"));
 // Create a new exercise
-const createExercise = (exerciseData) => __awaiter(void 0, void 0, void 0, function* () {
-    const exercise = yield exercise_model_1.default.create(Object.assign(Object.assign({}, exerciseData), { duration: Number(exerciseData.duration * 60) }));
-    if (!exercise && exerciseData.image) {
-        (0, unlinkFiles_1.default)(exerciseData.image);
+const createExercise = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    let video = null;
+    let image = null;
+    let duration = null;
+    if (req.files && "media" in req.files && req.files.media[0]) {
+        // const s3Url = await uploadFileToS3(filePath, file.filename);
+        // if (s3Url) {
+        //   video = s3Url;
+        // } else {
+        //   throw new AppError(500, "Video upload faield");
+        // }
+        const pathLink = `/medias/${req.files.media[0].filename}`;
+        const file = req.files.media[0];
+        const filePath = path_1.default.join(process.cwd(), `/uploads/${pathLink}`);
+        try {
+            const uploadResult = yield cloudinary_1.cloudinaryInstance.uploader.upload(filePath, {
+                public_id: file.filename.split(".")[0].trim(),
+                folder: "videos",
+                resource_type: "video",
+                eager: [
+                    {
+                        width: 1280,
+                        height: 720,
+                        crop: "scale",
+                        quality: "auto",
+                    },
+                ],
+                eager_async: true,
+            });
+            video = uploadResult.secure_url; // Cloudinary URL
+            if (uploadResult.eager[0].secure_url) {
+                video = uploadResult.eager[0].secure_url;
+            }
+            yield (0, get_video_duration_1.default)(req.files.media[0].path)
+                .then((durations) => {
+                duration = durations;
+            })
+                .catch((error) => {
+                throw new Error("Failed to get duration");
+            });
+            // Delete local file after upload
+            (0, unlinkFiles_1.default)(pathLink);
+        }
+        catch (error) {
+            // console.log(error);
+            (0, unlinkFiles_1.default)(pathLink);
+            throw new AppError_1.default(500, "Video upload to Cloudinary failed");
+        }
+    }
+    if (req.files && "image" in req.files && req.files.image[0]) {
+        image = `/images/${req.files.image[0].filename}`;
+    }
+    const value = Object.assign(Object.assign({}, req.body), { video,
+        image });
+    const exercise = yield exercise_model_1.default.create(Object.assign(Object.assign({}, value), { duration: Number(value.duration * 60) }));
+    if (!exercise && value.image) {
+        (0, unlinkFiles_1.default)(value.image);
     }
     return exercise;
 });
-const getAllExercise = (userRole, userId) => __awaiter(void 0, void 0, void 0, function* () {
+const getAllExercise = (userRole_1, userId_1, ...args_1) => __awaiter(void 0, [userRole_1, userId_1, ...args_1], void 0, function* (userRole, userId, page = 1, limit = 12) {
+    const skip = (page - 1) * limit;
     if (userRole === "ADMIN") {
-        // For admin, return all active exercises.
-        return yield exercise_model_1.default.find({ isDeleted: false }).exec();
+        // Get total count for pagination
+        const total = yield exercise_model_1.default.countDocuments({ isDeleted: false });
+        const totalPage = Math.ceil(total / limit);
+        const exercises = yield exercise_model_1.default.find({ isDeleted: false })
+            .skip(skip)
+            .limit(limit)
+            .exec();
+        return {
+            meta: { limit, page, total, totalPage },
+            data: exercises,
+        };
     }
     else {
         // Calculate today's boundaries.
@@ -38,13 +106,14 @@ const getAllExercise = (userRole, userId) => __awaiter(void 0, void 0, void 0, f
         startOfToday.setHours(0, 0, 0, 0);
         const endOfToday = new Date();
         endOfToday.setHours(23, 59, 59, 999);
-        return yield exercise_model_1.default.aggregate([
-            // Only include active (not deleted) exercises.
+        // Get total count for pagination
+        const total = yield exercise_model_1.default.countDocuments({ isDeleted: false });
+        const totalPage = Math.ceil(total / limit);
+        const exercises = yield exercise_model_1.default.aggregate([
             { $match: { isDeleted: false } },
-            // Lookup daily exercise records for the current user and only for today.
             {
                 $lookup: {
-                    from: "dailyexercises", // Use your actual DailyExercise collection name.
+                    from: "dailyexercises",
                     let: { exerciseId: "$_id" },
                     pipeline: [
                         {
@@ -59,23 +128,22 @@ const getAllExercise = (userRole, userId) => __awaiter(void 0, void 0, void 0, f
                                 },
                             },
                         },
-                        // Optionally, project only the fields you need.
                         { $project: { _id: 1 } },
                     ],
                     as: "dailyExercise",
                 },
             },
-            // Add the isCompleted field: true if there's at least one matching daily exercise.
             {
-                $addFields: {
-                    isCompleted: { $gt: [{ $size: "$dailyExercise" }, 0] },
-                },
+                $addFields: { isCompleted: { $gt: [{ $size: "$dailyExercise" }, 0] } },
             },
-            // Optionally, remove the dailyExercise field from the output.
-            {
-                $project: { dailyExercise: 0 },
-            },
+            { $project: { dailyExercise: 0 } },
+            { $skip: skip },
+            { $limit: limit },
         ]);
+        return {
+            meta: { limit, page, total, totalPage },
+            data: exercises,
+        };
     }
 });
 // Get an exercise by ID
@@ -99,18 +167,69 @@ const getExerciseById = (exerciseId) => __awaiter(void 0, void 0, void 0, functi
     return { exercise, participant: participantCount };
 });
 // Update an exercise by ID
-const updateExercise = (exerciseId, updateData) => __awaiter(void 0, void 0, void 0, function* () {
+const updateExercise = (exerciseId, req) => __awaiter(void 0, void 0, void 0, function* () {
     const isExist = yield exercise_model_1.default.findById(exerciseId);
     if (!(isExist === null || isExist === void 0 ? void 0 : isExist._id)) {
         throw new AppError_1.default(404, "Workout not found.");
     }
-    if (updateData.image) {
+    let video = null;
+    let image = null;
+    let duration = null;
+    if (req.files && "media" in req.files && req.files.media[0]) {
+        const pathLink = `/medias/${req.files.media[0].filename}`;
+        const file = req.files.media[0];
+        const filePath = path_1.default.join(process.cwd(), `/uploads/${pathLink}`);
+        console.log(file.filename.split(".")[0]);
+        try {
+            const uploadResult = yield cloudinary_1.cloudinaryInstance.uploader.upload(filePath, {
+                public_id: file.filename.split(".")[0].trim(),
+                folder: "videos",
+                resource_type: "video",
+                eager: [
+                    {
+                        width: 1280,
+                        height: 720,
+                        crop: "scale",
+                        quality: "auto",
+                    },
+                ],
+                eager_async: true,
+            });
+            video = uploadResult.secure_url; // Cloudinary URL
+            if (uploadResult.eager[0].secure_url) {
+                video = uploadResult.eager[0].secure_url;
+            }
+            yield (0, get_video_duration_1.default)(req.files.media[0].path)
+                .then((durations) => {
+                duration = durations;
+            })
+                .catch((error) => {
+                throw new Error("Failed to get duration");
+            });
+            // Delete local file after upload
+            (0, unlinkFiles_1.default)(pathLink);
+            const videoLink = isExist.video;
+            const publicId = (0, getPublicID_1.extractPublicId)(videoLink);
+            yield (0, deleteFile_1.deleteCloudinaryVideo)(publicId, "video");
+        }
+        catch (error) {
+            // console.log(error);
+            (0, unlinkFiles_1.default)(pathLink);
+            throw new AppError_1.default(500, "Video upload to Cloudinary failed");
+        }
+    }
+    if (req.files && "image" in req.files && req.files.image[0]) {
+        image = `/images/${req.files.image[0].filename}`;
+    }
+    let value = req.body;
+    if (image) {
+        value = Object.assign(Object.assign({}, value), { image });
         (0, unlinkFiles_1.default)(isExist.image);
     }
-    if (updateData.video) {
-        (0, unlinkFiles_1.default)(isExist.video);
+    if (video) {
+        value = Object.assign(Object.assign({}, value), { video });
     }
-    const updated = yield exercise_model_1.default.findByIdAndUpdate(exerciseId, updateData, {
+    const updated = yield exercise_model_1.default.findByIdAndUpdate(exerciseId, value, {
         new: true,
     }).exec();
     if (!(updated === null || updated === void 0 ? void 0 : updated._id)) {

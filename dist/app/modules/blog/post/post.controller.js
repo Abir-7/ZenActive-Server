@@ -67,19 +67,36 @@ const getUserPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
 }));
 const getAllUserPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.user;
-    const result = yield post_service_1.PostService.getAllUserPosts(userId);
+    const { page = 1, limit = 15 } = req.query;
+    const result = yield post_service_1.PostService.getAllUserPosts(userId, Number(page), Number(limit));
     (0, sendResponse_1.default)(res, {
-        data: result,
+        data: result.data,
+        meta: result.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Posts from users fetched successfully.",
     });
 }));
-const getGroupPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getGroupsAllPosts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { groupId } = req.params;
-    const result = yield post_service_1.PostService.getGroupPosts(groupId);
+    const { page = 1, limit = 25 } = req.query;
+    const result = yield post_service_1.PostService.getGroupsAllPosts(groupId, Number(page), Number(limit));
     (0, sendResponse_1.default)(res, {
-        data: result,
+        data: result.data,
+        meta: result.meta,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Posts fetched successfully.",
+    });
+}));
+const getUserAllGroupPost = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("--->");
+    const { userId } = req.user;
+    const { page = 1 } = req.query;
+    const result = yield post_service_1.PostService.getUserAllGroupPost(userId, Number(page));
+    (0, sendResponse_1.default)(res, {
+        data: result.posts,
+        meta: result.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Posts fetched successfully.",
@@ -98,8 +115,9 @@ const deletePost = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 exports.PostController = {
     createPost,
     editPost,
-    getGroupPosts,
+    getGroupsAllPosts,
     getUserPosts,
     deletePost,
     getAllUserPosts,
+    getUserAllGroupPost,
 };

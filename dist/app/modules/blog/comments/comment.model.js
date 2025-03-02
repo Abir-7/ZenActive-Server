@@ -33,11 +33,22 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoComment = exports.Comment = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const CommentSchema = new mongoose_1.Schema({
     postId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Post", required: true },
     comment: { type: String, required: true },
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
 }, { timestamps: true });
-const Comment = mongoose_1.default.model("Comment", CommentSchema);
-exports.default = Comment;
+exports.Comment = mongoose_1.default.model("Comment", CommentSchema);
+//   -------------------------------------------------------------------------
+const VideoCommentSchema = new mongoose_1.Schema({
+    videoId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "WorkoutVideo",
+        required: true,
+    },
+    comment: { type: String, required: true },
+    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+}, { timestamps: true });
+exports.VideoComment = mongoose_1.default.model("VideoComment", VideoCommentSchema);

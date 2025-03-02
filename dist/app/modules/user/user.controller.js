@@ -17,10 +17,8 @@ const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const http_status_1 = __importDefault(require("http-status"));
 const user_service_1 = require("./user.service");
-const newUserNotofication_1 = require("../../socket/notification/newUserNotofication");
 const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.UserService.createUser(req.body);
-    (0, newUserNotofication_1.handleNewUser)();
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

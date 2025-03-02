@@ -13,29 +13,54 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FriendListService = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
 const user_model_1 = require("../../user/user.model");
 const AppError_1 = __importDefault(require("../../../errors/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
 // import { Block } from "../blocklist/blockList.model";
 const friendlist_model_1 = __importDefault(require("./friendlist.model"));
+const notification_model_1 = require("../../notification/notification.model");
+const notification_interface_1 = require("../../notification/notification.interface");
+const handleNotification_1 = require("../../../socket/notification/handleNotification");
 const sendRequest = (userId, friendId) => __awaiter(void 0, void 0, void 0, function* () {
-    const existingFriendList = yield friendlist_model_1.default.findOne({
-        $or: [
-            { senderId: userId, receiverId: friendId },
-            { senderId: friendId, receiverId: userId },
-        ],
-    });
-    if (existingFriendList && existingFriendList.isAccepted == true) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "You are already friend.");
+    var _a, _b;
+    const senderData = yield user_model_1.User.findById(userId).select("name");
+    console.log(senderData);
+    const session = yield mongoose_1.default.startSession();
+    session.startTransaction();
+    try {
+        const existingFriendList = yield friendlist_model_1.default.findOne({
+            $or: [
+                { senderId: userId, receiverId: friendId },
+                { senderId: friendId, receiverId: userId },
+            ],
+        }).session(session);
+        if (existingFriendList) {
+            if (existingFriendList.isAccepted) {
+                throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "You are already friends.");
+            }
+            throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Already sent request");
+        }
+        yield notification_model_1.Notification.create([
+            {
+                senderId: userId,
+                receiverId: friendId,
+                type: notification_interface_1.NotificationType.FRIEND_REQUEST,
+                message: `\`${((_a = senderData === null || senderData === void 0 ? void 0 : senderData.name) === null || _a === void 0 ? void 0 : _a.firstName) +
+                    (((_b = senderData === null || senderData === void 0 ? void 0 : senderData.name) === null || _b === void 0 ? void 0 : _b.lastName) ? " " + senderData.name.lastName : "")}\` sent you a friend requiest.`,
+            },
+        ], { session });
+        (0, handleNotification_1.handleNotification)("You have a new friend request", String(friendId));
+        const sendRequest = yield friendlist_model_1.default.create([{ senderId: userId, receiverId: friendId }], { session });
+        yield session.commitTransaction();
+        session.endSession();
+        return sendRequest[0];
     }
-    if (existingFriendList && !(existingFriendList === null || existingFriendList === void 0 ? void 0 : existingFriendList.isAccepted)) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Already sent request");
+    catch (error) {
+        yield session.abortTransaction();
+        session.endSession();
+        throw error;
     }
-    const sendRequest = yield friendlist_model_1.default.create({
-        senderId: userId,
-        receiverId: friendId,
-    });
-    return sendRequest;
 });
 const acceteptRequest = (userId, friendId) => __awaiter(void 0, void 0, void 0, function* () {
     const friendList = yield friendlist_model_1.default.findOne({
@@ -51,7 +76,8 @@ const acceteptRequest = (userId, friendId) => __awaiter(void 0, void 0, void 0, 
     }, { isAccepted: true }, { new: true });
     return acceptUserRequest;
 });
-const getFriendList = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+const getFriendList = (userId_1, searchText_1, ...args_1) => __awaiter(void 0, [userId_1, searchText_1, ...args_1], void 0, function* (userId, searchText, page = 1, limit = 30) {
+    const skip = (page - 1) * limit;
     const friendList = yield friendlist_model_1.default.find({
         $or: [{ senderId: userId }, { receiverId: userId }],
         isAccepted: true,
@@ -67,13 +93,37 @@ const getFriendList = (userId) => __awaiter(void 0, void 0, void 0, function* ()
         select: "_id email image name",
         options: { lean: true },
     })
+        .skip(skip) // Apply pagination at the database level
+        .limit(limit)
         .lean();
-    return friendList.map((friend) => friend.senderId._id.toString() === userId
+    // Extract only the friend data
+    let friends = friendList.map((friend) => friend.senderId._id.toString() === userId
         ? friend.receiverId
         : friend.senderId);
+    // 🔍 Search by full name (case-insensitive)
+    if (searchText) {
+        const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
+        friends = friends.filter((friend) => {
+            var _a, _b;
+            const fullName = `${(_a = friend.name) === null || _a === void 0 ? void 0 : _a.firstName} ${(_b = friend === null || friend === void 0 ? void 0 : friend.name) === null || _b === void 0 ? void 0 : _b.lastName}`;
+            return searchRegex.test(fullName);
+        });
+    }
+    // Get total count for pagination
+    const total = friends.length;
+    const totalPage = Math.ceil(total / limit);
+    // Apply pagination
+    const paginatedFriends = friends.slice(skip, skip + limit);
+    return {
+        meta: { limit, page, total, totalPage },
+        data: paginatedFriends,
+    };
 });
-const getPendingList = (userId, type) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(userId, type);
+const getPendingList = (userId_1, type_1, ...args_1) => __awaiter(void 0, [userId_1, type_1, ...args_1], void 0, function* (userId, type, page = 1, limit = 30) {
+    if (!type) {
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "type query missing...");
+    }
+    const skip = (page - 1) * limit;
     const pendingRequests = yield friendlist_model_1.default.find({
         $or: [{ senderId: userId }, { receiverId: userId }],
         isAccepted: false,
@@ -90,25 +140,32 @@ const getPendingList = (userId, type) => __awaiter(void 0, void 0, void 0, funct
         options: { lean: true },
     })
         .lean();
-    if (!type) {
-        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "type query missing...");
-    }
+    let filteredList = [];
     if (type === "sendRequestList") {
-        return {
-            sendRequestList: pendingRequests
-                .filter((req) => req.senderId._id.toString() === userId)
-                .map((req) => req.senderId._id.toString() === userId ? req.receiverId : req.senderId),
-        };
+        filteredList = pendingRequests
+            .filter((req) => req.senderId._id.toString() === userId)
+            .map((req) => req.senderId._id.toString() === userId ? req.receiverId : req.senderId);
     }
-    if (type === "requestedList") {
-        return {
-            requestedList: pendingRequests
-                .filter((req) => req.receiverId._id.toString() === userId)
-                .map((req) => req.senderId._id.toString() === userId ? req.receiverId : req.senderId),
-        };
+    else if (type === "requestedList") {
+        filteredList = pendingRequests
+            .filter((req) => req.receiverId._id.toString() === userId)
+            .map((req) => req.senderId._id.toString() === userId ? req.receiverId : req.senderId);
     }
+    else {
+        throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Invalid type query...");
+    }
+    // Get total count for pagination
+    const total = filteredList.length;
+    const totalPage = Math.ceil(total / limit);
+    // Apply pagination
+    const paginatedList = filteredList.slice(skip, skip + limit);
+    return {
+        meta: { limit, page, total, totalPage },
+        data: paginatedList,
+    };
 });
-const suggestedFriend = (myUserId, email) => __awaiter(void 0, void 0, void 0, function* () {
+const suggestedFriend = (myUserId_1, email_1, ...args_1) => __awaiter(void 0, [myUserId_1, email_1, ...args_1], void 0, function* (myUserId, email, page = 1, limit = 30) {
+    const skip = (page - 1) * limit;
     // Step 1: Find all users who are in a relationship with you (either as sender or receiver)
     const relationships = yield friendlist_model_1.default.find({
         $or: [{ senderId: myUserId }, { receiverId: myUserId }],
@@ -127,9 +184,18 @@ const suggestedFriend = (myUserId, email) => __awaiter(void 0, void 0, void 0, f
     if (email) {
         query.email = { $regex: email, $options: "i" }; // Case-insensitive search by email
     }
-    // Step 2: Find all users who are not in the relatedUserIds list
-    const suggestedFriends = yield user_model_1.User.find(query);
-    return suggestedFriends;
+    // Step 2: Get total count for pagination
+    const total = yield user_model_1.User.countDocuments(query);
+    const totalPage = Math.ceil(total / limit);
+    // Step 3: Find all users who are not in the relatedUserIds list
+    const suggestedFriends = yield user_model_1.User.find(query)
+        .skip(skip)
+        .limit(limit)
+        .exec();
+    return {
+        meta: { limit, page, total, totalPage },
+        data: suggestedFriends,
+    };
 });
 const removeFriend = (userId, friendId) => __awaiter(void 0, void 0, void 0, function* () {
     const friendList = yield friendlist_model_1.default.findOne({

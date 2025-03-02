@@ -18,14 +18,52 @@ const http_status_1 = __importDefault(require("http-status"));
 const workoutPlan_model_1 = require("./workoutPlan.model");
 const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const userWorkoutPlan_model_1 = __importDefault(require("../../userWorkoutPlan/userWorkoutPlan.model"));
+const getGeminiResponse_1 = require("../../../utils/getGeminiResponse");
+const workout_model_1 = __importDefault(require("../workout/workout.model"));
+const getJson_1 = require("../../../utils/getJson");
 const createWorkoutPlan = (workoutData) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(workoutData);
-    if (workoutData.duration !== workoutData.workouts.length) {
-        throw new AppError_1.default(500, `day:${workoutData.duration} not equal workouts:${workoutData.workouts.length} in numbner`);
+    var _a, _b;
+    workoutData.duration = workoutData.duration * 7;
+    const allWorkouts = yield workout_model_1.default.find({ isDeleted: false });
+    // Extract only necessary fields to reduce token usage
+    const availableWorkouts = allWorkouts.map((w) => ({
+        id: w._id,
+        name: w.name,
+    }));
+    const prompt = `
+    You are an AI that creates structured workout plans. Below is a list of available workouts:
+    ${JSON.stringify(availableWorkouts)}
+
+**workouts array must have exactly ${String(Number(workoutData.duration) + 15)} workoutId**
+
+    Create a workout plan with:
+    - Plan Name: "${workoutData.name}"
+    - Duration: ${workoutData.duration} days
+    - Workouts must be selected only from the provided list.
+    - **workouts array must have exactly ${String(Number(workoutData.duration) + 15)} workoutId**.
+    - Workouts can be repeated, but diversity is preferred.
+    - Return **only** a valid JSON object, without any extra text.
+
+    Example Response:
+    {
+      "workouts": ["id1", "id2", "id3", "id4", ..., "idN"]
     }
-    const workout = yield workoutPlan_model_1.WorkoutPlan.create(workoutData);
+  `;
+    const workoutsResponse = yield (0, getGeminiResponse_1.getGeminiResponse)(prompt);
+    const json = yield (0, getJson_1.getJson)(workoutsResponse);
+    if (((_a = json === null || json === void 0 ? void 0 : json.workouts) === null || _a === void 0 ? void 0 : _a.length) > workoutData.duration) {
+        console.log(json === null || json === void 0 ? void 0 : json.workouts.slice(0, workoutData.duration));
+        json.workouts = json === null || json === void 0 ? void 0 : json.workouts.slice(0, workoutData.duration);
+    }
+    if (!json ||
+        !Array.isArray(json.workouts) ||
+        json.workouts.length !== workoutData.duration) {
+        throw new AppError_1.default(500, `Invalid workout plan: Expected ${workoutData.duration} workouts, got ${((_b = json === null || json === void 0 ? void 0 : json.workouts) === null || _b === void 0 ? void 0 : _b.length) || 0}`);
+    }
+    const data = Object.assign(Object.assign({}, json), workoutData);
+    const workout = yield workoutPlan_model_1.WorkoutPlan.create(data);
     if (!workout) {
-        (0, unlinkFiles_1.default)(workoutData.image);
+        (0, unlinkFiles_1.default)(data.image);
     }
     return workout;
 });
@@ -54,19 +92,39 @@ const updateWorkout = (workoutId, workoutData) => __awaiter(void 0, void 0, void
 exports.updateWorkout = updateWorkout;
 const getAllWorkouts = (userId, query) => __awaiter(void 0, void 0, void 0, function* () {
     query.isDeleted = false;
-    const workoutPlans = yield workoutPlan_model_1.WorkoutPlan.find(query).populate({
+    const { isDeleted, duration, page = 1, limit = 15 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+    // Step 1: Build query filter
+    const filter = { isDeleted };
+    if (duration) {
+        filter.duration = duration;
+    }
+    // Step 2: Get total count for pagination
+    const total = yield workoutPlan_model_1.WorkoutPlan.countDocuments(filter);
+    const totalPage = Math.ceil(total / Number(limit));
+    // Step 3: Fetch paginated workout plans with populated exercises
+    const workoutPlans = yield workoutPlan_model_1.WorkoutPlan.find(filter)
+        .populate({
         path: "workouts",
         populate: "exercises",
+    })
+        .skip(skip)
+        .limit(Number(limit));
+    // Step 4: Check if user is enrolled in each workout plan
+    const workoutPlanIds = workoutPlans.map((workout) => workout._id);
+    const userWorkoutPlans = yield userWorkoutPlan_model_1.default.find({
+        userId,
+        workoutPlanId: { $in: workoutPlanIds },
+        isCompleted: "InProgress",
     });
-    const workoutPlansWithStatus = yield Promise.all(workoutPlans.map((workoutPlan) => __awaiter(void 0, void 0, void 0, function* () {
-        const userWorkoutPlan = yield userWorkoutPlan_model_1.default.findOne({
-            userId,
-            workoutPlanId: workoutPlan._id,
-            isCompleted: "InProgress",
-        });
-        return Object.assign(Object.assign({}, workoutPlan.toObject()), { isEnrolled: userWorkoutPlan ? true : false });
-    })));
-    return workoutPlansWithStatus;
+    const workoutPlansWithStatus = workoutPlans.map((workoutPlan) => {
+        const isEnrolled = userWorkoutPlans.some((userPlan) => userPlan.workoutPlanId.toString() === workoutPlan._id.toString());
+        return Object.assign(Object.assign({}, workoutPlan.toObject()), { isEnrolled });
+    });
+    return {
+        meta: { limit: Number(limit), page: Number(page), total, totalPage },
+        data: workoutPlansWithStatus,
+    };
 });
 const getSingleWorkout = (workoutPlanId, userId) => __awaiter(void 0, void 0, void 0, function* () {
     const userWorkoutPlan = yield userWorkoutPlan_model_1.default.findOne({

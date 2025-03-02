@@ -10,19 +10,6 @@ const postSchema = new mongoose_1.Schema({
     image: { type: String, default: null },
 }, {
     timestamps: true,
-    // toJSON: { virtuals: true },
-    // toObject: { virtuals: true },
-    // id: false,
 });
-// postSchema.virtual("commentDetails", {
-//   ref: "Comment",
-//   localField: "comments",
-//   foreignField: "_id",
-// });
-// postSchema.virtual("likeDetails", {
-//   ref: "Like",
-//   localField: "likes",
-//   foreignField: "_id",
-// });
 const Post = (0, mongoose_1.model)("Post", postSchema);
 exports.default = Post;

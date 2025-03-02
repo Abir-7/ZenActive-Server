@@ -17,6 +17,12 @@ const chatSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    seenBy: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: "User",
+        },
+    ],
 }, {
     timestamps: true,
 });

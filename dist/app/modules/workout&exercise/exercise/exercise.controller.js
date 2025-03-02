@@ -18,17 +18,7 @@ const catchAsync_1 = __importDefault(require("../../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../../utils/sendResponse"));
 const exercise_service_1 = require("./exercise.service");
 const createExercise = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let video = null;
-    let image = null;
-    if (req.files && "media" in req.files && req.files.media[0]) {
-        video = `/medias/${req.files.media[0].filename}`;
-    }
-    if (req.files && "image" in req.files && req.files.image[0]) {
-        image = `/images/${req.files.image[0].filename}`;
-    }
-    const value = Object.assign(Object.assign({}, req.body), { video,
-        image });
-    const result = yield exercise_service_1.ExerciseService.createExercise(value);
+    const result = yield exercise_service_1.ExerciseService.createExercise(req);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
@@ -39,9 +29,11 @@ const createExercise = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
 // Get all exercises
 const getAllExercise = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userRole, userId } = req.user;
-    const result = yield exercise_service_1.ExerciseService.getAllExercise(userRole, userId);
+    const { page = 1, limit = 15 } = req.query;
+    const result = yield exercise_service_1.ExerciseService.getAllExercise(userRole, userId, Number(page), Number(limit));
     (0, sendResponse_1.default)(res, {
-        data: result,
+        data: result.data,
+        meta: result.meta,
         success: true,
         statusCode: http_status_1.default.OK,
         message: "Exercise fetched successfully.",
@@ -61,19 +53,7 @@ const getExerciseById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0
 // Update an exercise by ID
 const updateExercise = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const updateData = req.body;
-    let video = null;
-    let value = null;
-    if (req.files && "media" in req.files && req.files.media[0]) {
-        video = `/medias/${req.files.media[0].filename}`;
-    }
-    if (video) {
-        value = Object.assign(Object.assign({}, req.body), { video });
-    }
-    else {
-        value = req.body;
-    }
-    const result = yield exercise_service_1.ExerciseService.updateExercise(id, value);
+    const result = yield exercise_service_1.ExerciseService.updateExercise(id, req);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,

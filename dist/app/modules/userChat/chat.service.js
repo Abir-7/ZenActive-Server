@@ -18,6 +18,7 @@ const user_model_1 = require("../user/user.model");
 const friendlist_model_1 = __importDefault(require("../userConnection/friendList/friendlist.model"));
 const chat_model_1 = require("./chat.model");
 const friendlist_model_2 = __importDefault(require("../userConnection/friendList/friendlist.model"));
+const getGeminiResponse_1 = require("../../utils/getGeminiResponse");
 const createChat = (chatData) => __awaiter(void 0, void 0, void 0, function* () {
     const [isSenderExist, isReceiverExist] = yield Promise.all([
         user_model_1.User.findOne({ _id: chatData.senderId }),
@@ -37,17 +38,21 @@ const createChat = (chatData) => __awaiter(void 0, void 0, void 0, function* () 
     if (!isExist) {
         throw new AppError_1.default(404, "You are not friends.");
     }
-    const chat = new chat_model_1.Chat(chatData);
+    const chat = new chat_model_1.Chat(Object.assign(Object.assign({}, chatData), { seenBy: [chatData.senderId] }));
     return yield chat.save();
 });
-const getChatsBetweenUsers = (userId, friendId) => __awaiter(void 0, void 0, void 0, function* () {
-    const [userChat, userFriendShipStatus] = yield Promise.all([
+const getChatsBetweenUsers = (userId_1, friendId_1, ...args_1) => __awaiter(void 0, [userId_1, friendId_1, ...args_1], void 0, function* (userId, friendId, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [userChat, total] = yield Promise.all([
         chat_model_1.Chat.find({
             $or: [
                 { senderId: userId, receiverId: friendId },
                 { senderId: friendId, receiverId: userId },
             ],
         })
+            .sort({ createdAt: -1 }) // Sort by latest messages first
+            .skip(skip)
+            .limit(limit)
             .populate({
             path: "senderId",
             select: "name email _id image",
@@ -57,29 +62,65 @@ const getChatsBetweenUsers = (userId, friendId) => __awaiter(void 0, void 0, voi
             select: "name email _id image",
         })
             .lean(),
-        friendlist_model_2.default.findOne({
+        chat_model_1.Chat.countDocuments({
             $or: [
                 { senderId: userId, receiverId: friendId },
                 { senderId: friendId, receiverId: userId },
             ],
-        })
-            .select("senderId receiverId status isAccepted statusChangeBy")
-            .populate({
-            path: "statusChangeBy",
-            select: "name email _id image",
-        })
-            .populate({
-            path: "senderId",
-            select: "name email _id image",
-        })
-            .populate({
-            path: "receiverId",
-            select: "name email _id image",
         }),
     ]);
-    return { userChat, userFriendShipStatus };
+    const userFriendShipStatus = yield friendlist_model_2.default.findOne({
+        $or: [
+            { senderId: userId, receiverId: friendId },
+            { senderId: friendId, receiverId: userId },
+        ],
+    })
+        .select("senderId receiverId status isAccepted statusChangeBy")
+        .populate({
+        path: "statusChangeBy",
+        select: "name email _id image",
+    })
+        .populate({
+        path: "senderId",
+        select: "name email _id image",
+    })
+        .populate({
+        path: "receiverId",
+        select: "name email _id image",
+    });
+    // Update chats where userId is not in seenBy
+    yield chat_model_1.Chat.updateMany({
+        $or: [
+            { senderId: userId, receiverId: friendId },
+            { senderId: friendId, receiverId: userId },
+        ],
+        seenBy: { $ne: userId },
+    }, { $push: { seenBy: userId } });
+    // Create meta data
+    const meta = {
+        limit,
+        page,
+        total,
+        totalPage: Math.ceil(total / limit),
+    };
+    return { userChat, userFriendShipStatus, meta };
+});
+const chatWithFitBot = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const workoutsResponse = yield (0, getGeminiResponse_1.getGeminiResponse)(prompt);
+        // Extract text if the response is structured
+        const responseText = typeof workoutsResponse === "string"
+            ? workoutsResponse
+            : JSON.stringify(workoutsResponse, null, 2); // Convert object to readable text if necessary
+        return responseText;
+    }
+    catch (error) {
+        console.error("Error fetching response from Gemini:", error);
+        return "Sorry, I couldn't process your request. Please try again.";
+    }
 });
 exports.ChatService = {
     createChat,
     getChatsBetweenUsers,
+    chatWithFitBot,
 };

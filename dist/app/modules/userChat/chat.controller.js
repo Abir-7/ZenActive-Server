@@ -28,6 +28,7 @@ const createChat = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
         senderId,
         receiverId,
         message,
+        seenBy: [],
     });
     (0, sendResponse_1.default)(res, {
         data: result,
@@ -40,16 +41,32 @@ const createChat = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 const getChatsBetweenUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId } = req.user;
     const { friendId } = req.params;
-    const result = yield chat_service_1.ChatService.getChatsBetweenUsers(userId, friendId);
+    const { page = 1, limit = 30 } = req.query;
+    const result = yield chat_service_1.ChatService.getChatsBetweenUsers(userId, friendId, Number(page), Number(limit));
+    (0, sendResponse_1.default)(res, {
+        data: {
+            userChat: result.userChat,
+            userFriendShipStatus: result.userFriendShipStatus,
+        },
+        meta: result.meta,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Chat messages fetched successfully.",
+    });
+}));
+const chatWithFitbot = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { prompt } = req.body;
+    const result = yield chat_service_1.ChatService.chatWithFitBot(prompt);
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
         statusCode: http_status_1.default.OK,
-        message: "Chat messages fetched successfully.",
+        message: "Ai Response fetched successfully.",
     });
 }));
 // Group all controller functions into an object
 exports.ChatController = {
     createChat,
     getChatsBetweenUsers,
+    chatWithFitbot,
 };
