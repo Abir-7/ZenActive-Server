@@ -3,7 +3,6 @@ import { UserRoute } from "../modules/user/user.route";
 import { AuthRoute } from "../modules/auth/auth.route";
 import { MealRoute } from "../modules/meal/meal.route";
 
-import { ChallengeRoute } from "../modules/challenge( maybe not needed)/challenge.route";
 import { BadgeRoute } from "../modules/badge/badge.route";
 
 // import { BlockRoute } from "../modules/userConnection/blocklist/blocklist.route";
@@ -40,7 +39,7 @@ const apiRoutes = [
   { path: "/meal", route: MealRoute },
   { path: "/workout-plan", route: WorkoutPlanRoute },
   { path: "/workout-plan", route: UserWorkoutPlanRoute },
-  { path: "/challenge", route: ChallengeRoute },
+
   { path: "/badge", route: BadgeRoute },
   // { path: "/package", route: PackageRoute },
   // { path: "/block-list", route: BlockRoute },

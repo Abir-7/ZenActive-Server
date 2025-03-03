@@ -52,7 +52,8 @@ const editBadge = catchAsync(async (req, res) => {
 });
 
 const getAllBadge = catchAsync(async (req, res) => {
-  const result = await BadgeService.getAllBadge(req.query);
+  const userId = req.user.userId;
+  const result = await BadgeService.getAllBadge(req.query, userId);
   sendResponse(res, {
     data: result.result,
     meta: result.meta,
