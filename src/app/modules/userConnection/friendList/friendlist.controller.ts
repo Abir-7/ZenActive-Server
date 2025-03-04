@@ -145,7 +145,8 @@ const getFriendListWithLastMessage = catchAsync(async (req, res) => {
       Number(limit)
     );
   sendResponse(res, {
-    data: updatedFriendList,
+    data: updatedFriendList.data,
+    meta: updatedFriendList.meta,
     success: true,
     statusCode: httpStatus.OK,
     message: "Friend with last message fetched successfully.",

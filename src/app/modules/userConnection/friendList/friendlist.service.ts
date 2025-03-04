@@ -388,14 +388,14 @@ const getFriendListWithLastMessage = async (
       $or: [{ senderId: userId }, { receiverId: userId }],
       isAccepted: true,
     });
-
+    console.log(friendsWithLastMessage);
     return {
       data: friendsWithLastMessage,
       meta: {
         total: totalConnections,
         page,
         limit,
-        totalPages: Math.ceil(totalConnections / limit),
+        totalPage: Math.ceil(totalConnections / limit),
       },
     };
   } catch (error) {

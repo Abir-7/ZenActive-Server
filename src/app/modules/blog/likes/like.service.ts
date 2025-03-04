@@ -40,7 +40,7 @@ const toggleLike = async (postId: string, userId: string) => {
       await Like.create([{ postId, userId }], { session });
       isLiked = true;
 
-      if (post.userId._id !== userId) {
+      if (String(post.userId._id) !== String(userId)) {
         handleNotification(`${userName} likes your post`, post.userId._id);
         await Notification.create(
           [

@@ -36,7 +36,7 @@ const addComment = async (commentData: IComment) => {
       user?.name?.lastName ? " " + user.name.lastName : ""
     }`;
 
-    if (post.userId._id !== commentData.userId) {
+    if (String(post.userId._id) !== String(commentData.userId)) {
       handleNotification(`${userName} commented on your post`, post.userId._id);
       await Notification.create(
         [
