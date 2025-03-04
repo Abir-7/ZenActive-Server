@@ -22,6 +22,7 @@ const friendlist_model_1 = __importDefault(require("./friendlist.model"));
 const notification_model_1 = require("../../notification/notification.model");
 const notification_interface_1 = require("../../notification/notification.interface");
 const handleNotification_1 = require("../../../socket/notification/handleNotification");
+const chat_model_1 = require("../../userChat/chat.model");
 const sendRequest = (userId, friendId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const senderData = yield user_model_1.User.findById(userId).select("name");
@@ -253,105 +254,67 @@ const removeRequest = (userId, friendId) => __awaiter(void 0, void 0, void 0, fu
     });
     return { message: "User Request Deleted" };
 });
-function getFriendListWithLastMessage(userId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const friendListWithMessages = yield friendlist_model_1.default.aggregate([
-            {
-                $match: {
-                    $or: [{ senderId: userId }, { receiverId: userId }],
-                    isAccepted: true,
-                },
+const getFriendListWithLastMessage = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, ...args_1], void 0, function* (userId, page = 1, limit = 20) {
+    try {
+        // Step 1: Fetch all connections where the user is either the sender or receiver and isAccepted is true
+        const connections = yield friendlist_model_1.default.find({
+            $or: [{ senderId: userId }, { receiverId: userId }],
+            isAccepted: true,
+        })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .exec();
+        // Step 2: For each connection, find the last message in the IChat collection and fetch friend details
+        const friendsWithLastMessage = yield Promise.all(connections.map((connection) => __awaiter(void 0, void 0, void 0, function* () {
+            const friendId = connection.senderId.toString() === userId.toString()
+                ? connection.receiverId
+                : connection.senderId;
+            // Find the last message between the user and the friend
+            const lastMessage = yield chat_model_1.Chat.findOne({
+                $or: [
+                    { senderId: userId, receiverId: friendId },
+                    { senderId: friendId, receiverId: userId },
+                ],
+            })
+                .sort({ createdAt: -1 }) // Sort by createdAt in descending order to get the last message
+                .exec();
+            // Fetch friend details
+            const friendDetails = yield user_model_1.User.findById(friendId)
+                .select("name email image _id")
+                .exec();
+            return {
+                friendId,
+                friendDetails: friendDetails
+                    ? {
+                        name: friendDetails.name,
+                        email: friendDetails.email,
+                        image: friendDetails.image,
+                        _id: friendDetails._id,
+                    }
+                    : null,
+                lastMessage: lastMessage ? lastMessage.message : null,
+            };
+        })));
+        // Step 3: Get total count for pagination metadata
+        const totalConnections = yield friendlist_model_1.default.countDocuments({
+            $or: [{ senderId: userId }, { receiverId: userId }],
+            isAccepted: true,
+        });
+        return {
+            data: friendsWithLastMessage,
+            meta: {
+                total: totalConnections,
+                page,
+                limit,
+                totalPages: Math.ceil(totalConnections / limit),
             },
-            {
-                $lookup: {
-                    from: "users", // Assuming 'users' is the collection name for the User model
-                    let: { senderId: "$senderId", receiverId: "$receiverId" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $or: [
-                                        { $eq: ["$_id", "$$senderId"] },
-                                        { $eq: ["$_id", "$$receiverId"] },
-                                    ],
-                                },
-                            },
-                        },
-                        {
-                            $project: {
-                                name: 1,
-                                email: 1,
-                                image: 1,
-                                _id: 1,
-                            },
-                        },
-                    ],
-                    as: "friendDetails",
-                },
-            },
-            {
-                $unwind: {
-                    path: "$friendDetails",
-                },
-            },
-            {
-                $lookup: {
-                    from: "chats",
-                    let: { senderId: "$senderId", receiverId: "$receiverId" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $or: [
-                                        {
-                                            $and: [
-                                                { $eq: ["$senderId", "$$senderId"] },
-                                                { $eq: ["$receiverId", "$$receiverId"] },
-                                            ],
-                                        },
-                                        {
-                                            $and: [
-                                                { $eq: ["$senderId", "$$receiverId"] },
-                                                { $eq: ["$receiverId", "$$senderId"] },
-                                            ],
-                                        },
-                                    ],
-                                },
-                            },
-                        },
-                        { $sort: { createdAt: -1 } }, // Sort messages by most recent
-                        { $limit: 1 }, // Get only the latest message
-                    ],
-                    as: "lastMessage",
-                },
-            },
-            {
-                $unwind: {
-                    path: "$lastMessage",
-                    preserveNullAndEmptyArrays: true, // Include friends even if there's no message
-                },
-            },
-            {
-                $project: {
-                    friendDetails: 1,
-                    lastMessage: 1,
-                },
-            },
-            {
-                $match: {
-                    lastMessage: { $ne: null }, // Exclude friends with no messages
-                    "friendDetails._id": { $ne: userId }, // Exclude the user from the friend list
-                },
-            },
-            {
-                $sort: {
-                    "lastMessage.createdAt": -1, // Sort by the last message's createdAt time in descending order
-                },
-            },
-        ]);
-        return friendListWithMessages;
-    });
-}
+        };
+    }
+    catch (error) {
+        console.error("Error fetching friend list with last message:", error);
+        throw error;
+    }
+});
 exports.FriendListService = {
     sendRequest,
     removeFriend,

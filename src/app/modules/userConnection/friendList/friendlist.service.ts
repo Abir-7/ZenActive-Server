@@ -9,6 +9,7 @@ import { status } from "./friendlist.interface";
 import { Notification } from "../../notification/notification.model";
 import { NotificationType } from "../../notification/notification.interface";
 import { handleNotification } from "../../../socket/notification/handleNotification";
+import { Chat } from "../../userChat/chat.model";
 const sendRequest = async (
   userId: Types.ObjectId,
   friendId: Types.ObjectId
@@ -329,104 +330,79 @@ const removeRequest = async (
   return { message: "User Request Deleted" };
 };
 
-async function getFriendListWithLastMessage(userId: Types.ObjectId) {
-  const friendListWithMessages = await UserConnection.aggregate([
-    {
-      $match: {
-        $or: [{ senderId: userId }, { receiverId: userId }],
-        isAccepted: true,
-      },
-    },
-    {
-      $lookup: {
-        from: "users", // Assuming 'users' is the collection name for the User model
-        let: { senderId: "$senderId", receiverId: "$receiverId" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $or: [
-                  { $eq: ["$_id", "$$senderId"] },
-                  { $eq: ["$_id", "$$receiverId"] },
-                ],
-              },
-            },
-          },
-          {
-            $project: {
-              name: 1,
-              email: 1,
-              image: 1,
-              _id: 1,
-            },
-          },
-        ],
-        as: "friendDetails",
-      },
-    },
-    {
-      $unwind: {
-        path: "$friendDetails",
-      },
-    },
-    {
-      $lookup: {
-        from: "chats",
-        let: { senderId: "$senderId", receiverId: "$receiverId" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $or: [
-                  {
-                    $and: [
-                      { $eq: ["$senderId", "$$senderId"] },
-                      { $eq: ["$receiverId", "$$receiverId"] },
-                    ],
-                  },
-                  {
-                    $and: [
-                      { $eq: ["$senderId", "$$receiverId"] },
-                      { $eq: ["$receiverId", "$$senderId"] },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-          { $sort: { createdAt: -1 } }, // Sort messages by most recent
-          { $limit: 1 }, // Get only the latest message
-        ],
-        as: "lastMessage",
-      },
-    },
-    {
-      $unwind: {
-        path: "$lastMessage",
-        preserveNullAndEmptyArrays: true, // Include friends even if there's no message
-      },
-    },
-    {
-      $project: {
-        friendDetails: 1,
-        lastMessage: 1,
-      },
-    },
-    {
-      $match: {
-        lastMessage: { $ne: null }, // Exclude friends with no messages
-        "friendDetails._id": { $ne: userId }, // Exclude the user from the friend list
-      },
-    },
-    {
-      $sort: {
-        "lastMessage.createdAt": -1, // Sort by the last message's createdAt time in descending order
-      },
-    },
-  ]);
+const getFriendListWithLastMessage = async (
+  userId: Types.ObjectId,
+  page = 1,
+  limit = 20
+) => {
+  try {
+    // Step 1: Fetch all connections where the user is either the sender or receiver and isAccepted is true
+    const connections = await UserConnection.find({
+      $or: [{ senderId: userId }, { receiverId: userId }],
+      isAccepted: true,
+    })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec();
 
-  return friendListWithMessages;
-}
+    // Step 2: For each connection, find the last message in the IChat collection and fetch friend details
+    const friendsWithLastMessage = await Promise.all(
+      connections.map(async (connection) => {
+        const friendId =
+          connection.senderId.toString() === userId.toString()
+            ? connection.receiverId
+            : connection.senderId;
+
+        // Find the last message between the user and the friend
+        const lastMessage = await Chat.findOne({
+          $or: [
+            { senderId: userId, receiverId: friendId },
+            { senderId: friendId, receiverId: userId },
+          ],
+        })
+          .sort({ createdAt: -1 }) // Sort by createdAt in descending order to get the last message
+          .exec();
+
+        // Fetch friend details
+        const friendDetails = await User.findById(friendId)
+          .select("name email image _id")
+          .exec();
+
+        return {
+          friendId,
+          friendDetails: friendDetails
+            ? {
+                name: friendDetails.name,
+                email: friendDetails.email,
+                image: friendDetails.image,
+                _id: friendDetails._id,
+              }
+            : null,
+          lastMessage: lastMessage ? lastMessage.message : null,
+        };
+      })
+    );
+
+    // Step 3: Get total count for pagination metadata
+    const totalConnections = await UserConnection.countDocuments({
+      $or: [{ senderId: userId }, { receiverId: userId }],
+      isAccepted: true,
+    });
+
+    return {
+      data: friendsWithLastMessage,
+      meta: {
+        total: totalConnections,
+        page,
+        limit,
+        totalPages: Math.ceil(totalConnections / limit),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching friend list with last message:", error);
+    throw error;
+  }
+};
 
 export const FriendListService = {
   sendRequest,

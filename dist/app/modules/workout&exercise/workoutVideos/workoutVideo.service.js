@@ -18,15 +18,12 @@ const workoutVideo_model_1 = require("./workoutVideo.model");
 const AppError_1 = __importDefault(require("../../../errors/AppError"));
 const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const cloudinary_1 = require("../../../utils/cloudinary/cloudinary");
-const get_video_duration_1 = __importDefault(require("get-video-duration"));
 const getPublicID_1 = require("../../../utils/cloudinary/getPublicID");
 const deleteFile_1 = require("../../../utils/cloudinary/deleteFile");
 const getAllWorkoutVideos = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (page = 1, limit = 20) {
     const skip = (page - 1) * limit;
-    // Step 1: Get total count for pagination
     const total = yield workoutVideo_model_1.WorkoutVideo.countDocuments();
     const totalPage = Math.ceil(total / limit);
-    // Step 2: Fetch paginated workout videos
     const workoutVideos = yield workoutVideo_model_1.WorkoutVideo.find()
         .skip(skip)
         .limit(limit)
@@ -47,13 +44,8 @@ const createWorkoutVideo = (req) => __awaiter(void 0, void 0, void 0, function* 
     let video = null;
     let image = null;
     let duration = null;
+    let videoId = null;
     if (req.files && "media" in req.files && req.files.media[0]) {
-        // const s3Url = await uploadFileToS3(filePath, file.filename);
-        // if (s3Url) {
-        //   video = s3Url;
-        // } else {
-        //   throw new AppError(500, "Video upload faield");
-        // }
         const pathLink = `/medias/${req.files.media[0].filename}`;
         const file = req.files.media[0];
         const filePath = path_1.default.join(process.cwd(), `/uploads/${pathLink}`);
@@ -75,15 +67,9 @@ const createWorkoutVideo = (req) => __awaiter(void 0, void 0, void 0, function* 
             video = uploadResult.secure_url; // Cloudinary URL
             if (uploadResult.eager[0].secure_url) {
                 video = uploadResult.eager[0].secure_url;
+                videoId = uploadResult.public_id;
             }
-            yield (0, get_video_duration_1.default)(req.files.media[0].path)
-                .then((durations) => {
-                duration = durations;
-            })
-                .catch((error) => {
-                throw new Error("Failed to get duration");
-            });
-            // Delete local file after upload
+            duration = uploadResult.duration;
             (0, unlinkFiles_1.default)(pathLink);
         }
         catch (error) {
@@ -97,16 +83,15 @@ const createWorkoutVideo = (req) => __awaiter(void 0, void 0, void 0, function* 
     }
     const value = Object.assign(Object.assign({}, req.body), { video,
         image,
-        duration });
+        duration,
+        videoId });
     if (!image || !video) {
         throw new AppError_1.default(500, "Faield to  upload video/image");
     }
     const workoutVideo = yield workoutVideo_model_1.WorkoutVideo.create(value);
     return workoutVideo;
 });
-const updateWorkoutVideo = (id, 
-// payload: Partial<IWorkoutVideo>
-req) => __awaiter(void 0, void 0, void 0, function* () {
+const updateWorkoutVideo = (id, req) => __awaiter(void 0, void 0, void 0, function* () {
     const isWorkoutVideo = yield workoutVideo_model_1.WorkoutVideo.findById(id).exec();
     if (!isWorkoutVideo) {
         throw new AppError_1.default(404, "Workout video not found or already deleted.");
@@ -114,6 +99,7 @@ req) => __awaiter(void 0, void 0, void 0, function* () {
     let video = null;
     let image = null;
     let duration = null;
+    let videoId = null;
     if (req.files && "media" in req.files && req.files.media[0]) {
         const pathLink = `/medias/${req.files.media[0].filename}`;
         const file = req.files.media[0];
@@ -137,15 +123,9 @@ req) => __awaiter(void 0, void 0, void 0, function* () {
             video = uploadResult.secure_url; // Cloudinary URL
             if (uploadResult.eager[0].secure_url) {
                 video = uploadResult.eager[0].secure_url;
+                videoId = uploadResult.public_id;
             }
-            yield (0, get_video_duration_1.default)(req.files.media[0].path)
-                .then((durations) => {
-                duration = durations;
-            })
-                .catch((error) => {
-                throw new Error("Failed to get duration");
-            });
-            // Delete local file after upload
+            duration = uploadResult.duration;
             (0, unlinkFiles_1.default)(pathLink);
             const videoLink = isWorkoutVideo.video;
             const publicId = (0, getPublicID_1.extractPublicId)(videoLink);
@@ -164,8 +144,8 @@ req) => __awaiter(void 0, void 0, void 0, function* () {
         value = Object.assign(Object.assign({}, value), { image });
         (0, unlinkFiles_1.default)(isWorkoutVideo.image);
     }
-    if (video) {
-        value = Object.assign(Object.assign({}, value), { video });
+    if (video && videoId) {
+        value = Object.assign(Object.assign({}, value), { video, videoId, duration });
     }
     const updatedWorkout = yield workoutVideo_model_1.WorkoutVideo.findByIdAndUpdate(id, value, {
         new: true,
@@ -173,6 +153,10 @@ req) => __awaiter(void 0, void 0, void 0, function* () {
     return updatedWorkout;
 });
 const deleteWorkoutVideo = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const isExist = yield workoutVideo_model_1.WorkoutVideo.findById(id);
+    if (isExist === null || isExist === void 0 ? void 0 : isExist.video) {
+        yield (0, deleteFile_1.deleteCloudinaryVideo)(isExist.videoId, "video");
+    }
     const deletedWorkout = yield workoutVideo_model_1.WorkoutVideo.findByIdAndDelete(id).exec();
     if (!deletedWorkout) {
         throw new AppError_1.default(404, "Workout video not found or already deleted.");

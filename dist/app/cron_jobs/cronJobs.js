@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupCronJobs = void 0;
 const node_cron_1 = __importDefault(require("node-cron"));
 const userMealPlan_model_1 = __importDefault(require("../modules/userMealPlan/userMealPlan.model"));
+const dailyExercise_model_1 = __importDefault(require("../modules/usersDailyExercise/dailyExercise.model"));
 const setupCronJobs = () => {
     // delete user meal plan at 12Am everyday
     node_cron_1.default.schedule("0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
@@ -27,5 +28,14 @@ const setupCronJobs = () => {
         }
     }));
     //end
+    node_cron_1.default.schedule("0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const result = yield dailyExercise_model_1.default.deleteMany();
+            console.log(`Deleted ${result.deletedCount} DailyExercise.`);
+        }
+        catch (error) {
+            console.error("Error deleting DailyExercise:", error);
+        }
+    }));
 };
 exports.setupCronJobs = setupCronJobs;

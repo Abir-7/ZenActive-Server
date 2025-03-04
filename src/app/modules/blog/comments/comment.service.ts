@@ -17,7 +17,10 @@ const addComment = async (commentData: IComment) => {
 
   try {
     const post = (await Post.findById(commentData.postId)
-      .populate("userId")
+      .populate({
+        path: "userId",
+        select: "name _id email image",
+      })
       .session(session)) as any;
     if (!post) {
       throw new AppError(
@@ -33,23 +36,24 @@ const addComment = async (commentData: IComment) => {
       user?.name?.lastName ? " " + user.name.lastName : ""
     }`;
 
-    await Notification.create(
-      [
-        {
-          senderId: commentData.userId,
-          receiverId: post.userId._id,
-          type: NotificationType.COMMENT,
-          postId: commentData.postId,
-          message: `\`${userName}\` commented on your post`,
-        },
-      ],
-      { session }
-    );
+    if (post.userId._id !== commentData.userId) {
+      handleNotification(`${userName} commented on your post`, post.userId._id);
+      await Notification.create(
+        [
+          {
+            senderId: commentData.userId,
+            receiverId: post.userId._id,
+            type: NotificationType.COMMENT,
+            postId: commentData.postId,
+            message: `\`${userName}\` commented on your post`,
+          },
+        ],
+        { session }
+      );
+    }
 
     await session.commitTransaction();
     session.endSession();
-
-    handleNotification(`${userName} commented on your post`, post.userId._id);
 
     return comment[0];
   } catch (error) {

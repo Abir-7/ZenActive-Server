@@ -113,9 +113,10 @@ const removeRequest = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 }));
 const getFriendListWithLastMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    const { page = 1, limit = 20 } = req.query;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
     const userObjectId = userId;
-    const updatedFriendList = yield friendlist_service_1.FriendListService.getFriendListWithLastMessage(userObjectId);
+    const updatedFriendList = yield friendlist_service_1.FriendListService.getFriendListWithLastMessage(userObjectId, Number(page), Number(limit));
     (0, sendResponse_1.default)(res, {
         data: updatedFriendList,
         success: true,

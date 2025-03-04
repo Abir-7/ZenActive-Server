@@ -4,7 +4,6 @@ const express_1 = require("express");
 const user_route_1 = require("../modules/user/user.route");
 const auth_route_1 = require("../modules/auth/auth.route");
 const meal_route_1 = require("../modules/meal/meal.route");
-const challenge_route_1 = require("../modules/challenge( maybe not needed)/challenge.route");
 const badge_route_1 = require("../modules/badge/badge.route");
 // import { BlockRoute } from "../modules/userConnection/blocklist/blocklist.route";
 const friendlist_route_1 = require("../modules/userConnection/friendList/friendlist.route");
@@ -35,7 +34,6 @@ const apiRoutes = [
     { path: "/meal", route: meal_route_1.MealRoute },
     { path: "/workout-plan", route: workoutPlan_route_1.WorkoutPlanRoute },
     { path: "/workout-plan", route: userWorkoutPlan_router_1.UserWorkoutPlanRoute },
-    { path: "/challenge", route: challenge_route_1.ChallengeRoute },
     { path: "/badge", route: badge_route_1.BadgeRoute },
     // { path: "/package", route: PackageRoute },
     // { path: "/block-list", route: BlockRoute },

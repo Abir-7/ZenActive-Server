@@ -11,6 +11,7 @@ const friendSchema = new Schema<IUserConnection>(
       enum: status,
       default: null,
     },
+    lastMessage: { type: String, default: null },
     statusChangeBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
 

@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCloudinaryVideo = void 0;
 const cloudinary_1 = require("./cloudinary");
 const deleteCloudinaryVideo = (publicId, resource_type) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(publicId, resource_type);
     try {
         const response = yield cloudinary_1.cloudinaryInstance.uploader.destroy(publicId.trim(), {
             resource_type: resource_type,

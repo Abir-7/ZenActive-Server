@@ -6,6 +6,7 @@ export interface IUserConnection {
   isAccepted: boolean;
   status: IStatus;
   statusChangeBy: Types.ObjectId;
+  lastMessage: string;
 }
 
 export const status = ["blocked", "unfriend"] as const;

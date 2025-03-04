@@ -53,7 +53,8 @@ const editBadge = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
     });
 }));
 const getAllBadge = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield badge_service_1.default.getAllBadge(req.query);
+    const userId = req.user.userId;
+    const result = yield badge_service_1.default.getAllBadge(req.query, userId);
     (0, sendResponse_1.default)(res, {
         data: result.result,
         meta: result.meta,

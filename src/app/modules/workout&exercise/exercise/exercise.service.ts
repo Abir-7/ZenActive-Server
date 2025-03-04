@@ -12,21 +12,14 @@ import { Request } from "express";
 import { cloudinaryInstance } from "../../../utils/cloudinary/cloudinary";
 import { extractPublicId } from "../../../utils/cloudinary/getPublicID";
 import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
-import getVideoDurationInSeconds from "get-video-duration";
 
 // Create a new exercise
 const createExercise = async (req: Request) => {
   let video = null;
   let image = null;
-  let duration = null;
-  if (req.files && "media" in req.files && req.files.media[0]) {
-    // const s3Url = await uploadFileToS3(filePath, file.filename);
-    // if (s3Url) {
-    //   video = s3Url;
-    // } else {
-    //   throw new AppError(500, "Video upload faield");
-    // }
 
+  let videoId = null;
+  if (req.files && "media" in req.files && req.files.media[0]) {
     const pathLink = `/medias/${req.files.media[0].filename}`;
     const file = req.files.media[0];
     const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
@@ -50,16 +43,8 @@ const createExercise = async (req: Request) => {
       if (uploadResult.eager[0].secure_url) {
         video = uploadResult.eager[0].secure_url;
       }
+      videoId = uploadResult.public_id;
 
-      await getVideoDurationInSeconds(req.files.media[0].path)
-        .then((durations: number) => {
-          duration = durations;
-        })
-        .catch((error: any) => {
-          throw new Error("Failed to get duration");
-        });
-
-      // Delete local file after upload
       unlinkFile(pathLink);
     } catch (error) {
       // console.log(error);
@@ -75,6 +60,7 @@ const createExercise = async (req: Request) => {
     ...req.body,
     video,
     image,
+    videoId,
   } as IExercise;
 
   const exercise = await Exercise.create({
@@ -192,7 +178,9 @@ const updateExercise = async (exerciseId: string, req: Request) => {
 
   let video = null;
   let image = null;
-  let duration = null;
+
+  let videoId = null;
+
   if (req.files && "media" in req.files && req.files.media[0]) {
     const pathLink = `/medias/${req.files.media[0].filename}`;
     const file = req.files.media[0];
@@ -219,21 +207,12 @@ const updateExercise = async (exerciseId: string, req: Request) => {
       if (uploadResult.eager[0].secure_url) {
         video = uploadResult.eager[0].secure_url;
       }
-
-      await getVideoDurationInSeconds(req.files.media[0].path)
-        .then((durations: number) => {
-          duration = durations;
-        })
-        .catch((error: any) => {
-          throw new Error("Failed to get duration");
-        });
+      videoId = uploadResult.public_id;
 
       // Delete local file after upload
       unlinkFile(pathLink);
 
-      const videoLink = isExist.video;
-      const publicId = extractPublicId(videoLink);
-      await deleteCloudinaryVideo(publicId, "video");
+      await deleteCloudinaryVideo(isExist.videoId, "video");
     } catch (error) {
       // console.log(error);
       unlinkFile(pathLink);
@@ -251,8 +230,12 @@ const updateExercise = async (exerciseId: string, req: Request) => {
     value = { ...value, image };
     unlinkFile(isExist.image);
   }
-  if (video) {
-    value = { ...value, video };
+  if (video && videoId) {
+    value = { ...value, video, videoId };
+  }
+
+  if (value.duration) {
+    value.duration = Number(value.duration) * 60;
   }
 
   const updated = await Exercise.findByIdAndUpdate(exerciseId, value, {
@@ -274,6 +257,11 @@ const deleteExercise = async (exerciseId: string) => {
   if (!isExist?._id) {
     throw new AppError(404, "Workout not found.");
   }
+
+  // if (isExist.video) {
+  //   const publicId = extractPublicId(isExist.video);
+  //   await deleteCloudinaryVideo(publicId, "video");
+  // }
 
   return { message: "Exercise deleted" };
 };

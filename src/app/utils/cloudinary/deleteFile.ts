@@ -4,7 +4,6 @@ export const deleteCloudinaryVideo = async (
   publicId: string,
   resource_type: string
 ) => {
-  console.log(publicId, resource_type);
   try {
     const response = await cloudinaryInstance.uploader.destroy(
       publicId.trim(),

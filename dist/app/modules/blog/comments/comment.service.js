@@ -29,7 +29,10 @@ const addComment = (commentData) => __awaiter(void 0, void 0, void 0, function* 
     session.startTransaction();
     try {
         const post = (yield post_model_1.default.findById(commentData.postId)
-            .populate("userId")
+            .populate({
+            path: "userId",
+            select: "name _id email image",
+        })
             .session(session));
         if (!post) {
             throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Post not found to add comment.");
@@ -37,18 +40,20 @@ const addComment = (commentData) => __awaiter(void 0, void 0, void 0, function* 
         const comment = yield comment_model_1.Comment.create([commentData], { session });
         const user = yield user_model_1.User.findById(commentData.userId).session(session);
         const userName = `${(_a = user === null || user === void 0 ? void 0 : user.name) === null || _a === void 0 ? void 0 : _a.firstName}${((_b = user === null || user === void 0 ? void 0 : user.name) === null || _b === void 0 ? void 0 : _b.lastName) ? " " + user.name.lastName : ""}`;
-        yield notification_model_1.Notification.create([
-            {
-                senderId: commentData.userId,
-                receiverId: post.userId._id,
-                type: notification_interface_1.NotificationType.COMMENT,
-                postId: commentData.postId,
-                message: `\`${userName}\` commented on your post`,
-            },
-        ], { session });
+        if (post.userId._id !== commentData.userId) {
+            (0, handleNotification_1.handleNotification)(`${userName} commented on your post`, post.userId._id);
+            yield notification_model_1.Notification.create([
+                {
+                    senderId: commentData.userId,
+                    receiverId: post.userId._id,
+                    type: notification_interface_1.NotificationType.COMMENT,
+                    postId: commentData.postId,
+                    message: `\`${userName}\` commented on your post`,
+                },
+            ], { session });
+        }
         yield session.commitTransaction();
         session.endSession();
-        (0, handleNotification_1.handleNotification)(`${userName} commented on your post`, post.userId._id);
         return comment[0];
     }
     catch (error) {

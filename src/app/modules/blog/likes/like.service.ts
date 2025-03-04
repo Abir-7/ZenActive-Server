@@ -13,9 +13,10 @@ const toggleLike = async (postId: string, userId: string) => {
   session.startTransaction();
 
   try {
-    const post = (await Post.findById(postId)
-      .populate("userId")
-      .session(session)) as any;
+    const post = (await Post.findById(postId).populate({
+      path: "userId",
+      select: "name _id email image",
+    })) as any;
     if (!post) {
       throw new AppError(httpStatus.NOT_FOUND, "Post not found");
     }
@@ -30,28 +31,35 @@ const toggleLike = async (postId: string, userId: string) => {
       user.name?.lastName ? " " + user.name.lastName : ""
     }`;
 
+    let isLiked: boolean;
+
     if (like) {
-      await Like.findOneAndDelete({ postId, userId }).session(session);
+      await Like.findOneAndDelete({ postId, userId }, { session });
+      isLiked = false;
     } else {
       await Like.create([{ postId, userId }], { session });
-      await Notification.create(
-        [
-          {
-            senderId: user._id,
-            receiverId: post.userId._id,
-            type: NotificationType.LIKE,
-            postId,
-            message: `\`${userName}\` likes your post`,
-          },
-        ],
-        { session }
-      );
-      handleNotification(`${userName} likes your post`, post.userId._id);
+      isLiked = true;
+
+      if (post.userId._id !== userId) {
+        handleNotification(`${userName} likes your post`, post.userId._id);
+        await Notification.create(
+          [
+            {
+              senderId: user._id,
+              receiverId: post.userId._id,
+              type: NotificationType.LIKE,
+              postId,
+              message: `\`${userName}\` likes your post`,
+            },
+          ],
+          { session }
+        );
+      }
     }
 
     await session.commitTransaction();
     session.endSession();
-    return { message: "Like status updated" };
+    return { isLiked };
   } catch (error) {
     await session.abortTransaction();
     session.endSession();

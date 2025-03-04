@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const QueryBuilder_1 = __importDefault(require("../../builder/QueryBuilder"));
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const unlinkFiles_1 = __importDefault(require("../../utils/unlinkFiles"));
+const appdata_model_1 = require("../userAppData/appdata.model");
 const badge_model_1 = __importDefault(require("./badge.model"));
 const http_status_1 = __importDefault(require("http-status"));
 const createBadge = (data) => __awaiter(void 0, void 0, void 0, function* () {
@@ -44,12 +45,26 @@ const editBadge = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     }
     return badge;
 });
-const getAllBadge = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const badege = new QueryBuilder_1.default(badge_model_1.default.find({ isDeleted: false }), query)
+// const getAllBadge = async (query: Record<string, unknown>) => {
+//   const badege = new QueryBuilder(Badge.find({ isDeleted: false }), query)
+//     .sort()
+//     .paginate();
+//   const result = await badege.modelQuery;
+//   const meta = await badege.countTotal();
+//   return { result, meta };
+// };
+const getAllBadge = (query, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    // Fetch the user's current points
+    const userAppData = yield appdata_model_1.UserAppData.findOne({ userId });
+    const userPoints = (userAppData === null || userAppData === void 0 ? void 0 : userAppData.points) || 0;
+    // Query badges
+    const badgeQuery = new QueryBuilder_1.default(badge_model_1.default.find({ isDeleted: false }), query)
         .sort()
         .paginate();
-    const result = yield badege.modelQuery;
-    const meta = yield badege.countTotal();
+    const badges = yield badgeQuery.modelQuery;
+    const meta = yield badgeQuery.countTotal();
+    // Add isEligibleToClaim field
+    const result = badges.map((badge) => (Object.assign(Object.assign({}, badge.toObject()), { isEligibleToClaim: userPoints >= badge.points })));
     return { result, meta };
 });
 const getSingleBadge = (id) => __awaiter(void 0, void 0, void 0, function* () {

@@ -11,6 +11,7 @@ const friendSchema = new mongoose_1.Schema({
         enum: friendlist_interface_1.status,
         default: null,
     },
+    lastMessage: { type: String, default: null },
     statusChangeBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", default: null },
 }, { timestamps: true });
 const UserConnection = (0, mongoose_1.model)("UserConnection", friendSchema);

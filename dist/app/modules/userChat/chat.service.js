@@ -35,10 +35,19 @@ const createChat = (chatData) => __awaiter(void 0, void 0, void 0, function* () 
         isAccepted: true,
         status: null,
     });
+    if (!(isExist === null || isExist === void 0 ? void 0 : isExist.isAccepted)) {
+        throw new AppError_1.default(404, "You are not friends.");
+    }
     if (!isExist) {
         throw new AppError_1.default(404, "You are not friends.");
     }
     const chat = new chat_model_1.Chat(Object.assign(Object.assign({}, chatData), { seenBy: [chatData.senderId] }));
+    yield friendlist_model_2.default.findOneAndUpdate({
+        $or: [
+            { senderId: chatData.receiverId, receiverId: chatData.senderId },
+            { senderId: chatData.senderId, receiverId: chatData.receiverId },
+        ],
+    }, { lastMessage: chatData.message, updatedAt: Date.now() }, { new: true });
     return yield chat.save();
 });
 const getChatsBetweenUsers = (userId_1, friendId_1, ...args_1) => __awaiter(void 0, [userId_1, friendId_1, ...args_1], void 0, function* (userId, friendId, page = 1, limit = 20) {
@@ -50,7 +59,7 @@ const getChatsBetweenUsers = (userId_1, friendId_1, ...args_1) => __awaiter(void
                 { senderId: friendId, receiverId: userId },
             ],
         })
-            .sort({ createdAt: -1 }) // Sort by latest messages first
+            .sort({ createdAt: 1 }) // Sort by latest messages first
             .skip(skip)
             .limit(limit)
             .populate({

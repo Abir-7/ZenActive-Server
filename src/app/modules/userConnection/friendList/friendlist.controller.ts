@@ -135,10 +135,15 @@ const removeRequest = catchAsync(async (req, res) => {
 });
 
 const getFriendListWithLastMessage = catchAsync(async (req, res) => {
+  const { page = 1, limit = 20 } = req.query;
   const userId = req.user?.userId;
   const userObjectId = userId;
   const updatedFriendList =
-    await FriendListService.getFriendListWithLastMessage(userObjectId);
+    await FriendListService.getFriendListWithLastMessage(
+      userObjectId,
+      Number(page),
+      Number(limit)
+    );
   sendResponse(res, {
     data: updatedFriendList,
     success: true,

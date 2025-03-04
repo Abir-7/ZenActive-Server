@@ -1,21 +1,20 @@
 import { Server } from "socket.io";
-import { ChatService } from "../modules/userChat/chat.service";
-import { IChat } from "../modules/userChat/chat.interface";
 import { handleSendMessage } from "./userMessage/message";
-import { Types } from "mongoose";
 
-export const users = new Map();
+export const users = new Map<string, string>();
 let io: Server; // Store io instance globally
+
 const setupSocket = (server: any) => {
   io = new Server(server, {
     cors: {
-      origin: ["*", "http://localhost:3000"],
+      origin: "*",
       methods: ["GET", "POST"],
     },
   });
 
   io.on("connection", (socket) => {
-    socket.on("register", (userId) => {
+    socket.on("register", (userId: string) => {
+      console.log("User registered:", userId);
       users.set(userId, socket.id);
       io.emit("onlineUsers", Array.from(users.keys()));
     });
@@ -24,17 +23,24 @@ const setupSocket = (server: any) => {
       "sendMessage",
       (data: { senderId: string; receiverId: string; message: string }) => {
         const { senderId, receiverId, message } = data;
-        senderId;
         handleSendMessage({ senderId, receiverId, message });
+
+        // Emit message to receiver if online
+        const receiverSocketId = users.get(receiverId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("receiveMessage", { senderId, message });
+        }
       }
     );
 
     socket.on("disconnect", () => {
-      users.forEach((socketId, userId) => {
-        if (socketId === socket.id) {
-          users.delete(userId);
-        }
-      });
+      const userId = [...users.entries()].find(
+        ([_, id]) => id === socket.id
+      )?.[0];
+      if (userId) {
+        users.delete(userId);
+        io.emit("onlineUsers", Array.from(users.keys()));
+      }
     });
   });
 

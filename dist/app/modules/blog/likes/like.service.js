@@ -27,9 +27,10 @@ const toggleLike = (postId, userId) => __awaiter(void 0, void 0, void 0, functio
     const session = yield mongoose_1.default.startSession();
     session.startTransaction();
     try {
-        const post = (yield post_model_1.default.findById(postId)
-            .populate("userId")
-            .session(session));
+        const post = (yield post_model_1.default.findById(postId).populate({
+            path: "userId",
+            select: "name _id email image",
+        }));
         if (!post) {
             throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Post not found");
         }
@@ -39,25 +40,30 @@ const toggleLike = (postId, userId) => __awaiter(void 0, void 0, void 0, functio
             throw new AppError_1.default(http_status_1.default.NOT_FOUND, "User not found");
         }
         const userName = `${(_a = user.name) === null || _a === void 0 ? void 0 : _a.firstName}${((_b = user.name) === null || _b === void 0 ? void 0 : _b.lastName) ? " " + user.name.lastName : ""}`;
+        let isLiked;
         if (like) {
-            yield like_model_1.default.findOneAndDelete({ postId, userId }).session(session);
+            yield like_model_1.default.findOneAndDelete({ postId, userId }, { session });
+            isLiked = false;
         }
         else {
             yield like_model_1.default.create([{ postId, userId }], { session });
-            yield notification_model_1.Notification.create([
-                {
-                    senderId: user._id,
-                    receiverId: post.userId._id,
-                    type: notification_interface_1.NotificationType.LIKE,
-                    postId,
-                    message: `\`${userName}\` likes your post`,
-                },
-            ], { session });
-            (0, handleNotification_1.handleNotification)(`${userName} likes your post`, post.userId._id);
+            isLiked = true;
+            if (post.userId._id !== userId) {
+                (0, handleNotification_1.handleNotification)(`${userName} likes your post`, post.userId._id);
+                yield notification_model_1.Notification.create([
+                    {
+                        senderId: user._id,
+                        receiverId: post.userId._id,
+                        type: notification_interface_1.NotificationType.LIKE,
+                        postId,
+                        message: `\`${userName}\` likes your post`,
+                    },
+                ], { session });
+            }
         }
         yield session.commitTransaction();
         session.endSession();
-        return { message: "Like status updated" };
+        return { isLiked };
     }
     catch (error) {
         yield session.abortTransaction();

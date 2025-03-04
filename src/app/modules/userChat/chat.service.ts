@@ -25,12 +25,27 @@ const createChat = async (chatData: IChat) => {
     isAccepted: true,
     status: null,
   });
+  if (!isExist?.isAccepted) {
+    throw new AppError(404, "You are not friends.");
+  }
 
   if (!isExist) {
     throw new AppError(404, "You are not friends.");
   }
 
   const chat = new Chat({ ...chatData, seenBy: [chatData.senderId] });
+
+  await UserConnection.findOneAndUpdate(
+    {
+      $or: [
+        { senderId: chatData.receiverId, receiverId: chatData.senderId },
+        { senderId: chatData.senderId, receiverId: chatData.receiverId },
+      ],
+    },
+    { lastMessage: chatData.message, updatedAt: Date.now() },
+    { new: true }
+  );
+
   return await chat.save();
 };
 
@@ -49,7 +64,7 @@ const getChatsBetweenUsers = async (
         { senderId: friendId, receiverId: userId },
       ],
     })
-      .sort({ createdAt: -1 }) // Sort by latest messages first
+      .sort({ createdAt: 1 }) // Sort by latest messages first
       .skip(skip)
       .limit(limit)
       .populate({

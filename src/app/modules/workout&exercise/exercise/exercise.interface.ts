@@ -11,4 +11,5 @@ export interface IExercise {
   duration: number;
   about: string;
   isDeleted: boolean;
+  videoId: string;
 }

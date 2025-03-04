@@ -3,10 +3,11 @@ import { IWorkoutVideo } from "./workoutVideo.interface";
 
 const WorkoutVideoSchema = new Schema<IWorkoutVideo>(
   {
+    videoId: { type: String, required: true },
     video: { type: String, required: true },
     name: { type: String, required: true },
     image: { type: String, required: true },
-    duration: { type: String, required: true },
+    duration: { type: Number, required: true },
   },
   { timestamps: true }
 );
