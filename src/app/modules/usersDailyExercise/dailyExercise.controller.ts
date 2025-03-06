@@ -35,7 +35,18 @@ const getDailyExerciseById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getDailyChallenge = catchAsync(async (req: Request, res: Response) => {
+  const result = await DailyExerciseService.getDailyChallenge();
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Daily challenge record fetched successfully.",
+  });
+});
+
 export const DailyExerciseController = {
   createDailyExercise,
   getDailyExerciseById,
+  getDailyChallenge,
 };

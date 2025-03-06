@@ -128,7 +128,7 @@ const getAllWorkouts = async (
   // Step 1: Build query filter
   const filter: Record<string, unknown> = { isDeleted };
   if (duration) {
-    filter.duration = duration;
+    filter.duration = Number((duration as number) * 7);
   }
 
   // Step 2: Get total count for pagination

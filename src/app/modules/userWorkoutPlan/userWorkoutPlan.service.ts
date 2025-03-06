@@ -30,9 +30,7 @@ const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
     currentExerciseIndex: 0,
     isCompleted: "InProgress",
     startedAt: Date.now(),
-    endAt: new Date(
-      Date.now() + workoutPlan.duration * 7 * 24 * 60 * 60 * 1000
-    ),
+    endAt: new Date(Date.now() + workoutPlan.duration * 24 * 60 * 60 * 1000),
   };
 
   const isExist = await UserWorkoutPlan.findOne({
@@ -167,22 +165,7 @@ const getActiveWorkoutPlan = async (userId: string, planId: string) => {
     })
     .lean();
 
-  // console.log(
-  //   (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
-  //     data?.currentWorkoutIndex as number,
-  //     (data?.currentWorkoutIndex as number) + 1
-  //   ),
-  //   "gg"
-  // );
   return data;
-
-  // return {
-  //   ...data,
-  //   workoutPlanId: (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
-  //     data?.currentWorkoutIndex as number,
-  //     (data?.currentWorkoutIndex as number) + 1
-  //   ),
-  // };
 };
 
 // const giveFeedback = async (data: {

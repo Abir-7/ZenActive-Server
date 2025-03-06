@@ -5,6 +5,13 @@ import auth from "../../middleware/auth/auth";
 const router = express.Router();
 
 router.post("/", auth("USER"), DailyExerciseController.createDailyExercise);
+
+router.get(
+  "/daily-challenge",
+  auth("USER"),
+  DailyExerciseController.getDailyChallenge
+);
+
 router.get("/:id", auth("USER"), DailyExerciseController.getDailyExerciseById);
 
 export const DailyExerciseRoutes = router;

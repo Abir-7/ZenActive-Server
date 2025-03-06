@@ -2,9 +2,10 @@ import UserMealPlan from "./userMealPlan.model";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import Meal from "../meal/meal.model";
-import { IMeal } from "../meal/meal.interface";
+
 import { UserAppData } from "../userAppData/appdata.model";
 const createUserMealPlan = async (userId: string, mealId: string) => {
+  console.log(mealId, userId);
   const isExist = await Meal.findById(mealId);
   if (!isExist) {
     throw new AppError(httpStatus.NOT_FOUND, "Meal not found");

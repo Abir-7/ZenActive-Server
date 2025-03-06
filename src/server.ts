@@ -3,7 +3,7 @@ import { config } from "./app/config";
 import { server } from "./app";
 import seedAdmin from "./app/DB/seedAdmin";
 
-import { setupCronJobs } from "./app/cron_jobs/cronJobs";
+import { setupCronJobs } from "./app/node-cron/cronJobs";
 import { setupSocket } from "./app/socket/socket";
 
 // Handle uncaught exceptions
