@@ -145,27 +145,84 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
 // Increment the number of workouts done
 
 // Get a user's active workout plan
-const getActiveWorkoutPlan = async (userId: string, planId: string) => {
-  console.log(userId, planId);
-  const data = await UserWorkoutPlan.findOne({
-    workoutPlanId: planId,
-    userId,
-    isCompleted: "InProgress",
-  })
-    .populate({
-      path: "workoutPlanId",
-      select: "title _id duration workouts",
-      populate: {
-        path: "workouts",
-        select: "_id name description exercises",
-        populate: {
-          path: "exercises",
-        },
-      },
-    })
-    .lean();
+// const getActiveWorkoutPlan = async (userId: string, planId: string) => {
+//   console.log(userId, planId);
+//   const data = await UserWorkoutPlan.findOne({
+//     workoutPlanId: planId,
+//     userId,
+//     isCompleted: "InProgress",
+//   })
+//     .populate({
+//       path: "workoutPlanId",
+//       select: "title _id duration workouts",
+//       populate: {
+//         path: "workouts",
+//         select: "_id name description exercises",
+//         populate: {
+//           path: "exercises",
+//         },
+//       },
+//     })
+//     .lean();
 
-  return data;
+//   return data;
+// };
+
+const getActiveWorkoutPlan = async (userId: string, planId: string) => {
+  const data = await UserWorkoutPlan.findOne({
+    userId,
+    workoutPlanId: planId,
+    isCompleted: "InProgress",
+  }).lean();
+
+  if (!data) return null;
+
+  const { startedAt, completedExercises } = data;
+
+  // Normalize `startedAt` to only the date part (YYYY-MM-DD)
+  const startDate = new Date(startedAt);
+  startDate.setHours(0, 0, 0, 0); // Remove time for accurate comparison
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Remove time for accurate comparison
+
+  // Ensure today is not before `startedAt`
+  if (today < startDate) {
+    return { ...data, missedDays: [] };
+  }
+
+  // Store completed workout days in a Set
+  const completedDays = new Set<string>();
+
+  for (const exercise of completedExercises) {
+    const completedDate = new Date(exercise.completedAt);
+    const completedDateStr = completedDate.toISOString().split("T")[0];
+
+    // Store only if the exercise was completed before 8 PM
+    if (completedDate.getUTCHours() < 20) {
+      completedDays.add(completedDateStr);
+    }
+  }
+
+  const missedDays: string[] = [];
+  let currentDate = new Date(startDate);
+
+  // Iterate from `startedAt` to `today`
+  while (currentDate <= today) {
+    const currentDateStr = currentDate.toISOString().split("T")[0];
+
+    // Add to missedDays only if it's not in completedDays
+    if (!completedDays.has(currentDateStr)) {
+      missedDays.push(currentDateStr);
+    }
+
+    currentDate.setDate(currentDate.getDate() + 1); // Move to next day
+  }
+
+  return {
+    ...data,
+    missedDays, // List of missed workout dates
+  };
 };
 
 // const giveFeedback = async (data: {

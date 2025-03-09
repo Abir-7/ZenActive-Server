@@ -1,3 +1,6 @@
+import AppError from "../../errors/AppError";
+import admin from "../../firebase/firebase";
+import UserWorkoutPlan from "../userWorkoutPlan/userWorkoutPlan.model";
 import { INotification } from "./notification.interface";
 import { Notification } from "./notification.model";
 
@@ -54,7 +57,106 @@ const updateNotification = async (id: string) => {
   return notification;
 };
 
+const checkPushNotification = async () => {
+  try {
+    // Define the notification payload
+    const payload = {
+      notification: {
+        title: "Workout Reminder!",
+        body: "You missed your workout today. Let’s get moving!",
+      },
+    };
+
+    const today = new Date();
+
+    // Aggregate to get users who haven't completed their workout today
+    const users = await UserWorkoutPlan.aggregate([
+      // 1. Extract the last completed exercise
+      {
+        $addFields: {
+          lastCompleted: { $arrayElemAt: ["$completedExercises", -1] },
+        },
+      },
+      // 2. Check if the last completed exercise was done today
+      {
+        $addFields: {
+          isDoneToday: {
+            $cond: {
+              if: {
+                $eq: [
+                  {
+                    $dateToString: {
+                      format: "%Y-%m-%d",
+                      date: "$lastCompleted.completedAt",
+                    },
+                  },
+                  { $dateToString: { format: "%Y-%m-%d", date: today } },
+                ],
+              },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      // 3. Only include documents where the workout was not done today
+      {
+        $match: { isDoneToday: false },
+      },
+      // 4. Join with the users collection to retrieve user details
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      // 5. Unwind the resulting array from the lookup
+      {
+        $unwind: "$user",
+      },
+      // 6. Project only the user's email and fcmToken as top-level fields
+      {
+        $project: {
+          _id: 0,
+          email: "$user.email",
+          fcmToken: "$user.fcmToken",
+        },
+      },
+    ]);
+
+    // Loop through each user and send a push notification if they have a valid FCM token
+    for (const user of users) {
+      if (user.fcmToken) {
+        try {
+          console.log(user.fcmToken);
+          const response = await admin.messaging().send({
+            token: user.fcmToken,
+            notification: payload.notification,
+          });
+          console.log(`Notification sent to ${user.email}:`, response);
+        } catch (error: any) {
+          console.error(
+            `Error sending notification to ${user.email}:`,
+            error.message
+          );
+
+          throw new AppError(
+            500,
+            `Error sending notification to ${user.email}: ${error.message}`
+          );
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error("Aggregation error:", err.message);
+    throw new AppError(500, `${err.message}`);
+  }
+};
+
 export const NotificationService = {
   getAllNotifications,
   updateNotification,
+  checkPushNotification,
 };
