@@ -4,7 +4,6 @@ import sendResponse from "../../../utils/sendResponse";
 import { UserGroupService } from "./userGroup.service";
 
 const getUserAllGroups = catchAsync(async (req, res) => {
-  console.log("object");
   const { userId } = req.user;
   const { page = 1, limit = 25, searchTerm } = req.query;
   const result = await UserGroupService.getUserAllGroups(

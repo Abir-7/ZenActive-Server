@@ -97,8 +97,6 @@ const getGroupsAllPosts = catchAsync(async (req, res) => {
 });
 
 const getUserAllGroupPost = catchAsync(async (req, res) => {
-  console.log("--->");
-
   const { userId } = req.user;
   const { page = 1 } = req.query;
   const result = await PostService.getUserAllGroupPost(userId, Number(page));

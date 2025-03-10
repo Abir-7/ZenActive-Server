@@ -130,7 +130,6 @@ const checkPushNotification = async () => {
     for (const user of users) {
       if (user.fcmToken) {
         try {
-          console.log(user.fcmToken);
           const response = await admin.messaging().send({
             token: user.fcmToken,
             notification: payload.notification,

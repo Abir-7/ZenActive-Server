@@ -42,7 +42,7 @@ const verifyUser = catchAsync(async (req, res) => {
 
 const resetPassword = catchAsync(async (req, res) => {
   const token = req.headers.authorization;
-  console.log(token, "----------------> pass token");
+
   const result = await AuthService.resetPassword(token as string, req.body);
   sendResponse(res, {
     data: result,

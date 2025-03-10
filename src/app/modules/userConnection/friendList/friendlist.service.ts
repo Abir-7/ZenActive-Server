@@ -15,7 +15,6 @@ const sendRequest = async (
   friendId: Types.ObjectId
 ) => {
   const senderData = await User.findById(userId).select("name");
-  console.log(senderData);
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -354,14 +353,14 @@ const getFriendListWithLastMessage = async (
             : connection.senderId;
 
         // Find the last message between the user and the friend
-        const lastMessage = await Chat.findOne({
+        const lastMessage = (await Chat.findOne({
           $or: [
             { senderId: userId, receiverId: friendId },
             { senderId: friendId, receiverId: userId },
           ],
         })
           .sort({ createdAt: -1 }) // Sort by createdAt in descending order to get the last message
-          .exec();
+          .exec()) as any;
 
         // Fetch friend details
         const friendDetails = await User.findById(friendId)
@@ -379,6 +378,7 @@ const getFriendListWithLastMessage = async (
               }
             : null,
           lastMessage: lastMessage ? lastMessage.message : null,
+          time: lastMessage ? lastMessage?.createdAt : null,
         };
       })
     );
@@ -388,7 +388,7 @@ const getFriendListWithLastMessage = async (
       $or: [{ senderId: userId }, { receiverId: userId }],
       isAccepted: true,
     });
-    console.log(friendsWithLastMessage);
+
     return {
       data: friendsWithLastMessage,
       meta: {

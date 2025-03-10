@@ -12,6 +12,7 @@ import { Request } from "express";
 import { cloudinaryInstance } from "../../../utils/cloudinary/cloudinary";
 import { extractPublicId } from "../../../utils/cloudinary/getPublicID";
 import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
+import { bool } from "aws-sdk/clients/signer";
 
 // Create a new exercise
 const createExercise = async (req: Request) => {
@@ -77,19 +78,29 @@ const getAllExercise = async (
   userRole: string,
   userId: string,
   page: number = 1,
-  limit: number = 12
+  limit: number = 12,
+  query?: Record<string, unknown>
 ) => {
+  if (!query?.name) {
+    delete query?.name;
+  }
+
+  query!.isDeleted = false;
+
   const skip = (page - 1) * limit;
 
   if (userRole === "ADMIN") {
-    // Get total count for pagination
-    const total = await Exercise.countDocuments({ isDeleted: false });
+    query = { isDeleted: false, ...query };
+    console.log(query);
+    if (typeof query.name === "string" && query.name.trim() !== "") {
+      // Add a case-insensitive regex search for the name field
+      query.name = { $regex: query.name, $options: "i" };
+    }
+
+    const total = await Exercise.countDocuments(query);
     const totalPage = Math.ceil(total / limit);
 
-    const exercises = await Exercise.find({ isDeleted: false })
-      .skip(skip)
-      .limit(limit)
-      .exec();
+    const exercises = await Exercise.find(query).skip(skip).limit(limit).exec();
 
     return {
       meta: { limit, page, total, totalPage },

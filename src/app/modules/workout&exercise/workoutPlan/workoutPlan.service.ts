@@ -50,8 +50,6 @@ const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
   const json = await getJson(workoutsResponse);
 
   if (json?.workouts?.length > workoutData.duration) {
-    console.log(json?.workouts.slice(0, workoutData.duration));
-
     json.workouts = json?.workouts.slice(0, workoutData.duration);
   }
   if (
@@ -122,7 +120,8 @@ const getAllWorkouts = async (
 ) => {
   query.isDeleted = false;
 
-  const { isDeleted, duration, page = 1, limit = 15 } = query;
+  const { isDeleted, duration, page = 1, limit = 15, name } = query;
+
   const skip = (Number(page) - 1) * Number(limit);
 
   // Step 1: Build query filter
@@ -130,7 +129,10 @@ const getAllWorkouts = async (
   if (duration) {
     filter.duration = Number((duration as number) * 7);
   }
-
+  if (name !== "" && typeof name === "string") {
+    filter.name = { $regex: name, $options: "i" };
+  }
+  console.log(filter);
   // Step 2: Get total count for pagination
   const total = await WorkoutPlan.countDocuments(filter);
   const totalPage = Math.ceil(total / Number(limit));

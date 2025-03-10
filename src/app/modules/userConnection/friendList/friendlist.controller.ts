@@ -51,7 +51,6 @@ const removeFriend = catchAsync(async (req, res) => {
 });
 
 const getFriendList = catchAsync(async (req, res) => {
-  console.log("2222");
   const userId = req.user.userId;
   const { page = 1, limit = 30 } = req.query;
   const friendList = await FriendListService.getFriendList(
