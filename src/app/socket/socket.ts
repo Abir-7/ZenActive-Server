@@ -26,10 +26,10 @@ const setupSocket = (server: any) => {
         handleSendMessage({ senderId, receiverId, message });
 
         // Emit message to receiver if online
-        const receiverSocketId = users.get(receiverId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit("receiveMessage", { senderId, message });
-        }
+        // const receiverSocketId = users.get(receiverId);
+        // if (receiverSocketId) {
+        //   io.to(receiverSocketId).emit("receiveMessage", { senderId, message });
+        // }
       }
     );
 

@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 
 import { ChatService } from "../../modules/userChat/chat.service";
 
-import { io, users } from "../socket";
+import { io } from "../socket";
 
 export const handleSendMessage = (data: {
   senderId: string;
