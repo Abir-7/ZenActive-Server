@@ -103,7 +103,8 @@ const getChatsBetweenUsers = async (
     .populate({
       path: "receiverId",
       select: "name email _id image",
-    });
+    })
+    .lean();
 
   // Update chats where userId is not in seenBy
   await Chat.updateMany(
@@ -125,7 +126,22 @@ const getChatsBetweenUsers = async (
     totalPage: Math.ceil(total / limit),
   };
 
-  return { userChat, userFriendShipStatus, meta };
+  const formattedCode = {
+    userChat,
+    userFriendShipStatus: userFriendShipStatus
+      ? {
+          senderId: userFriendShipStatus?.senderId,
+          receiverId: userFriendShipStatus?.receiverId,
+          connectionId: userFriendShipStatus?._id,
+          isAccepted: userFriendShipStatus?.isAccepted,
+          status: userFriendShipStatus?.status,
+          statusChangeBy: userFriendShipStatus?.statusChangeBy,
+        }
+      : null,
+    meta,
+  };
+
+  return formattedCode;
 };
 
 const chatWithFitBot = async (prompt: string): Promise<string> => {

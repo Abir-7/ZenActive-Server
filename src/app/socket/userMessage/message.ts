@@ -8,15 +8,16 @@ export const handleSendMessage = (data: {
   senderId: string;
   receiverId: string;
   message: string;
+  connectionId: string;
 }) => {
   //sender
-  io.emit(`receiver-${data.senderId}`, {
-    senderId: data.senderId,
-    receiverId: data.receiverId,
-    content: data.message,
-  });
+  // io.emit(`receiver-${data.connectionId}`, {
+  //   senderId: data.senderId,
+  //   receiverId: data.receiverId,
+  //   content: data.message,
+  // });
   //receiver
-  io.emit(`receiver-${data.receiverId}`, {
+  io.emit(`receiver-${data.connectionId}`, {
     senderId: data.senderId,
     receiverId: data.receiverId,
     content: data.message,

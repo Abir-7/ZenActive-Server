@@ -379,6 +379,7 @@ const getFriendListWithLastMessage = async (
             : null,
           lastMessage: lastMessage ? lastMessage.message : null,
           time: lastMessage ? lastMessage?.createdAt : null,
+          connectionId: connection._id,
         };
       })
     );

@@ -72,7 +72,11 @@ const getAllBadge = async (query: Record<string, unknown>, userId: string) => {
 };
 
 const getSingleBadge = async (id: string) => {
-  return await Badge.findOne({ _id: id, isDeleted: false });
+  const data = await Badge.findOne({ _id: id, isDeleted: false });
+  if (!data) {
+    throw new AppError(httpStatus.NOT_FOUND, "Badge not found");
+  }
+  return data;
 };
 
 const deleteBadge = async (id: string) => {

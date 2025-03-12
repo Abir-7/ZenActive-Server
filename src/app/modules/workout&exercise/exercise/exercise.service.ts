@@ -10,9 +10,8 @@ import status from "http-status";
 import { Request } from "express";
 
 import { cloudinaryInstance } from "../../../utils/cloudinary/cloudinary";
-import { extractPublicId } from "../../../utils/cloudinary/getPublicID";
+
 import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
-import { bool } from "aws-sdk/clients/signer";
 
 // Create a new exercise
 const createExercise = async (req: Request) => {

@@ -21,9 +21,14 @@ const setupSocket = (server: any) => {
 
     socket.on(
       "sendMessage",
-      (data: { senderId: string; receiverId: string; message: string }) => {
-        const { senderId, receiverId, message } = data;
-        handleSendMessage({ senderId, receiverId, message });
+      (data: {
+        senderId: string;
+        receiverId: string;
+        message: string;
+        connectionId: string;
+      }) => {
+        const { senderId, receiverId, message, connectionId } = data;
+        handleSendMessage({ senderId, receiverId, message, connectionId });
 
         // Emit message to receiver if online
         // const receiverSocketId = users.get(receiverId);

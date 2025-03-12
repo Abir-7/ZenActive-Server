@@ -61,6 +61,8 @@ export const globalErrorHandler = (
     ];
   }
 
+  console.log(err.message, "----error");
+
   res.status(statusCode).json({
     success: false,
     status: statusCode,

@@ -41,6 +41,14 @@ const updateGroup = async (
   userId: string,
   updateData: Partial<IGroup>
 ) => {
+  console.log(updateData, groupId, userId);
+
+  const groupData = await Group.findById(groupId).lean();
+
+  if (groupData && groupData.admin.toString() !== userId) {
+    throw new AppError(httpStatus.NOT_FOUND, "You are not admin.");
+  }
+
   const result = await Group.findOneAndUpdate(
     { _id: groupId, admin: userId, isDeleted: false },
     updateData,

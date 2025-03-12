@@ -52,8 +52,8 @@ const updateMeal = catchAsync(async (req, res) => {
 
 const deleteMeal = catchAsync(async (req, res) => {
   const { id } = req.params;
-
   const result = await MealService.deleteMeal(id);
+  console.log(result, "------->");
   sendResponse(res, {
     data: result,
     success: true,
