@@ -7,7 +7,7 @@ router.get("/", auth("USER"), NotificationController.getAllNotifications);
 router.get(
   "/send-notification",
   auth("USER"),
-  NotificationController.checkPushNotification
+  NotificationController.sendPushNotification
 );
 router.patch("/:id", auth("USER"), NotificationController.updateNotification);
 

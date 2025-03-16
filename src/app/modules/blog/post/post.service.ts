@@ -9,6 +9,8 @@ import { UserGroup } from "../../socialGroup/UsersGroup/userGroup.model";
 
 const createPost = async (data: Partial<IPost>) => {
   let post: IPost;
+  console.log(data);
+
   if (data.groupId) {
     post = await Post.create({ ...data, isGroup: true });
 

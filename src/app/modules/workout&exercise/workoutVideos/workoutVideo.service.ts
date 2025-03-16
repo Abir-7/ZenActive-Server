@@ -103,7 +103,7 @@ const updateWorkoutVideo = async (id: string, req: Request) => {
     const pathLink = `/medias/${req.files.media[0].filename}`;
     const file = req.files.media[0];
     const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
-    console.log(file.filename.split(".")[0]);
+
     try {
       const uploadResult = await cloudinaryInstance.uploader.upload(filePath, {
         public_id: file.filename.split(".")[0].trim(),

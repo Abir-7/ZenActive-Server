@@ -83,7 +83,7 @@ const inviteUserList = catchAsync(async (req, res) => {
 const inviteUser = catchAsync(async (req, res) => {
   const { groupId, receiverId } = req.body;
   const { userId } = req.user;
-
+  console.log("object", userId, groupId, receiverId);
   const result = await UserGroupService.inviteUser(groupId, userId, receiverId);
   sendResponse(res, {
     data: result,

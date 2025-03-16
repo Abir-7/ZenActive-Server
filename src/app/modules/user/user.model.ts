@@ -103,7 +103,7 @@ export const userSchema = new Schema<IUser, IUserModel>(
     isProfileUpdated: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
-    fcmToken: { type: String },
+    fcmToken: { type: String, unique: true },
   },
   {
     timestamps: true,

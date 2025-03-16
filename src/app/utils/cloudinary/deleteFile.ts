@@ -12,7 +12,7 @@ export const deleteCloudinaryVideo = async (
         invalidate: true,
       }
     );
-    console.log(response);
+
     if (response.result === "ok") {
       console.log("Video deleted successfully.");
     } else {

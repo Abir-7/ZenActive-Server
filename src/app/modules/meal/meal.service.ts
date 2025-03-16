@@ -6,6 +6,7 @@ import { IMeal } from "./meal.interface";
 import Meal from "./meal.model";
 import httpStatus from "http-status";
 import QueryBuilder from "../../builder/QueryBuilder";
+import { sendPushNotification } from "../notification/notification.service";
 const createMeal = async (mealData: IMeal) => {
   const newMeal = await Meal.create(mealData);
 
@@ -13,6 +14,10 @@ const createMeal = async (mealData: IMeal) => {
     unlinkFile(mealData?.image);
   }
 
+  sendPushNotification({
+    title: "New Meal",
+    body: `New meal added category: ${mealData.category}`,
+  });
   return newMeal;
 };
 

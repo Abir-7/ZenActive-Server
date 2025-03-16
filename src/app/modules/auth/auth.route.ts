@@ -47,4 +47,6 @@ router.patch(
   AuthController.updatePassword
 );
 
+router.get("/get-access-token/:email", AuthController.getNewAccessToken);
+
 export const AuthRoute = router;

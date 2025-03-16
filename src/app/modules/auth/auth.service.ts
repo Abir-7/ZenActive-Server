@@ -299,6 +299,41 @@ const updatePassword = async (
   return { message: "Password changed." };
 };
 
+const getNewAccessToken = async (refreshToken: string, email: string) => {
+  console.log(email);
+  if (!refreshToken) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Refresh token not found.");
+  }
+  const decode = jwtHelper.verifyToken(
+    refreshToken,
+    config.security.jwt.refreshSecret as string
+  );
+
+  const { userEmail, userId, userRole } = decode;
+  console.log(userEmail);
+  if (userEmail !== email) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "You are unauthorized.");
+  }
+
+  if (userEmail && userId && userRole) {
+    const jwtPayload = {
+      userEmail: userEmail,
+      userId: userId,
+      userRole: userRole,
+    };
+
+    const accessToken = jwtHelper.generateToken(
+      jwtPayload,
+      config.security.jwt.secret as string,
+      config.security.jwt.refreshExpiresIn
+    );
+
+    return { accessToken };
+  } else {
+    throw new AppError(httpStatus.UNAUTHORIZED, "You are unauthorized.");
+  }
+};
+
 export const AuthService = {
   loginUser,
   forgotPass,
@@ -306,4 +341,5 @@ export const AuthService = {
   resetPassword,
   reSendOtp,
   updatePassword,
+  getNewAccessToken,
 };

@@ -1,7 +1,7 @@
 import AppError from "../../errors/AppError";
 import admin from "../../firebase/firebase";
-import UserWorkoutPlan from "../userWorkoutPlan/userWorkoutPlan.model";
-import { INotification } from "./notification.interface";
+import { User } from "../user/user.model";
+
 import { Notification } from "./notification.model";
 
 // const createNotification = async (data: Partial<INotification>) => {
@@ -57,105 +57,53 @@ const updateNotification = async (id: string) => {
   return notification;
 };
 
-const checkPushNotification = async () => {
+export const sendPushNotification = async (data: {
+  title: string;
+  body: string;
+}) => {
   try {
-    // Define the notification payload
-    const payload = {
-      notification: {
-        title: "Workout Reminder!",
-        body: "You missed your workout today. Let’s get moving!",
-      },
-    };
+    console.log("Sending push notifications...");
 
-    const today = new Date();
+    const users = await User.find({
+      $and: [
+        { fcmToken: { $exists: true } },
+        { fcmToken: { $ne: null } },
+        { fcmToken: { $ne: "" } },
+      ],
+    })
+      .select("email fcmToken")
+      .lean(); // Fetch only required fields
 
-    // Aggregate to get users who haven't completed their workout today
-    const users = await UserWorkoutPlan.aggregate([
-      // 1. Extract the last completed exercise
-      {
-        $addFields: {
-          lastCompleted: { $arrayElemAt: ["$completedExercises", -1] },
-        },
-      },
-      // 2. Check if the last completed exercise was done today
-      {
-        $addFields: {
-          isDoneToday: {
-            $cond: {
-              if: {
-                $eq: [
-                  {
-                    $dateToString: {
-                      format: "%Y-%m-%d",
-                      date: "$lastCompleted.completedAt",
-                    },
-                  },
-                  { $dateToString: { format: "%Y-%m-%d", date: today } },
-                ],
-              },
-              then: true,
-              else: false,
-            },
-          },
-        },
-      },
-      // 3. Only include documents where the workout was not done today
-      {
-        $match: { isDoneToday: false },
-      },
-      // 4. Join with the users collection to retrieve user details
-      {
-        $lookup: {
-          from: "users",
-          localField: "userId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      // 5. Unwind the resulting array from the lookup
-      {
-        $unwind: "$user",
-      },
-      // 6. Project only the user's email and fcmToken as top-level fields
-      {
-        $project: {
-          _id: 0,
-          email: "$user.email",
-          fcmToken: "$user.fcmToken",
-        },
-      },
-    ]);
+    if (users.length === 0) return console.log("No users with valid fcmToken");
 
-    // Loop through each user and send a push notification if they have a valid FCM token
-    for (const user of users) {
-      if (user.fcmToken) {
-        try {
-          const response = await admin.messaging().send({
-            token: user.fcmToken,
-            notification: payload.notification,
-          });
-          console.log(`Notification sent to ${user.email}:`, response);
-        } catch (error: any) {
-          console.error(
-            `Error sending notification to ${user.email}:`,
-            error.message
-          );
+    const messages = users.map((user) => ({
+      token: user.fcmToken,
+      notification: { title: data.title, body: data.body },
+    }));
 
-          throw new AppError(
-            500,
-            `Error sending notification to ${user.email}: ${error.message}`
-          );
+    const BATCH_SIZE = 500; // Firebase batch limit
+    for (let i = 0; i < messages.length; i += BATCH_SIZE) {
+      const batch = messages.slice(i, i + BATCH_SIZE);
+      const responses = await Promise.allSettled(
+        batch.map((msg) => admin.messaging().send(msg))
+      );
+
+      responses.forEach((result, index) => {
+        const user = users[i + index];
+        if (result.status === "fulfilled") {
+          console.log(`Notification sent to ${user.email}`);
+        } else {
+          console.error(`Failed to send notification to ${user.email}`);
         }
-      }
+      });
     }
   } catch (err: any) {
-    console.error("Aggregation error:", err.message);
-    throw new AppError(500, `${err.message}`);
+    console.error("Notification Error:", err.message);
   }
 };
 
 export const NotificationService = {
   getAllNotifications,
   updateNotification,
-  checkPushNotification,
+  sendPushNotification,
 };

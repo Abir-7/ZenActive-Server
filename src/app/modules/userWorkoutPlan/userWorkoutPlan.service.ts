@@ -8,7 +8,6 @@ import { UserAppData } from "../userAppData/appdata.model";
 import status from "http-status";
 
 const startWorkoutPlan = async (userId: string, workoutPlanId: string) => {
-  console.log(workoutPlanId, "------------------->>");
   const workoutPlan = await WorkoutPlan.findOne({
     _id: workoutPlanId,
   }).populate({

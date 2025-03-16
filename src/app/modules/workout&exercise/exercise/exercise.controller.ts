@@ -19,7 +19,7 @@ const createExercise = catchAsync(async (req: Request, res: Response) => {
 const getAllExercise = catchAsync(async (req: Request, res: Response) => {
   const { userRole, userId } = req.user;
   const { page = 1, limit = 15, name } = req.query;
-  console.log(name);
+
   const result = await ExerciseService.getAllExercise(
     userRole,
     userId,

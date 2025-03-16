@@ -119,10 +119,11 @@ const getFriendList = async (
     .lean();
 
   // Extract only the friend data
+
   let friends = friendList.map((friend) =>
     friend.senderId._id.toString() === userId
-      ? friend.receiverId
-      : friend.senderId
+      ? { ...friend.receiverId, connectionId: friend._id }
+      : { ...friend.senderId, connectionId: friend._id }
   ) as any[];
 
   // 🔍 Search by full name (case-insensitive)

@@ -204,62 +204,190 @@ const leaveFromGroup = async (groupId: string, userId: string) => {
   return { message: "Successfully left the group." };
 };
 
+// const inviteUserList = async (
+//   groupId: string,
+//   userId: string,
+//   searchText?: string,
+//   page: number = 1,
+//   limit: number = 10
+// ) => {
+//   const userObjectId = new Types.ObjectId(userId);
+//   const groupObjectId = new Types.ObjectId(groupId);
+//   const skip = (page - 1) * limit;
+
+//   // Step 1: Get user friends
+//   const friends = await UserConnection.find({
+//     $or: [{ senderId: userObjectId }, { receiverId: userObjectId }],
+//     isAccepted: true,
+//   });
+
+//   const friendIds = friends.map((friend) =>
+//     friend.senderId.equals(userObjectId) ? friend.receiverId : friend.senderId
+//   );
+
+//   // Step 2: Get users who are already in the group
+//   const groupMembers = await UserGroup.find({ groupId: groupObjectId }).select(
+//     "userId"
+//   );
+//   const groupMemberIds = groupMembers.map((member) => member.userId.toString());
+
+//   // Step 3: Construct the query filter
+//   const query: any = {
+//     _id: { $in: friendIds, $nin: groupMemberIds },
+//   };
+
+//   // Step 4: Apply name or email search if provided
+//   if (searchText) {
+//     const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
+//     query.$or = [
+//       { "name.firstName": { $regex: searchRegex } }, // Search by first name
+//       { "name.lastName": { $regex: searchRegex } }, // Search by last name
+//       { email: { $regex: searchRegex } }, // Search by email
+//     ];
+//   }
+
+//   // Step 5: Count total available friends who match the query
+//   const total = await User.countDocuments(query);
+//   const totalPage = Math.ceil(total / limit);
+
+//   // Step 6: Fetch available users with pagination
+//   const availableUsers = await User.find(query)
+//     .select("email name image")
+//     .skip(skip)
+//     .limit(limit);
+
+//   return {
+//     meta: { limit, page, total, totalPage },
+//     data: availableUsers,
+//   };
+// };
 const inviteUserList = async (
   groupId: string,
   userId: string,
   searchText?: string,
   page: number = 1,
   limit: number = 10
-) => {
-  const userObjectId = new Types.ObjectId(userId);
-  const groupObjectId = new Types.ObjectId(groupId);
-  const skip = (page - 1) * limit;
+): Promise<{
+  meta: { limit: number; page: number; total: number; totalPage: number };
+  data: Array<any>;
+}> => {
+  const sessionUserId = new mongoose.Types.ObjectId(userId);
+  const sessionGroupId = new mongoose.Types.ObjectId(groupId);
 
-  // Step 1: Get user friends
-  const friends = await UserConnection.find({
-    $or: [{ senderId: userObjectId }, { receiverId: userObjectId }],
-    isAccepted: true,
-  });
+  try {
+    // Get all accepted friends of the current user
+    const friendsAggregate = await UserConnection.aggregate([
+      {
+        $match: {
+          $or: [
+            { senderId: sessionUserId, isAccepted: true },
+            { receiverId: sessionUserId, isAccepted: true },
+          ],
+        },
+      },
+      {
+        $project: {
+          friendId: {
+            $cond: {
+              if: { $eq: ["$senderId", sessionUserId] },
+              then: "$receiverId",
+              else: "$senderId",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          friendIds: { $addToSet: "$friendId" },
+        },
+      },
+    ]);
 
-  const friendIds = friends.map((friend) =>
-    friend.senderId.equals(userObjectId) ? friend.receiverId : friend.senderId
-  );
+    const friendIds = friendsAggregate[0]?.friendIds || [];
+    if (friendIds.length === 0) {
+      return {
+        meta: { limit, page, total: 0, totalPage: 0 },
+        data: [],
+      };
+    }
 
-  // Step 2: Get users who are already in the group
-  const groupMembers = await UserGroup.find({ groupId: groupObjectId }).select(
-    "userId"
-  );
-  const groupMemberIds = groupMembers.map((member) => member.userId.toString());
+    // Find users already in the group
+    const usersInGroup = await UserGroup.find({
+      groupId: sessionGroupId,
+      userId: { $in: friendIds },
+    }).distinct("userId");
 
-  // Step 3: Construct the query filter
-  const query: any = {
-    _id: { $in: friendIds, $nin: groupMemberIds },
-  };
+    // Filter out users already in the group
+    const inviteCandidateIds = friendIds.filter(
+      (id: string) => !usersInGroup.some((ugId) => ugId.equals(id))
+    );
 
-  // Step 4: Apply name or email search if provided
-  if (searchText) {
-    const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
-    query.$or = [
-      { "name.firstName": { $regex: searchRegex } }, // Search by first name
-      { "name.lastName": { $regex: searchRegex } }, // Search by last name
-      { email: { $regex: searchRegex } }, // Search by email
-    ];
+    if (inviteCandidateIds.length === 0) {
+      return {
+        meta: { limit, page, total: 0, totalPage: 0 },
+        data: [],
+      };
+    }
+
+    // Build search query
+    const searchQuery: any = { _id: { $in: inviteCandidateIds } };
+    if (searchText) {
+      const regex = new RegExp(searchText, "i");
+      searchQuery.$or = [
+        { username: regex },
+        { email: regex },
+        { firstName: regex },
+        { lastName: regex },
+      ];
+    }
+
+    // Get paginated results
+    const [total, users] = await Promise.all([
+      User.countDocuments(searchQuery),
+      User.find(searchQuery)
+        .select("-password -refreshToken") // Exclude sensitive fields
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    // Check existing invitations
+    const userIds = users.map((user) => user._id);
+    const notifications = await Notification.find({
+      senderId: sessionUserId,
+      receiverId: { $in: userIds },
+      type: NotificationType.JOIN_GROUP_REQUEST,
+      groupId: sessionGroupId,
+      isRead: false,
+    });
+
+    const invitedUserIds = new Set(
+      notifications.map((n) => n.receiverId.toString())
+    );
+
+    // Add isInvited status to users
+    const usersWithInviteStatus = users.map((user) => ({
+      email: user.email,
+      name: user.name || null,
+      image: user.image || null,
+      _id: user._id,
+      isInvited: invitedUserIds.has(user._id.toString()),
+    }));
+
+    return {
+      meta: {
+        limit,
+        page,
+        total,
+        totalPage: Math.ceil(total / limit),
+      },
+      data: usersWithInviteStatus,
+    };
+  } catch (error) {
+    console.error("Error in inviteUserList:", error);
+    throw new Error("Failed to fetch invite user list");
   }
-
-  // Step 5: Count total available friends who match the query
-  const total = await User.countDocuments(query);
-  const totalPage = Math.ceil(total / limit);
-
-  // Step 6: Fetch available users with pagination
-  const availableUsers = await User.find(query)
-    .select("email name image")
-    .skip(skip)
-    .limit(limit);
-
-  return {
-    meta: { limit, page, total, totalPage },
-    data: availableUsers,
-  };
 };
 
 const inviteUser = async (

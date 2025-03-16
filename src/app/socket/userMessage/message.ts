@@ -17,6 +17,7 @@ export const handleSendMessage = (data: {
   //   content: data.message,
   // });
   //receiver
+
   io.emit(`receiver-${data.connectionId}`, {
     senderId: data.senderId,
     receiverId: data.receiverId,

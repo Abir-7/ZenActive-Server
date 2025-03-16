@@ -42,21 +42,19 @@ const updateNotification = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const checkPushNotification = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const result = await NotificationService.checkPushNotification();
-    sendResponse(res, {
-      data: result,
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Push Notification sent successfully.",
-    });
-  }
-);
+const sendPushNotification = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await NotificationService.sendPushNotification(req.body);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Push Notification sent successfully.",
+  });
+});
 
 export const NotificationController = {
   getAllNotifications,
   updateNotification,
-  checkPushNotification,
+  sendPushNotification,
 };

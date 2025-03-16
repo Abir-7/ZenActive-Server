@@ -12,6 +12,7 @@ import { Request } from "express";
 import { cloudinaryInstance } from "../../../utils/cloudinary/cloudinary";
 
 import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
+import { sendPushNotification } from "../../notification/notification.service";
 
 // Create a new exercise
 const createExercise = async (req: Request) => {
@@ -70,6 +71,12 @@ const createExercise = async (req: Request) => {
   if (!exercise && value.image) {
     unlinkFile(value.image);
   }
+
+  sendPushNotification({
+    title: "New Exercise",
+    body: `New exercise added name: ${value.name}`,
+  });
+
   return exercise;
 };
 
@@ -90,7 +97,7 @@ const getAllExercise = async (
 
   if (userRole === "ADMIN") {
     query = { isDeleted: false, ...query };
-    console.log(query);
+
     if (typeof query.name === "string" && query.name.trim() !== "") {
       // Add a case-insensitive regex search for the name field
       query.name = { $regex: query.name, $options: "i" };
@@ -195,7 +202,7 @@ const updateExercise = async (exerciseId: string, req: Request) => {
     const pathLink = `/medias/${req.files.media[0].filename}`;
     const file = req.files.media[0];
     const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
-    console.log(file.filename.split(".")[0]);
+
     try {
       const uploadResult = await cloudinaryInstance.uploader.upload(filePath, {
         public_id: file.filename.split(".")[0].trim(),

@@ -6,6 +6,7 @@ import { Types } from "mongoose";
 import DailyChallenge from "../modules/usersDailyChallage/usersDailyExercise.model";
 import UserWorkoutPlan from "../modules/userWorkoutPlan/userWorkoutPlan.model";
 import admin from "../firebase/firebase";
+import AppError from "../errors/AppError";
 
 export const setupCronJobs = () => {
   // delete user meal plan at 12Am everyday
@@ -55,7 +56,6 @@ export const setupCronJobs = () => {
 
       // 4️⃣ Insert into MongoDB
       await DailyChallenge.insertMany(dailyChallenges);
-      console.log("Daily Challenges Created:", dailyChallenges);
     } catch (error) {
       console.error("Error creating daily challenges:", error);
     }
@@ -64,95 +64,101 @@ export const setupCronJobs = () => {
   //  send notification allert for user workout plan
 
   // Schedule the job to run at midnight every day
-  // cron.schedule("* * * * *", async () => {
-  //   try {
-  //     // Define the notification payload
-  //     const payload = {
-  //       notification: {
-  //         title: "Workout Reminder!",
-  //         body: "You missed your workout today. Let’s get moving!",
-  //       },
-  //     };
+  cron.schedule("0 18 * * *", async () => {
+    try {
+      // Define the notification payload
+      const payload = {
+        notification: {
+          title: "Workout Reminder!",
+          body: "You missed your workout today. Let’s get moving!",
+        },
+      };
 
-  //     const today = new Date();
+      const today = new Date();
 
-  //     // Aggregate to get users who haven't completed their workout today
-  //     const users = await UserWorkoutPlan.aggregate([
-  //       // 1. Extract the last completed exercise
-  //       {
-  //         $addFields: {
-  //           lastCompleted: { $arrayElemAt: ["$completedExercises", -1] },
-  //         },
-  //       },
-  //       // 2. Check if the last completed exercise was done today
-  //       {
-  //         $addFields: {
-  //           isDoneToday: {
-  //             $cond: {
-  //               if: {
-  //                 $eq: [
-  //                   {
-  //                     $dateToString: {
-  //                       format: "%Y-%m-%d",
-  //                       date: "$lastCompleted.completedAt",
-  //                     },
-  //                   },
-  //                   { $dateToString: { format: "%Y-%m-%d", date: today } },
-  //                 ],
-  //               },
-  //               then: true,
-  //               else: false,
-  //             },
-  //           },
-  //         },
-  //       },
-  //       // 3. Only include documents where the workout was not done today
-  //       {
-  //         $match: { isDoneToday: false },
-  //       },
-  //       // 4. Join with the users collection to retrieve user details
-  //       {
-  //         $lookup: {
-  //           from: "users",
-  //           localField: "userId",
-  //           foreignField: "_id",
-  //           as: "user",
-  //         },
-  //       },
-  //       // 5. Unwind the resulting array from the lookup
-  //       {
-  //         $unwind: "$user",
-  //       },
-  //       // 6. Project only the user's email and fcmToken as top-level fields
-  //       {
-  //         $project: {
-  //           _id: 0,
-  //           email: "$user.email",
-  //           fcmToken: "$user.fcmToken",
-  //         },
-  //       },
-  //     ]);
+      // Aggregate to get users who haven't completed their workout today
+      const users = await UserWorkoutPlan.aggregate([
+        // 1. Extract the last completed exercise
+        {
+          $addFields: {
+            lastCompleted: { $arrayElemAt: ["$completedExercises", -1] },
+          },
+        },
+        // 2. Check if the last completed exercise was done today
+        {
+          $addFields: {
+            isDoneToday: {
+              $cond: {
+                if: {
+                  $eq: [
+                    {
+                      $dateToString: {
+                        format: "%Y-%m-%d",
+                        date: "$lastCompleted.completedAt",
+                      },
+                    },
+                    { $dateToString: { format: "%Y-%m-%d", date: today } },
+                  ],
+                },
+                then: true,
+                else: false,
+              },
+            },
+          },
+        },
+        // 3. Only include documents where the workout was not done today
+        {
+          $match: { isDoneToday: false },
+        },
+        // 4. Join with the users collection to retrieve user details
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        // 5. Unwind the resulting array from the lookup
+        {
+          $unwind: "$user",
+        },
+        // 6. Project only the user's email and fcmToken as top-level fields
+        {
+          $project: {
+            _id: 0,
+            email: "$user.email",
+            fcmToken: "$user.fcmToken",
+          },
+        },
+      ]);
+      console.log(users.length);
+      // Loop through each user and send a push notification if they have a valid FCM token
+      for (const user of users) {
+        if (user.fcmToken) {
+          console.log(user.fcmToken);
+          try {
+            const response = await admin.messaging().send({
+              token: user.fcmToken,
+              notification: payload.notification,
+            });
+            console.log(`Notification sent to ${user.email}:`, response);
+          } catch (error: any) {
+            console.error(
+              `Error sending notification to ${user.email}:`,
+              error.message
+            );
 
-  //     // Loop through each user and send a push notification if they have a valid FCM token
-  //     for (const user of users) {
-  //       if (user.fcmToken) {
-  //         try {
-  //           console.log(user.fcmToken);
-  //           const response = await admin.messaging().send({
-  //             token: user.fcmToken,
-  //             notification: payload.notification,
-  //           });
-  //           console.log(`Notification sent to ${user.email}:`, response);
-  //         } catch (error: any) {
-  //           console.error(
-  //             `Error sending notification to ${user.email}:`,
-  //             error.message
-  //           );
-  //         }
-  //       }
-  //     }
-  //   } catch (err) {
-  //     console.error("Aggregation error:", err);
-  //   }
-  // });
+            throw new AppError(
+              500,
+              `Error sending notification to ${user.email}: ${error.message}`
+            );
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Aggregation error:", err.message);
+      throw new AppError(500, `${err.message}`);
+    }
+  });
 };

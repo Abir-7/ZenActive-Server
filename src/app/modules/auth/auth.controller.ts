@@ -74,6 +74,20 @@ const updatePassword = catchAsync(async (req, res) => {
   });
 });
 
+const getNewAccessToken = catchAsync(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  const result = await AuthService.getNewAccessToken(
+    refreshToken,
+    req.params.email as string
+  );
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: HttpStatus.OK,
+    message: "New access-token is created.",
+  });
+});
+
 export const AuthController = {
   loginUser,
   forgotPass,
@@ -81,4 +95,5 @@ export const AuthController = {
   verifyUser,
   reSendOtp,
   updatePassword,
+  getNewAccessToken,
 };

@@ -10,6 +10,9 @@ const createBadge = catchAsync(async (req, res) => {
   if (req.files && "image" in req.files && req.files.image[0]) {
     image = `/images/${req.files.image[0].filename}`;
   }
+
+  console.log(req.files);
+
   const value = {
     ...req.body,
     image,
