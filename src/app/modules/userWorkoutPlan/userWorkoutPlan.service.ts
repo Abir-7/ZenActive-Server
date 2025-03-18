@@ -54,7 +54,7 @@ const updatePresentWorkout = async (userId: string, planId: string) => {
   const progress = await UserWorkoutPlan.findOne({
     userId,
     workoutPlanId: planId,
-  });
+  }).populate({ path: "workoutPlanId", populate: "workouts" });
 
   if (!progress) {
     throw new Error("User progress not found");
@@ -172,7 +172,9 @@ const getActiveWorkoutPlan = async (userId: string, planId: string) => {
     userId,
     workoutPlanId: planId,
     isCompleted: "InProgress",
-  }).lean();
+  })
+    .populate({ path: "workoutPlanId", populate: "workouts" })
+    .lean();
 
   if (!data) return null;
 

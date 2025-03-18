@@ -34,8 +34,10 @@ const loginUser = async (userData: {
   if (!(await User.passwordMatch(isUserExist.password, userData.password))) {
     throw new AppError(httpStatus.BAD_REQUEST, "Password not matched.");
   }
-
+  console.log(userData.fcmToken, "<<>>", isUserExist.fcmToken, "1");
   if (isUserExist.fcmToken !== userData.fcmToken) {
+    console.log(userData.fcmToken, "<<>>", isUserExist.fcmToken);
+
     await User.findOneAndUpdate(
       { email: userData.email },
       { fcmToken: userData.fcmToken },
@@ -325,7 +327,7 @@ const getNewAccessToken = async (refreshToken: string, email: string) => {
     const accessToken = jwtHelper.generateToken(
       jwtPayload,
       config.security.jwt.secret as string,
-      config.security.jwt.refreshExpiresIn
+      config.security.jwt.expireIn
     );
 
     return { accessToken };

@@ -14,7 +14,6 @@ const setupSocket = (server: any) => {
 
   io.on("connection", (socket) => {
     socket.on("register", (userId: string) => {
-      console.log("User registered:", userId);
       if (!!userId) {
         users.forEach((socketId, existingUserId) => {
           if (existingUserId === userId) {
@@ -23,7 +22,7 @@ const setupSocket = (server: any) => {
         });
         users.set(userId, socket.id);
       }
-      console.log(Array.from(users.keys()), "users");
+
       io.emit("onlineUsers", Array.from(users.keys()));
     });
 
