@@ -173,7 +173,17 @@ const getActiveWorkoutPlan = async (userId: string, planId: string) => {
     workoutPlanId: planId,
     isCompleted: "InProgress",
   })
-    .populate({ path: "workoutPlanId", populate: "workouts" })
+    .populate({
+      path: "workoutPlanId",
+      select: "name _id duration workouts description duration image about",
+      populate: {
+        path: "workouts",
+        select: "_id name description exercises",
+        populate: {
+          path: "exercises",
+        },
+      },
+    })
     .lean();
 
   if (!data) return null;
