@@ -104,6 +104,7 @@ export const userSchema = new Schema<IUser, IUserModel>(
     isDeleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
     fcmToken: { type: String, unique: true },
+    hasPremiumAccess: { type: Boolean, default: false },
   },
   {
     timestamps: true,

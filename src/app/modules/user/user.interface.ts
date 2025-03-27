@@ -38,6 +38,7 @@ export interface IUser {
   isBlocked: boolean;
   mobile: string;
   fcmToken: string;
+  hasPremiumAccess: boolean;
 }
 
 export enum Gender {

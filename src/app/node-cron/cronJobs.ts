@@ -7,6 +7,8 @@ import DailyChallenge from "../modules/usersDailyChallage/usersDailyExercise.mod
 import UserWorkoutPlan from "../modules/userWorkoutPlan/userWorkoutPlan.model";
 import admin from "../firebase/firebase";
 import AppError from "../errors/AppError";
+import { User } from "../modules/user/user.model";
+import Subscription from "../modules/payment/subscription/subscription.model";
 
 export const setupCronJobs = () => {
   // delete user meal plan at 12Am everyday
@@ -36,7 +38,10 @@ export const setupCronJobs = () => {
       console.log(`Deleted ${result.deletedCount} Daily Challenges.`);
 
       // 1️⃣ Fetch all exercises
-      const allExercises = await Exercise.find({}, "_id").lean();
+      const allExercises = await Exercise.find(
+        { isPremium: false },
+        "_id"
+      ).lean();
 
       if (allExercises.length === 0) {
         console.log("No exercises found!");
@@ -159,6 +164,37 @@ export const setupCronJobs = () => {
     } catch (err: any) {
       console.error("Aggregation error:", err.message);
       throw new AppError(500, `${err.message}`);
+    }
+  });
+
+  cron.schedule("0 0 * * *", async () => {
+    try {
+      console.log("Running subscription expiry check at 12:00 AM...");
+
+      const now = new Date();
+
+      // Find all users with premium access
+      const premiumUsers = await User.find({ hasPremiumAccess: true });
+
+      // For each user, check if they have an active (non-expired) subscription.
+      for (const user of premiumUsers) {
+        const activeSubscription = await Subscription.findOne({
+          userId: user._id,
+          expiryDate: { $gte: now }, // Subscription expiry date is in the future
+        });
+
+        // If no active subscription exists, update the user's premium access
+        if (!activeSubscription) {
+          await User.findByIdAndUpdate(user._id, { hasPremiumAccess: false });
+          console.log(
+            `User ${user._id} subscription expired. Premium access revoked.`
+          );
+        }
+      }
+
+      console.log("Subscription expiry check complete.");
+    } catch (error) {
+      console.error("Error during subscription expiry check:", error);
     }
   });
 };

@@ -12,4 +12,7 @@ export interface IExercise {
   about: string;
   isDeleted: boolean;
   videoId: string;
+  isPremium: boolean;
 }
+
+// !  need to make premium based on payment subcription

@@ -1,4 +1,7 @@
+import mongoose from "mongoose";
 import QueryBuilder from "../../../builder/QueryBuilder";
+import AppError from "../../../errors/AppError";
+import { User } from "../../user/user.model";
 import { ISubscription } from "./subscription.interface";
 import Subscription from "./subscription.model";
 
@@ -6,8 +9,37 @@ const createSubscription = async (
   subscriptionData: ISubscription,
   userId: string
 ) => {
-  return await Subscription.create({ ...subscriptionData, userId });
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      throw new AppError(404, "User not found.");
+    }
+
+    const subscriptions = await Subscription.create(
+      [{ ...subscriptionData, userId }],
+      { session }
+    );
+
+    await User.findByIdAndUpdate(
+      userId,
+      { hasPremiumAccess: true },
+      { new: true, session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return subscriptions[0];
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 };
+
 const getSubscriptionData = async (timePeriod: "weekly" | "monthly") => {
   const endDate = new Date(); // Today's date
   const startDate = new Date();

@@ -13,6 +13,7 @@ import { cloudinaryInstance } from "../../../utils/cloudinary/cloudinary";
 
 import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
 import { sendPushNotification } from "../../notification/notification.service";
+import { User } from "../../user/user.model";
 
 // Create a new exercise
 const createExercise = async (req: Request) => {
@@ -114,17 +115,26 @@ const getAllExercise = async (
     };
   } else {
     // Calculate today's boundaries.
+    const query: { isDeleted?: boolean; isPremium?: boolean } = {
+      isDeleted: false,
+      isPremium: false,
+    };
+    const userData = await User.findOne({ _id: userId });
+
+    if (userData?.hasPremiumAccess) {
+      delete query.isPremium;
+    }
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
     // Get total count for pagination
-    const total = await Exercise.countDocuments({ isDeleted: false });
+    const total = await Exercise.countDocuments(query);
     const totalPage = Math.ceil(total / limit);
 
     const exercises = await Exercise.aggregate([
-      { $match: { isDeleted: false } },
+      { $match: query },
       {
         $lookup: {
           from: "dailyexercises",

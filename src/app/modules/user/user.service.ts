@@ -383,6 +383,7 @@ const getSingleUser = async (userId: string) => {
         isVerified: 1,
         name: 1,
         dateOfBirth: 1,
+        hasPremiumAccess: 1,
         gender: 1,
         height: 1,
         weight: 1,

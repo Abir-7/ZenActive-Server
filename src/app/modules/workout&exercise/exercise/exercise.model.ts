@@ -16,6 +16,7 @@ const exerciseSchema = new Schema<IExercise>(
     duration: { type: Number, required: true },
     about: { type: String, required: true },
     isDeleted: { type: Boolean, default: false },
+    isPremium: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

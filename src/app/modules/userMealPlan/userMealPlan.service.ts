@@ -4,7 +4,14 @@ import httpStatus from "http-status";
 import Meal from "../meal/meal.model";
 
 import { UserAppData } from "../userAppData/appdata.model";
+import { User } from "../user/user.model";
 const createUserMealPlan = async (userId: string, mealId: string) => {
+  const userData = await User.findById(userId);
+
+  if (userData && userData.hasPremiumAccess === false) {
+    throw new AppError(httpStatus.NOT_FOUND, "You have to buy subcription.");
+  }
+
   const isExist = await Meal.findById(mealId);
   if (!isExist) {
     throw new AppError(httpStatus.NOT_FOUND, "Meal not found");
