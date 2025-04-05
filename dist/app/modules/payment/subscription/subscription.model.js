@@ -4,7 +4,7 @@ const mongoose_1 = require("mongoose");
 const SubscriptionSchema = new mongoose_1.Schema({
     productId: { type: String, required: true },
     purchaseId: { type: String, required: true },
-    expiryData: { type: String, required: true },
+    expiryDate: { type: Date, required: true },
     purchaseDate: { type: Date, required: true, default: Date.now },
     packageName: { type: String, required: true },
     purchaseToken: { type: String, required: true },

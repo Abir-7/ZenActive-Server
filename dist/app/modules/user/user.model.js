@@ -100,7 +100,8 @@ exports.userSchema = new mongoose_1.Schema({
     isProfileUpdated: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
-    fcmToken: { type: String },
+    fcmToken: { type: String, unique: true },
+    hasPremiumAccess: { type: Boolean, default: false },
 }, {
     timestamps: true,
 });

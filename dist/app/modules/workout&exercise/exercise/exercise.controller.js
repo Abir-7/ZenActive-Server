@@ -29,8 +29,8 @@ const createExercise = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
 // Get all exercises
 const getAllExercise = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userRole, userId } = req.user;
-    const { page = 1, limit = 15 } = req.query;
-    const result = yield exercise_service_1.ExerciseService.getAllExercise(userRole, userId, Number(page), Number(limit));
+    const { page = 1, limit = 15, name } = req.query;
+    const result = yield exercise_service_1.ExerciseService.getAllExercise(userRole, userId, Number(page), Number(limit), { name: name });
     (0, sendResponse_1.default)(res, {
         data: result.data,
         meta: result.meta,

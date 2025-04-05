@@ -17,4 +17,5 @@ router.post("/forgot-pass", (0, validator_1.default)(auth_validation_1.zodForgot
 router.post("/reset-pass", (0, validator_1.default)(auth_validation_1.zodResetPassSchema), auth_controller_1.AuthController.resetPassword);
 router.post("/resend-code", (0, validator_1.default)(auth_validation_1.zodResendCodeSchema), auth_controller_1.AuthController.reSendOtp);
 router.patch("/update-password", (0, auth_1.default)("ADMIN", "USER"), (0, validator_1.default)(auth_validation_1.zodUpdatePasswordSchema), auth_controller_1.AuthController.updatePassword);
+router.get("/get-access-token/:email", auth_controller_1.AuthController.getNewAccessToken);
 exports.AuthRoute = router;

@@ -52,7 +52,6 @@ const verifyUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 }));
 const resetPassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.headers.authorization;
-    console.log(token, "----------------> pass token");
     const result = yield auth_service_1.AuthService.resetPassword(token, req.body);
     (0, sendResponse_1.default)(res, {
         data: result,
@@ -81,6 +80,16 @@ const updatePassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         message: "Password updated successfully",
     });
 }));
+const getNewAccessToken = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const refreshToken = req.cookies.refreshToken;
+    const result = yield auth_service_1.AuthService.getNewAccessToken(refreshToken, req.params.email);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "New access-token is created.",
+    });
+}));
 exports.AuthController = {
     loginUser,
     forgotPass,
@@ -88,4 +97,5 @@ exports.AuthController = {
     verifyUser,
     reSendOtp,
     updatePassword,
+    getNewAccessToken,
 };

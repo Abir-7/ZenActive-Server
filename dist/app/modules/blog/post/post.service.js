@@ -20,6 +20,7 @@ const unlinkFiles_1 = __importDefault(require("../../../utils/unlinkFiles"));
 const userGroup_model_1 = require("../../socialGroup/UsersGroup/userGroup.model");
 const createPost = (data) => __awaiter(void 0, void 0, void 0, function* () {
     let post;
+    console.log(data);
     if (data.groupId) {
         post = yield post_model_1.default.create(Object.assign(Object.assign({}, data), { isGroup: true }));
         yield userGroup_model_1.UserGroup.findOneAndUpdate({ groupId: data.groupId, userId: data.userId }, { $inc: { previousTotalPost: 1 } });

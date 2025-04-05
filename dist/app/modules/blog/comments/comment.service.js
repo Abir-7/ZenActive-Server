@@ -40,7 +40,7 @@ const addComment = (commentData) => __awaiter(void 0, void 0, void 0, function* 
         const comment = yield comment_model_1.Comment.create([commentData], { session });
         const user = yield user_model_1.User.findById(commentData.userId).session(session);
         const userName = `${(_a = user === null || user === void 0 ? void 0 : user.name) === null || _a === void 0 ? void 0 : _a.firstName}${((_b = user === null || user === void 0 ? void 0 : user.name) === null || _b === void 0 ? void 0 : _b.lastName) ? " " + user.name.lastName : ""}`;
-        if (post.userId._id !== commentData.userId) {
+        if (String(post.userId._id) !== String(commentData.userId)) {
             (0, handleNotification_1.handleNotification)(`${userName} commented on your post`, post.userId._id);
             yield notification_model_1.Notification.create([
                 {

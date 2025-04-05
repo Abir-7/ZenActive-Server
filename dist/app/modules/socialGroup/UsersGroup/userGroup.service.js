@@ -1,37 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -51,7 +18,7 @@ const group_model_1 = require("../Group/group.model");
 const userGroup_model_1 = require("./userGroup.model");
 const AppError_1 = __importDefault(require("../../../errors/AppError"));
 const post_model_1 = __importDefault(require("../../blog/post/post.model"));
-const mongoose_1 = __importStar(require("mongoose"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const friendlist_model_1 = __importDefault(require("../../userConnection/friendList/friendlist.model"));
 const user_model_1 = require("../../user/user.model");
 const notification_model_1 = require("../../notification/notification.model");
@@ -182,44 +149,160 @@ const leaveFromGroup = (groupId, userId) => __awaiter(void 0, void 0, void 0, fu
     }
     return { message: "Successfully left the group." };
 });
+// const inviteUserList = async (
+//   groupId: string,
+//   userId: string,
+//   searchText?: string,
+//   page: number = 1,
+//   limit: number = 10
+// ) => {
+//   const userObjectId = new Types.ObjectId(userId);
+//   const groupObjectId = new Types.ObjectId(groupId);
+//   const skip = (page - 1) * limit;
+//   // Step 1: Get user friends
+//   const friends = await UserConnection.find({
+//     $or: [{ senderId: userObjectId }, { receiverId: userObjectId }],
+//     isAccepted: true,
+//   });
+//   const friendIds = friends.map((friend) =>
+//     friend.senderId.equals(userObjectId) ? friend.receiverId : friend.senderId
+//   );
+//   // Step 2: Get users who are already in the group
+//   const groupMembers = await UserGroup.find({ groupId: groupObjectId }).select(
+//     "userId"
+//   );
+//   const groupMemberIds = groupMembers.map((member) => member.userId.toString());
+//   // Step 3: Construct the query filter
+//   const query: any = {
+//     _id: { $in: friendIds, $nin: groupMemberIds },
+//   };
+//   // Step 4: Apply name or email search if provided
+//   if (searchText) {
+//     const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
+//     query.$or = [
+//       { "name.firstName": { $regex: searchRegex } }, // Search by first name
+//       { "name.lastName": { $regex: searchRegex } }, // Search by last name
+//       { email: { $regex: searchRegex } }, // Search by email
+//     ];
+//   }
+//   // Step 5: Count total available friends who match the query
+//   const total = await User.countDocuments(query);
+//   const totalPage = Math.ceil(total / limit);
+//   // Step 6: Fetch available users with pagination
+//   const availableUsers = await User.find(query)
+//     .select("email name image")
+//     .skip(skip)
+//     .limit(limit);
+//   return {
+//     meta: { limit, page, total, totalPage },
+//     data: availableUsers,
+//   };
+// };
 const inviteUserList = (groupId_1, userId_1, searchText_1, ...args_1) => __awaiter(void 0, [groupId_1, userId_1, searchText_1, ...args_1], void 0, function* (groupId, userId, searchText, page = 1, limit = 10) {
-    const userObjectId = new mongoose_1.Types.ObjectId(userId);
-    const groupObjectId = new mongoose_1.Types.ObjectId(groupId);
-    const skip = (page - 1) * limit;
-    // Step 1: Get user friends
-    const friends = yield friendlist_model_1.default.find({
-        $or: [{ senderId: userObjectId }, { receiverId: userObjectId }],
-        isAccepted: true,
-    });
-    const friendIds = friends.map((friend) => friend.senderId.equals(userObjectId) ? friend.receiverId : friend.senderId);
-    // Step 2: Get users who are already in the group
-    const groupMembers = yield userGroup_model_1.UserGroup.find({ groupId: groupObjectId }).select("userId");
-    const groupMemberIds = groupMembers.map((member) => member.userId.toString());
-    // Step 3: Construct the query filter
-    const query = {
-        _id: { $in: friendIds, $nin: groupMemberIds },
-    };
-    // Step 4: Apply name or email search if provided
-    if (searchText) {
-        const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
-        query.$or = [
-            { "name.firstName": { $regex: searchRegex } }, // Search by first name
-            { "name.lastName": { $regex: searchRegex } }, // Search by last name
-            { email: { $regex: searchRegex } }, // Search by email
-        ];
+    var _a;
+    const sessionUserId = new mongoose_1.default.Types.ObjectId(userId);
+    const sessionGroupId = new mongoose_1.default.Types.ObjectId(groupId);
+    try {
+        // Get all accepted friends of the current user
+        const friendsAggregate = yield friendlist_model_1.default.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { senderId: sessionUserId, isAccepted: true },
+                        { receiverId: sessionUserId, isAccepted: true },
+                    ],
+                },
+            },
+            {
+                $project: {
+                    friendId: {
+                        $cond: {
+                            if: { $eq: ["$senderId", sessionUserId] },
+                            then: "$receiverId",
+                            else: "$senderId",
+                        },
+                    },
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    friendIds: { $addToSet: "$friendId" },
+                },
+            },
+        ]);
+        const friendIds = ((_a = friendsAggregate[0]) === null || _a === void 0 ? void 0 : _a.friendIds) || [];
+        if (friendIds.length === 0) {
+            return {
+                meta: { limit, page, total: 0, totalPage: 0 },
+                data: [],
+            };
+        }
+        // Find users already in the group
+        const usersInGroup = yield userGroup_model_1.UserGroup.find({
+            groupId: sessionGroupId,
+            userId: { $in: friendIds },
+        }).distinct("userId");
+        // Filter out users already in the group
+        const inviteCandidateIds = friendIds.filter((id) => !usersInGroup.some((ugId) => ugId.equals(id)));
+        if (inviteCandidateIds.length === 0) {
+            return {
+                meta: { limit, page, total: 0, totalPage: 0 },
+                data: [],
+            };
+        }
+        // Build search query
+        const searchQuery = { _id: { $in: inviteCandidateIds } };
+        if (searchText) {
+            const regex = new RegExp(searchText, "i");
+            searchQuery.$or = [
+                { username: regex },
+                { email: regex },
+                { firstName: regex },
+                { lastName: regex },
+            ];
+        }
+        // Get paginated results
+        const [total, users] = yield Promise.all([
+            user_model_1.User.countDocuments(searchQuery),
+            user_model_1.User.find(searchQuery)
+                .select("-password -refreshToken") // Exclude sensitive fields
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+        ]);
+        // Check existing invitations
+        const userIds = users.map((user) => user._id);
+        const notifications = yield notification_model_1.Notification.find({
+            senderId: sessionUserId,
+            receiverId: { $in: userIds },
+            type: notification_interface_1.NotificationType.JOIN_GROUP_REQUEST,
+            groupId: sessionGroupId,
+            isRead: false,
+        });
+        const invitedUserIds = new Set(notifications.map((n) => n.receiverId.toString()));
+        // Add isInvited status to users
+        const usersWithInviteStatus = users.map((user) => ({
+            email: user.email,
+            name: user.name || null,
+            image: user.image || null,
+            _id: user._id,
+            isInvited: invitedUserIds.has(user._id.toString()),
+        }));
+        return {
+            meta: {
+                limit,
+                page,
+                total,
+                totalPage: Math.ceil(total / limit),
+            },
+            data: usersWithInviteStatus,
+        };
     }
-    // Step 5: Count total available friends who match the query
-    const total = yield user_model_1.User.countDocuments(query);
-    const totalPage = Math.ceil(total / limit);
-    // Step 6: Fetch available users with pagination
-    const availableUsers = yield user_model_1.User.find(query)
-        .select("email name image")
-        .skip(skip)
-        .limit(limit);
-    return {
-        meta: { limit, page, total, totalPage },
-        data: availableUsers,
-    };
+    catch (error) {
+        console.error("Error in inviteUserList:", error);
+        throw new Error("Failed to fetch invite user list");
+    }
 });
 const inviteUser = (groupId, userId, receiverId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;

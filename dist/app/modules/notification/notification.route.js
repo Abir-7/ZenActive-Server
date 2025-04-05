@@ -9,5 +9,6 @@ const notification_controller_1 = require("./notification.controller");
 const auth_1 = __importDefault(require("../../middleware/auth/auth"));
 const router = express_1.default.Router();
 router.get("/", (0, auth_1.default)("USER"), notification_controller_1.NotificationController.getAllNotifications);
+router.get("/send-notification", (0, auth_1.default)("USER"), notification_controller_1.NotificationController.sendPushNotification);
 router.patch("/:id", (0, auth_1.default)("USER"), notification_controller_1.NotificationController.updateNotification);
 exports.NotificationRoute = router;

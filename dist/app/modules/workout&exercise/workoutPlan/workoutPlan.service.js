@@ -52,7 +52,6 @@ const createWorkoutPlan = (workoutData) => __awaiter(void 0, void 0, void 0, fun
     const workoutsResponse = yield (0, getGeminiResponse_1.getGeminiResponse)(prompt);
     const json = yield (0, getJson_1.getJson)(workoutsResponse);
     if (((_a = json === null || json === void 0 ? void 0 : json.workouts) === null || _a === void 0 ? void 0 : _a.length) > workoutData.duration) {
-        console.log(json === null || json === void 0 ? void 0 : json.workouts.slice(0, workoutData.duration));
         json.workouts = json === null || json === void 0 ? void 0 : json.workouts.slice(0, workoutData.duration);
     }
     if (!json ||
@@ -92,13 +91,17 @@ const updateWorkout = (workoutId, workoutData) => __awaiter(void 0, void 0, void
 exports.updateWorkout = updateWorkout;
 const getAllWorkouts = (userId, query) => __awaiter(void 0, void 0, void 0, function* () {
     query.isDeleted = false;
-    const { isDeleted, duration, page = 1, limit = 15 } = query;
+    const { isDeleted, duration, page = 1, limit = 15, name } = query;
     const skip = (Number(page) - 1) * Number(limit);
     // Step 1: Build query filter
     const filter = { isDeleted };
     if (duration) {
-        filter.duration = duration;
+        filter.duration = Number(duration * 7);
     }
+    if (name !== "" && typeof name === "string") {
+        filter.name = { $regex: name, $options: "i" };
+    }
+    console.log(filter);
     // Step 2: Get total count for pagination
     const total = yield workoutPlan_model_1.WorkoutPlan.countDocuments(filter);
     const totalPage = Math.ceil(total / Number(limit));

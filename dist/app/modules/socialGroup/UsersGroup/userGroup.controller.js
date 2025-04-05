@@ -18,7 +18,6 @@ const catchAsync_1 = __importDefault(require("../../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../../utils/sendResponse"));
 const userGroup_service_1 = require("./userGroup.service");
 const getUserAllGroups = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("object");
     const { userId } = req.user;
     const { page = 1, limit = 25, searchTerm } = req.query;
     const result = yield userGroup_service_1.UserGroupService.getUserAllGroups(userId, searchTerm, Number(page), Number(limit));
@@ -79,6 +78,7 @@ const inviteUserList = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
 const inviteUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { groupId, receiverId } = req.body;
     const { userId } = req.user;
+    console.log("object", userId, groupId, receiverId);
     const result = yield userGroup_service_1.UserGroupService.inviteUser(groupId, userId, receiverId);
     (0, sendResponse_1.default)(res, {
         data: result,

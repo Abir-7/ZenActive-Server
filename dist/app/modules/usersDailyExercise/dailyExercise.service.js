@@ -18,6 +18,7 @@ const exercise_model_1 = __importDefault(require("../workout&exercise/exercise/e
 const dailyExercise_model_1 = __importDefault(require("./dailyExercise.model"));
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const appdata_model_1 = require("../userAppData/appdata.model");
+const usersDailyExercise_model_1 = __importDefault(require("../usersDailyChallage/usersDailyExercise.model"));
 const createDailyExercise = (dailyExerciseData) => __awaiter(void 0, void 0, void 0, function* () {
     const exerciseData = yield exercise_model_1.default.findOne({
         _id: dailyExerciseData.exerciseId,
@@ -53,7 +54,14 @@ const getDailyExerciseById = (dailyExerciseId) => __awaiter(void 0, void 0, void
         },
     });
 });
+const getDailyChallenge = () => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield usersDailyExercise_model_1.default.find().populate("exerciseId");
+    return result.map((exercise) => {
+        return exercise.exerciseId;
+    });
+});
 exports.DailyExerciseService = {
     createDailyExercise,
     getDailyExerciseById,
+    getDailyChallenge,
 };

@@ -18,7 +18,12 @@ const AppError_1 = __importDefault(require("../../errors/AppError"));
 const http_status_1 = __importDefault(require("http-status"));
 const meal_model_1 = __importDefault(require("../meal/meal.model"));
 const appdata_model_1 = require("../userAppData/appdata.model");
+const user_model_1 = require("../user/user.model");
 const createUserMealPlan = (userId, mealId) => __awaiter(void 0, void 0, void 0, function* () {
+    const userData = yield user_model_1.User.findById(userId);
+    if (userData && userData.hasPremiumAccess === false) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "You have to buy subcription.");
+    }
     const isExist = yield meal_model_1.default.findById(mealId);
     if (!isExist) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Meal not found");

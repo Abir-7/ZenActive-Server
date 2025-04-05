@@ -17,7 +17,6 @@ const deleteCloudinaryVideo = (publicId, resource_type) => __awaiter(void 0, voi
             resource_type: resource_type,
             invalidate: true,
         });
-        console.log(response);
         if (response.result === "ok") {
             console.log("Video deleted successfully.");
         }

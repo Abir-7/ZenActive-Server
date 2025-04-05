@@ -9,5 +9,6 @@ const dailyExercise_controller_1 = require("./dailyExercise.controller");
 const auth_1 = __importDefault(require("../../middleware/auth/auth"));
 const router = express_1.default.Router();
 router.post("/", (0, auth_1.default)("USER"), dailyExercise_controller_1.DailyExerciseController.createDailyExercise);
+router.get("/daily-challenge", (0, auth_1.default)("USER"), dailyExercise_controller_1.DailyExerciseController.getDailyChallenge);
 router.get("/:id", (0, auth_1.default)("USER"), dailyExercise_controller_1.DailyExerciseController.getDailyExerciseById);
 exports.DailyExerciseRoutes = router;

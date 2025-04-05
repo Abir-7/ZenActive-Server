@@ -8,8 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NotificationService = void 0;
+exports.NotificationService = exports.sendPushNotification = void 0;
+const firebase_1 = __importDefault(require("../../firebase/firebase"));
+const user_model_1 = require("../user/user.model");
 const notification_model_1 = require("./notification.model");
 // const createNotification = async (data: Partial<INotification>) => {
 //   const notification = await Notification.create(data);
@@ -50,7 +55,46 @@ const updateNotification = (id) => __awaiter(void 0, void 0, void 0, function* (
     });
     return notification;
 });
+const sendPushNotification = (data) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        console.log("Sending push notifications...");
+        const users = yield user_model_1.User.find({
+            $and: [
+                { fcmToken: { $exists: true } },
+                { fcmToken: { $ne: null } },
+                { fcmToken: { $ne: "" } },
+            ],
+        })
+            .select("email fcmToken")
+            .lean(); // Fetch only required fields
+        if (users.length === 0)
+            return console.log("No users with valid fcmToken");
+        const messages = users.map((user) => ({
+            token: user.fcmToken,
+            notification: { title: data.title, body: data.body },
+        }));
+        const BATCH_SIZE = 500; // Firebase batch limit
+        for (let i = 0; i < messages.length; i += BATCH_SIZE) {
+            const batch = messages.slice(i, i + BATCH_SIZE);
+            const responses = yield Promise.allSettled(batch.map((msg) => firebase_1.default.messaging().send(msg)));
+            responses.forEach((result, index) => {
+                const user = users[i + index];
+                if (result.status === "fulfilled") {
+                    console.log(`Notification sent to ${user.email}`);
+                }
+                else {
+                    console.error(`Failed to send notification to ${user.email}`);
+                }
+            });
+        }
+    }
+    catch (err) {
+        console.error("Notification Error:", err.message);
+    }
+});
+exports.sendPushNotification = sendPushNotification;
 exports.NotificationService = {
     getAllNotifications,
     updateNotification,
+    sendPushNotification: exports.sendPushNotification,
 };

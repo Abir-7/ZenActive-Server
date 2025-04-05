@@ -15,7 +15,9 @@ const corsOption = {
     origin: [
         "http://localhost:3000",
         "http://192.168.10.32:5174",
+        "http://localhost:5173",
         "http://192.168.10.18:3500",
+        "http://192.168.10.206:5173",
         "https://zen-active-admin.vercel.app",
     ],
     credentials: true,

@@ -49,7 +49,18 @@ const updateNotification = (0, catchAsync_1.default)((req, res) => __awaiter(voi
         message: "Notification updated successfully.",
     });
 }));
+const sendPushNotification = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const result = yield notification_service_1.NotificationService.sendPushNotification(req.body);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Push Notification sent successfully.",
+    });
+}));
 exports.NotificationController = {
     getAllNotifications,
     updateNotification,
+    sendPushNotification,
 };

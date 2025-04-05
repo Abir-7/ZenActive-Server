@@ -68,7 +68,11 @@ const getAllBadge = (query, userId) => __awaiter(void 0, void 0, void 0, functio
     return { result, meta };
 });
 const getSingleBadge = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield badge_model_1.default.findOne({ _id: id, isDeleted: false });
+    const data = yield badge_model_1.default.findOne({ _id: id, isDeleted: false });
+    if (!data) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Badge not found");
+    }
+    return data;
 });
 const deleteBadge = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const badge = yield badge_model_1.default.findById(id);

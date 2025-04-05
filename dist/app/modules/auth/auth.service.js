@@ -40,7 +40,9 @@ const loginUser = (userData) => __awaiter(void 0, void 0, void 0, function* () {
     if (!(yield user_model_1.User.passwordMatch(isUserExist.password, userData.password))) {
         throw new AppError_1.default(http_status_1.default.BAD_REQUEST, "Password not matched.");
     }
+    console.log(userData.fcmToken, "<<>>", isUserExist.fcmToken, "1");
     if (isUserExist.fcmToken !== userData.fcmToken) {
+        console.log(userData.fcmToken, "<<>>", isUserExist.fcmToken);
         yield user_model_1.User.findOneAndUpdate({ email: userData.email }, { fcmToken: userData.fcmToken }, { new: true });
     }
     const jwtPayload = {
@@ -194,6 +196,30 @@ const updatePassword = (userId, passData) => __awaiter(void 0, void 0, void 0, f
     }
     return { message: "Password changed." };
 });
+const getNewAccessToken = (refreshToken, email) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(email);
+    if (!refreshToken) {
+        throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, "Refresh token not found.");
+    }
+    const decode = jwtHelper_1.jwtHelper.verifyToken(refreshToken, config_1.config.security.jwt.refreshSecret);
+    const { userEmail, userId, userRole } = decode;
+    console.log(userEmail);
+    if (userEmail !== email) {
+        throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, "You are unauthorized.");
+    }
+    if (userEmail && userId && userRole) {
+        const jwtPayload = {
+            userEmail: userEmail,
+            userId: userId,
+            userRole: userRole,
+        };
+        const accessToken = jwtHelper_1.jwtHelper.generateToken(jwtPayload, config_1.config.security.jwt.secret, config_1.config.security.jwt.expireIn);
+        return { accessToken };
+    }
+    else {
+        throw new AppError_1.default(http_status_1.default.UNAUTHORIZED, "You are unauthorized.");
+    }
+});
 exports.AuthService = {
     loginUser,
     forgotPass,
@@ -201,4 +227,5 @@ exports.AuthService = {
     resetPassword,
     reSendOtp,
     updatePassword,
+    getNewAccessToken,
 };

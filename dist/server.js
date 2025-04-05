@@ -16,7 +16,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const config_1 = require("./app/config");
 const app_1 = require("./app");
 const seedAdmin_1 = __importDefault(require("./app/DB/seedAdmin"));
-const cronJobs_1 = require("./app/cron_jobs/cronJobs");
+const cronJobs_1 = require("./app/node-cron/cronJobs");
 const socket_1 = require("./app/socket/socket");
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {

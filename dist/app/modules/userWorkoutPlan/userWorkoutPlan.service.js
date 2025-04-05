@@ -20,7 +20,6 @@ const workout_model_1 = __importDefault(require("../workout&exercise/workout/wor
 const appdata_model_1 = require("../userAppData/appdata.model");
 const http_status_1 = __importDefault(require("http-status"));
 const startWorkoutPlan = (userId, workoutPlanId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(workoutPlanId, "------------------->>");
     const workoutPlan = yield workoutPlan_model_1.WorkoutPlan.findOne({
         _id: workoutPlanId,
     }).populate({
@@ -40,7 +39,7 @@ const startWorkoutPlan = (userId, workoutPlanId) => __awaiter(void 0, void 0, vo
         currentExerciseIndex: 0,
         isCompleted: "InProgress",
         startedAt: Date.now(),
-        endAt: new Date(Date.now() + workoutPlan.duration * 7 * 24 * 60 * 60 * 1000),
+        endAt: new Date(Date.now() + workoutPlan.duration * 24 * 60 * 60 * 1000),
     };
     const isExist = yield userWorkoutPlan_model_1.default.findOne({
         workoutPlanId,
@@ -58,7 +57,7 @@ const updatePresentWorkout = (userId, planId) => __awaiter(void 0, void 0, void 
     const progress = yield userWorkoutPlan_model_1.default.findOne({
         userId,
         workoutPlanId: planId,
-    });
+    }).populate({ path: "workoutPlanId", populate: "workouts" });
     if (!progress) {
         throw new Error("User progress not found");
     }
@@ -128,16 +127,36 @@ const updatePresentWorkout = (userId, planId) => __awaiter(void 0, void 0, void 
 });
 // Increment the number of workouts done
 // Get a user's active workout plan
+// const getActiveWorkoutPlan = async (userId: string, planId: string) => {
+//   console.log(userId, planId);
+//   const data = await UserWorkoutPlan.findOne({
+//     workoutPlanId: planId,
+//     userId,
+//     isCompleted: "InProgress",
+//   })
+//     .populate({
+//       path: "workoutPlanId",
+//       select: "title _id duration workouts",
+//       populate: {
+//         path: "workouts",
+//         select: "_id name description exercises",
+//         populate: {
+//           path: "exercises",
+//         },
+//       },
+//     })
+//     .lean();
+//   return data;
+// };
 const getActiveWorkoutPlan = (userId, planId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(userId, planId);
     const data = yield userWorkoutPlan_model_1.default.findOne({
-        workoutPlanId: planId,
         userId,
+        workoutPlanId: planId,
         isCompleted: "InProgress",
     })
         .populate({
         path: "workoutPlanId",
-        select: "title _id duration workouts",
+        select: "name _id duration workouts description duration image about",
         populate: {
             path: "workouts",
             select: "_id name description exercises",
@@ -147,21 +166,40 @@ const getActiveWorkoutPlan = (userId, planId) => __awaiter(void 0, void 0, void 
         },
     })
         .lean();
-    // console.log(
-    //   (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
-    //     data?.currentWorkoutIndex as number,
-    //     (data?.currentWorkoutIndex as number) + 1
-    //   ),
-    //   "gg"
-    // );
-    return data;
-    // return {
-    //   ...data,
-    //   workoutPlanId: (data?.workoutPlanId as IWorkoutPlan).workouts.slice(
-    //     data?.currentWorkoutIndex as number,
-    //     (data?.currentWorkoutIndex as number) + 1
-    //   ),
-    // };
+    if (!data)
+        return null;
+    const { startedAt, completedExercises } = data;
+    // Normalize `startedAt` to only the date part (YYYY-MM-DD)
+    const startDate = new Date(startedAt);
+    startDate.setHours(0, 0, 0, 0); // Remove time for accurate comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Remove time for accurate comparison
+    // Ensure today is not before `startedAt`
+    if (today < startDate) {
+        return Object.assign(Object.assign({}, data), { missedDays: [] });
+    }
+    // Store completed workout days in a Set
+    const completedDays = new Set();
+    for (const exercise of completedExercises) {
+        const completedDate = new Date(exercise.completedAt);
+        const completedDateStr = completedDate.toISOString().split("T")[0];
+        // Store only if the exercise was completed before 8 PM
+        if (completedDate.getUTCHours() < 20) {
+            completedDays.add(completedDateStr);
+        }
+    }
+    const missedDays = [];
+    let currentDate = new Date(startDate);
+    // Iterate from `startedAt` to `today`
+    while (currentDate <= today) {
+        const currentDateStr = currentDate.toISOString().split("T")[0];
+        // Add to missedDays only if it's not in completedDays
+        if (!completedDays.has(currentDateStr)) {
+            missedDays.push(currentDateStr);
+        }
+        currentDate.setDate(currentDate.getDate() + 1); // Move to next day
+    }
+    return Object.assign(Object.assign({}, data), { missedDays });
 });
 // const giveFeedback = async (data: {
 //   planId: string;

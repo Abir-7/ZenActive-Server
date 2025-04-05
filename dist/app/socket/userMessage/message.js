@@ -6,13 +6,13 @@ const chat_service_1 = require("../../modules/userChat/chat.service");
 const socket_1 = require("../socket");
 const handleSendMessage = (data) => {
     //sender
-    socket_1.io.emit(`receiver-${data.senderId}`, {
-        senderId: data.senderId,
-        receiverId: data.receiverId,
-        content: data.message,
-    });
+    // io.emit(`receiver-${data.connectionId}`, {
+    //   senderId: data.senderId,
+    //   receiverId: data.receiverId,
+    //   content: data.message,
+    // });
     //receiver
-    socket_1.io.emit(`receiver-${data.receiverId}`, {
+    socket_1.io.emit(`receiver-${data.connectionId}`, {
         senderId: data.senderId,
         receiverId: data.receiverId,
         content: data.message,

@@ -313,6 +313,7 @@ const getSingleUser = (userId) => __awaiter(void 0, void 0, void 0, function* ()
                 isVerified: 1,
                 name: 1,
                 dateOfBirth: 1,
+                hasPremiumAccess: 1,
                 gender: 1,
                 height: 1,
                 weight: 1,

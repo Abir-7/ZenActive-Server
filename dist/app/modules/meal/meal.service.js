@@ -19,11 +19,16 @@ const user_model_1 = require("../user/user.model");
 const meal_model_1 = __importDefault(require("./meal.model"));
 const http_status_1 = __importDefault(require("http-status"));
 const QueryBuilder_1 = __importDefault(require("../../builder/QueryBuilder"));
+const notification_service_1 = require("../notification/notification.service");
 const createMeal = (mealData) => __awaiter(void 0, void 0, void 0, function* () {
     const newMeal = yield meal_model_1.default.create(mealData);
     if (!newMeal) {
         (0, unlinkFiles_1.default)(mealData === null || mealData === void 0 ? void 0 : mealData.image);
     }
+    (0, notification_service_1.sendPushNotification)({
+        title: "New Meal",
+        body: `New meal added category: ${mealData.category}`,
+    });
     return newMeal;
 });
 const updateMeal = (mealId, updateFields) => __awaiter(void 0, void 0, void 0, function* () {

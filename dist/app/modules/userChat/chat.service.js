@@ -96,7 +96,8 @@ const getChatsBetweenUsers = (userId_1, friendId_1, ...args_1) => __awaiter(void
         .populate({
         path: "receiverId",
         select: "name email _id image",
-    });
+    })
+        .lean();
     // Update chats where userId is not in seenBy
     yield chat_model_1.Chat.updateMany({
         $or: [
@@ -112,7 +113,21 @@ const getChatsBetweenUsers = (userId_1, friendId_1, ...args_1) => __awaiter(void
         total,
         totalPage: Math.ceil(total / limit),
     };
-    return { userChat, userFriendShipStatus, meta };
+    const formattedCode = {
+        userChat,
+        userFriendShipStatus: userFriendShipStatus
+            ? {
+                senderId: userFriendShipStatus === null || userFriendShipStatus === void 0 ? void 0 : userFriendShipStatus.senderId,
+                receiverId: userFriendShipStatus === null || userFriendShipStatus === void 0 ? void 0 : userFriendShipStatus.receiverId,
+                connectionId: userFriendShipStatus === null || userFriendShipStatus === void 0 ? void 0 : userFriendShipStatus._id,
+                isAccepted: userFriendShipStatus === null || userFriendShipStatus === void 0 ? void 0 : userFriendShipStatus.isAccepted,
+                status: userFriendShipStatus === null || userFriendShipStatus === void 0 ? void 0 : userFriendShipStatus.status,
+                statusChangeBy: userFriendShipStatus === null || userFriendShipStatus === void 0 ? void 0 : userFriendShipStatus.statusChangeBy,
+            }
+            : null,
+        meta,
+    };
+    return formattedCode;
 });
 const chatWithFitBot = (prompt) => __awaiter(void 0, void 0, void 0, function* () {
     try {

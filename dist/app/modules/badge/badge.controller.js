@@ -22,6 +22,7 @@ const createBadge = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
     if (req.files && "image" in req.files && req.files.image[0]) {
         image = `/images/${req.files.image[0].filename}`;
     }
+    console.log(req.files);
     const value = Object.assign(Object.assign({}, req.body), { image });
     const result = yield badge_service_1.default.createBadge(value);
     (0, sendResponse_1.default)(res, {

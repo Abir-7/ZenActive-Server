@@ -75,6 +75,11 @@ const createGroup = (groupData, userId) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 const updateGroup = (groupId, userId, updateData) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(updateData, groupId, userId);
+    const groupData = yield group_model_1.Group.findById(groupId).lean();
+    if (groupData && groupData.admin.toString() !== userId) {
+        throw new AppError_1.default(http_status_1.default.NOT_FOUND, "You are not admin.");
+    }
     const result = yield group_model_1.Group.findOneAndUpdate({ _id: groupId, admin: userId, isDeleted: false }, updateData, { new: true }).exec();
     if (!result) {
         throw new AppError_1.default(http_status_1.default.NOT_FOUND, "Group update failed.");

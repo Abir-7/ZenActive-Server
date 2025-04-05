@@ -26,7 +26,6 @@ const chat_model_1 = require("../../userChat/chat.model");
 const sendRequest = (userId, friendId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const senderData = yield user_model_1.User.findById(userId).select("name");
-    console.log(senderData);
     const session = yield mongoose_1.default.startSession();
     session.startTransaction();
     try {
@@ -99,8 +98,7 @@ const getFriendList = (userId_1, searchText_1, ...args_1) => __awaiter(void 0, [
         .lean();
     // Extract only the friend data
     let friends = friendList.map((friend) => friend.senderId._id.toString() === userId
-        ? friend.receiverId
-        : friend.senderId);
+        ? Object.assign(Object.assign({}, friend.receiverId), { connectionId: friend._id }) : Object.assign(Object.assign({}, friend.senderId), { connectionId: friend._id }));
     // 🔍 Search by full name (case-insensitive)
     if (searchText) {
         const searchRegex = new RegExp(searchText, "i"); // Case-insensitive search
@@ -270,14 +268,14 @@ const getFriendListWithLastMessage = (userId_1, ...args_1) => __awaiter(void 0, 
                 ? connection.receiverId
                 : connection.senderId;
             // Find the last message between the user and the friend
-            const lastMessage = yield chat_model_1.Chat.findOne({
+            const lastMessage = (yield chat_model_1.Chat.findOne({
                 $or: [
                     { senderId: userId, receiverId: friendId },
                     { senderId: friendId, receiverId: userId },
                 ],
             })
                 .sort({ createdAt: -1 }) // Sort by createdAt in descending order to get the last message
-                .exec();
+                .exec());
             // Fetch friend details
             const friendDetails = yield user_model_1.User.findById(friendId)
                 .select("name email image _id")
@@ -293,6 +291,8 @@ const getFriendListWithLastMessage = (userId_1, ...args_1) => __awaiter(void 0, 
                     }
                     : null,
                 lastMessage: lastMessage ? lastMessage.message : null,
+                time: lastMessage ? lastMessage === null || lastMessage === void 0 ? void 0 : lastMessage.createdAt : null,
+                connectionId: connection._id,
             };
         })));
         // Step 3: Get total count for pagination metadata
@@ -306,7 +306,7 @@ const getFriendListWithLastMessage = (userId_1, ...args_1) => __awaiter(void 0, 
                 total: totalConnections,
                 page,
                 limit,
-                totalPages: Math.ceil(totalConnections / limit),
+                totalPage: Math.ceil(totalConnections / limit),
             },
         };
     }

@@ -40,7 +40,17 @@ const getDailyExerciseById = (0, catchAsync_1.default)((req, res) => __awaiter(v
         message: "Daily exercise record fetched successfully.",
     });
 }));
+const getDailyChallenge = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield dailyExercise_service_1.DailyExerciseService.getDailyChallenge();
+    (0, sendResponse_1.default)(res, {
+        data: result,
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "Daily challenge record fetched successfully.",
+    });
+}));
 exports.DailyExerciseController = {
     createDailyExercise,
     getDailyExerciseById,
+    getDailyChallenge,
 };

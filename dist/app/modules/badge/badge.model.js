@@ -6,6 +6,6 @@ const BadgeSchema = new mongoose_1.Schema({
     image: { type: String, required: true },
     points: { type: Number, required: true },
     isDeleted: { type: Boolean, default: false },
-});
+}, { timestamps: true });
 const Badge = (0, mongoose_1.model)("Badge", BadgeSchema);
 exports.default = Badge;

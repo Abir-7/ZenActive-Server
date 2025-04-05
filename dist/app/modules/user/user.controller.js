@@ -29,7 +29,6 @@ const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 const updateUserInfo = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const id = (_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.userId;
-    console.log(req.files);
     let image = null;
     let value = null;
     if (req.files && "image" in req.files && req.files.image[0]) {

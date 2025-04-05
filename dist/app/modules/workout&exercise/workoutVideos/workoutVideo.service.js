@@ -104,7 +104,6 @@ const updateWorkoutVideo = (id, req) => __awaiter(void 0, void 0, void 0, functi
         const pathLink = `/medias/${req.files.media[0].filename}`;
         const file = req.files.media[0];
         const filePath = path_1.default.join(process.cwd(), `/uploads/${pathLink}`);
-        console.log(file.filename.split(".")[0]);
         try {
             const uploadResult = yield cloudinary_1.cloudinaryInstance.uploader.upload(filePath, {
                 public_id: file.filename.split(".")[0].trim(),

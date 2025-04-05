@@ -14,18 +14,24 @@ const setupSocket = (server) => {
     });
     io.on("connection", (socket) => {
         socket.on("register", (userId) => {
-            console.log("User registered:", userId);
-            exports.users.set(userId, socket.id);
+            if (!!userId) {
+                exports.users.forEach((socketId, existingUserId) => {
+                    if (existingUserId === userId) {
+                        exports.users.delete(existingUserId);
+                    }
+                });
+                exports.users.set(userId, socket.id);
+            }
             io.emit("onlineUsers", Array.from(exports.users.keys()));
         });
         socket.on("sendMessage", (data) => {
-            const { senderId, receiverId, message } = data;
-            (0, message_1.handleSendMessage)({ senderId, receiverId, message });
+            const { senderId, receiverId, message, connectionId } = data;
+            (0, message_1.handleSendMessage)({ senderId, receiverId, message, connectionId });
             // Emit message to receiver if online
-            const receiverSocketId = exports.users.get(receiverId);
-            if (receiverSocketId) {
-                io.to(receiverSocketId).emit("receiveMessage", { senderId, message });
-            }
+            // const receiverSocketId = users.get(receiverId);
+            // if (receiverSocketId) {
+            //   io.to(receiverSocketId).emit("receiveMessage", { senderId, message });
+            // }
         });
         socket.on("disconnect", () => {
             var _a;

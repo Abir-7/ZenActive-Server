@@ -22,6 +22,6 @@ const MealSchema = new mongoose_1.Schema({
         required: true,
     },
     amount: { type: Number, required: true },
-});
+}, { timestamps: true });
 const Meal = (0, mongoose_1.model)("Meal", MealSchema);
 exports.default = Meal;

@@ -60,6 +60,7 @@ const globalErrorHandler = (err, req, res, next) => {
             },
         ];
     }
+    console.log(err.message, "----error");
     res.status(statusCode).json(Object.assign({ success: false, status: statusCode, message, errors: errors.length ? errors : undefined }, (process.env.NODE_ENV === "development" && { stack: err.stack })));
 };
 exports.globalErrorHandler = globalErrorHandler;

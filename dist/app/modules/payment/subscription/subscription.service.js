@@ -13,10 +13,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubscriptionService = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
 const QueryBuilder_1 = __importDefault(require("../../../builder/QueryBuilder"));
+const AppError_1 = __importDefault(require("../../../errors/AppError"));
+const user_model_1 = require("../../user/user.model");
 const subscription_model_1 = __importDefault(require("./subscription.model"));
 const createSubscription = (subscriptionData, userId) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield subscription_model_1.default.create(Object.assign(Object.assign({}, subscriptionData), { userId }));
+    const session = yield mongoose_1.default.startSession();
+    session.startTransaction();
+    try {
+        const user = yield user_model_1.User.findById(userId).session(session);
+        if (!user) {
+            throw new AppError_1.default(404, "User not found.");
+        }
+        const subscriptions = yield subscription_model_1.default.create([Object.assign(Object.assign({}, subscriptionData), { userId })], { session });
+        yield user_model_1.User.findByIdAndUpdate(userId, { hasPremiumAccess: true }, { new: true, session });
+        yield session.commitTransaction();
+        session.endSession();
+        return subscriptions[0];
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        session.endSession();
+        throw error;
+    }
 });
 const getSubscriptionData = (timePeriod) => __awaiter(void 0, void 0, void 0, function* () {
     const endDate = new Date(); // Today's date

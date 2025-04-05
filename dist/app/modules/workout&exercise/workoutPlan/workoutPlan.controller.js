@@ -88,7 +88,7 @@ const deleteWorkoutPlan = (0, catchAsync_1.default)((req, res) => __awaiter(void
     (0, sendResponse_1.default)(res, {
         data: result,
         success: true,
-        statusCode: http_status_1.default.NO_CONTENT,
+        statusCode: http_status_1.default.OK,
         message: "Workout plan is successfully deleted.",
     });
 }));

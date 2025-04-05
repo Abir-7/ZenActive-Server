@@ -48,7 +48,7 @@ const toggleLike = (postId, userId) => __awaiter(void 0, void 0, void 0, functio
         else {
             yield like_model_1.default.create([{ postId, userId }], { session });
             isLiked = true;
-            if (post.userId._id !== userId) {
+            if (String(post.userId._id) !== String(userId)) {
                 (0, handleNotification_1.handleNotification)(`${userName} likes your post`, post.userId._id);
                 yield notification_model_1.Notification.create([
                     {
