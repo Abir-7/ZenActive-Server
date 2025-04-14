@@ -99,7 +99,7 @@ export const userSchema = new Schema<IUser, IUserModel>(
       },
       select: false,
     },
-    password: { type: String, required: true, select: false },
+    password: { type: String, required: true, select: false, min: 6 },
     isProfileUpdated: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
