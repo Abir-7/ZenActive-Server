@@ -87,6 +87,10 @@ const createWorkoutVideo = async (req: Request) => {
     throw new AppError(500, "Faield to  upload video/image");
   }
   const workoutVideo = await WorkoutVideo.create(value);
+  if (!workoutVideo && videoId) {
+    await deleteCloudinaryVideo(videoId, "video");
+    unlinkFile(image);
+  }
   return workoutVideo;
 };
 

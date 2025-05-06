@@ -104,7 +104,7 @@ export const updateWorkout = async (
   );
 
   if (!updatedWorkout) {
-    unlinkFile(isWorkoutExist.image);
+    if (workoutData.image) unlinkFile(workoutData.image);
     throw new AppError(httpStatus.BAD_REQUEST, "Failed to update. ");
   } else {
     if (workoutData.image) {

@@ -15,6 +15,7 @@ const corsOption = {
     "http://192.168.10.206:5173",
     "https://zen-active-admin.vercel.app",
     "http://82.25.85.126:4173",
+    "http://192.168.10.18:4173",
   ],
   credentials: true,
 

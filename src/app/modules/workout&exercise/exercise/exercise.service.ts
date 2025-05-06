@@ -49,7 +49,6 @@ const createExercise = async (req: Request) => {
 
       unlinkFile(pathLink);
     } catch (error) {
-      // console.log(error);
       unlinkFile(pathLink);
       throw new AppError(500, "Video upload to Cloudinary failed");
     }
@@ -71,6 +70,7 @@ const createExercise = async (req: Request) => {
   });
   if (!exercise && value.image) {
     unlinkFile(value.image);
+    if (videoId) await deleteCloudinaryVideo(videoId, "video");
   }
 
   sendPushNotification({
@@ -205,7 +205,6 @@ const updateExercise = async (exerciseId: string, req: Request) => {
 
   let video = null;
   let image = null;
-
   let videoId = null;
 
   if (req.files && "media" in req.files && req.files.media[0]) {

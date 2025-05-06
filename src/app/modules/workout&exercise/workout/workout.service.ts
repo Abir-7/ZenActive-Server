@@ -131,10 +131,18 @@ const updateWorkout = async (
     unlinkFile(workoutData.image);
   }
 
-  return await Workout.findByIdAndUpdate(workoutId, updateData, { new: true })
+  const updated = await Workout.findByIdAndUpdate(workoutId, updateData, {
+    new: true,
+  })
 
     .populate("exercises")
     .exec();
+
+  if (workoutData && updateData.image && updated?.name) {
+    unlinkFile(workoutData.image);
+  }
+
+  return updated;
 };
 
 // Delete a workout by ID
