@@ -8,7 +8,7 @@ import UserWorkoutPlan from "../modules/userWorkoutPlan/userWorkoutPlan.model";
 import admin from "../firebase/firebase";
 import AppError from "../errors/AppError";
 import { User } from "../modules/user/user.model";
-import Subscription from "../modules/payment/subscription/subscription.model";
+import Subscription from "../modules/payment/payment/payment.model";
 
 export const setupCronJobs = () => {
   // delete user meal plan at 12Am everyday

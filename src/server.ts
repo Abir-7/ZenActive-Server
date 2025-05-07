@@ -5,6 +5,7 @@ import seedAdmin from "./app/DB/seedAdmin";
 
 import { setupCronJobs } from "./app/node-cron/cronJobs";
 import { setupSocket } from "./app/socket/socket";
+import { seedSubscription } from "./app/DB/seedSubscription";
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error: Error) => {
@@ -17,8 +18,8 @@ async function startServer() {
     // Connect to MongoDB
     await mongoose.connect(config.database.url as string);
     console.log("MongoDB connected successfully");
-    seedAdmin();
-
+    await seedAdmin();
+    await seedSubscription();
     setupCronJobs();
     setupSocket(server);
 

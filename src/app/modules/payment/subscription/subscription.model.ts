@@ -1,17 +1,17 @@
-import { model, Schema } from "mongoose";
-import { ISubscription } from "./subscription.interface";
+import mongoose, { Schema } from "mongoose";
+import { ISubscriptionPlan } from "./subscription.interface";
 
-const SubscriptionSchema: Schema = new Schema<ISubscription>({
-  productId: { type: String, required: true },
-  purchaseId: { type: String, required: true },
-  expiryDate: { type: Date, required: true },
-  purchaseDate: { type: Date, required: true, default: Date.now },
-  packageName: { type: String, required: true },
-  purchaseToken: { type: String, required: true },
-  packagePrice: { type: Number, required: true },
-  userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+const subscriptionPlanSchema = new Schema<ISubscriptionPlan>({
+  id: { type: String, required: false }, // Optional field, since it’s not mandatory
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  features: { type: [String], required: true }, // Array of strings for features
 });
 
-const Subscription = model<ISubscription>("Subscription", SubscriptionSchema);
+// Create and export the model
+const SubscriptionPlan = mongoose.model<ISubscriptionPlan>(
+  "SubscriptionPlan",
+  subscriptionPlanSchema
+);
 
-export default Subscription;
+export default SubscriptionPlan;

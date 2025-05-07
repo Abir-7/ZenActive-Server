@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 import QueryBuilder from "../../../builder/QueryBuilder";
 import AppError from "../../../errors/AppError";
 import { User } from "../../user/user.model";
-import { ISubscription } from "./subscription.interface";
-import Subscription from "./subscription.model";
+import { IPayment } from "./payment.interface";
+import Payment from "./payment.model";
 
-const createSubscription = async (
-  subscriptionData: ISubscription,
+const createUserPayment = async (
+  subscriptionData: IPayment,
   userId: string
 ) => {
   const session = await mongoose.startSession();
@@ -18,7 +18,7 @@ const createSubscription = async (
       throw new AppError(404, "User not found.");
     }
 
-    const subscriptions = await Subscription.create(
+    const subscriptions = await Payment.create(
       [{ ...subscriptionData, userId }],
       { session }
     );
@@ -40,7 +40,7 @@ const createSubscription = async (
   }
 };
 
-const getSubscriptionData = async (timePeriod: "weekly" | "monthly") => {
+const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
   const endDate = new Date(); // Today's date
   const startDate = new Date();
 
@@ -55,7 +55,7 @@ const getSubscriptionData = async (timePeriod: "weekly" | "monthly") => {
 
   try {
     // Step 1: Use MongoDB Aggregation Pipeline
-    const result = await Subscription.aggregate([
+    const result = await Payment.aggregate([
       // Match documents within the date range
       {
         $match: {
@@ -111,10 +111,7 @@ const getSubscriptionData = async (timePeriod: "weekly" | "monthly") => {
 };
 
 const getAllTransection = async (query: Record<string, unknown>) => {
-  const allData = new QueryBuilder(
-    Subscription.find().populate("userId"),
-    query
-  )
+  const allData = new QueryBuilder(Payment.find().populate("userId"), query)
     .search(["packageName", "purchaseId"])
     .filter()
     .paginate()
@@ -128,7 +125,7 @@ const getAllTransection = async (query: Record<string, unknown>) => {
 };
 
 const getTotalEarnings = async () => {
-  const result = await Subscription.aggregate([
+  const result = await Payment.aggregate([
     {
       $group: {
         _id: null,
@@ -140,9 +137,9 @@ const getTotalEarnings = async () => {
   return { totalEarn: result.length > 0 ? result[0].totalEarnings : 0 };
 };
 
-export const SubscriptionService = {
-  createSubscription,
-  getSubscriptionData,
+export const PaymentService = {
+  createUserPayment,
+  getUserPaymentData,
   getAllTransection,
   getTotalEarnings,
 };

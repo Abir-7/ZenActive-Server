@@ -92,6 +92,8 @@ const getAllExercise = async (
     delete query?.name;
   }
 
+  console.log(query);
+
   query!.isDeleted = false;
 
   const skip = (page - 1) * limit;

@@ -23,13 +23,15 @@ import { WorkoutRoute } from "../modules/workout&exercise/workout/workout.route"
 import { FeedbackRoute } from "../modules/userFeedback/feedback.route";
 import { UserBadgeRoute } from "../modules/usersBadge/userBadge.route";
 //import { PackageRoute } from "../modules/payment/package/package.route";
-import { SubscriptionRoute } from "../modules/payment/subscription/subscription.route";
+
 import { PrivacyTermsAboutUsRoute } from "../modules/privacy & terms & about us/privacy_terms_aboutus.route";
 import { DailyExerciseRoutes } from "../modules/usersDailyExercise/dailyExercise.route";
 import { WorkoutVideoRoutes } from "../modules/workout&exercise/workoutVideos/workoutVideo.route";
 import { GroupRoute } from "../modules/socialGroup/Group/group.route";
 import { UserGroupRoute } from "../modules/socialGroup/UsersGroup/userGroup.route";
 import { NotificationRoute } from "../modules/notification/notification.route";
+import { PaymentRoute } from "../modules/payment/payment/payment.route";
+import { SubscriptionPlanRoute } from "../modules/payment/subscription/subscription.route";
 
 const router = Router();
 
@@ -57,10 +59,11 @@ const apiRoutes = [
   { path: "/workout-video", route: WorkoutVideoRoutes },
   { path: "/feedback", route: FeedbackRoute },
   { path: "/user-badge", route: UserBadgeRoute },
-  { path: "/subscription", route: SubscriptionRoute },
   { path: "/privacy&terms", route: PrivacyTermsAboutUsRoute },
   { path: "/daily-exercise", route: DailyExerciseRoutes },
   { path: "/notification", route: NotificationRoute },
+  { path: "/payment", route: PaymentRoute },
+  { path: "/subscription-plan", route: SubscriptionPlanRoute },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

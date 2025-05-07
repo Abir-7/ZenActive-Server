@@ -2,14 +2,14 @@ import { handleNewSubscription } from "../../../socket/notification/subscription
 import catchAsync from "../../../utils/catchAsync";
 import sendResponse from "../../../utils/sendResponse";
 
-import { SubscriptionService } from "./subscription.service";
 import httpStatus from "http-status";
+import { PaymentService } from "./payment.service";
 
-const createSubscription = catchAsync(async (req, res) => {
+const createUserPayment = catchAsync(async (req, res) => {
   const { userId } = req.user;
   const subscriptionData = req.body;
 
-  const result = await SubscriptionService.createSubscription(
+  const result = await PaymentService.createUserPayment(
     subscriptionData,
     userId
   );
@@ -26,8 +26,8 @@ const createSubscription = catchAsync(async (req, res) => {
   });
 });
 
-const getSubscriptionData = catchAsync(async (req, res) => {
-  const result = await SubscriptionService.getSubscriptionData(
+const getUserPaymentData = catchAsync(async (req, res) => {
+  const result = await PaymentService.getUserPaymentData(
     req.query.type as "weekly" | "monthly"
   );
   sendResponse(res, {
@@ -39,7 +39,7 @@ const getSubscriptionData = catchAsync(async (req, res) => {
 });
 
 const getAllTransection = catchAsync(async (req, res) => {
-  const result = await SubscriptionService.getAllTransection(req.query);
+  const result = await PaymentService.getAllTransection(req.query);
   sendResponse(res, {
     data: result.data,
     meta: result.meta,
@@ -50,7 +50,7 @@ const getAllTransection = catchAsync(async (req, res) => {
 });
 
 const getTotalEarnings = catchAsync(async (req, res) => {
-  const result = await SubscriptionService.getTotalEarnings();
+  const result = await PaymentService.getTotalEarnings();
   sendResponse(res, {
     data: result,
     success: true,
@@ -59,9 +59,9 @@ const getTotalEarnings = catchAsync(async (req, res) => {
   });
 });
 
-export const SubscriptionController = {
-  createSubscription,
-  getSubscriptionData,
+export const PaymentController = {
+  createUserPayment,
+  getUserPaymentData,
   getAllTransection,
   getTotalEarnings,
 };
