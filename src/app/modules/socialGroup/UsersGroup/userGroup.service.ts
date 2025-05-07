@@ -100,8 +100,6 @@ const addUserToGroup = async (groupId: string, userId: string) => {
 
     const addUser = await UserGroup.create([{ groupId, userId }], { session });
 
-    await Post.updateMany({ groupId, userId }, { isDelete: true }, { session });
-
     await session.commitTransaction();
     session.endSession();
 
@@ -141,7 +139,6 @@ const removeUserFromGroup = async (
       );
     }
 
-    // Update user's posts in the group
     await Post.updateMany({ groupId, userId }, { isDelete: true }, { session });
 
     // Commit transaction
@@ -396,6 +393,12 @@ const inviteUser = async (
   receiverId: string
 ) => {
   const sender = await User.findOne({ _id: userId });
+
+  const isUser = await User.findOne({ _id: receiverId });
+
+  if (isUser?.hasPremiumAccess === false) {
+    throw new AppError(500, "Invited user don't have premium access.");
+  }
 
   const notification = await Notification.create({
     senderId: userId,

@@ -174,7 +174,13 @@ const getAllExercise = async (
   }
 };
 // Get an exercise by ID
-const getExerciseById = async (exerciseId: string) => {
+const getExerciseById = async (exerciseId: string, userId: string) => {
+  const isUser = await User.findOne({ _id: userId });
+
+  if (isUser?.hasPremiumAccess === false) {
+    throw new AppError(500, "User don't have premium access.");
+  }
+
   const now = new Date();
   const startOfDay = new Date(now.setHours(0, 0, 0, 0)); // Start of today
   const endOfDay = new Date(now.setHours(23, 59, 59, 999)); // End of today

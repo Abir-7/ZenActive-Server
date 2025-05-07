@@ -39,7 +39,7 @@ const getAllExercise = catchAsync(async (req: Request, res: Response) => {
 // Get an exercise by ID
 const getExerciseById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await ExerciseService.getExerciseById(id);
+  const result = await ExerciseService.getExerciseById(id, req.user.userId);
   sendResponse(res, {
     data: result,
     success: true,

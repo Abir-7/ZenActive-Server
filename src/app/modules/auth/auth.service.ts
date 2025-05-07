@@ -49,6 +49,7 @@ const loginUser = async (userData: {
     userEmail: isUserExist.email,
     userId: isUserExist._id,
     userRole: isUserExist.role,
+    hasPremiumAccess: isUserExist.hasPremiumAccess,
   };
 
   const accessToken = jwtHelper.generateToken(

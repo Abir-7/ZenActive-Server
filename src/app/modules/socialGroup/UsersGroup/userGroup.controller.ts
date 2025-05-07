@@ -5,6 +5,7 @@ import { UserGroupService } from "./userGroup.service";
 
 const getUserAllGroups = catchAsync(async (req, res) => {
   const { userId } = req.user;
+
   const { page = 1, limit = 25, searchTerm } = req.query;
   const result = await UserGroupService.getUserAllGroups(
     userId,
@@ -22,7 +23,10 @@ const getUserAllGroups = catchAsync(async (req, res) => {
 });
 
 const addUserToGroup = catchAsync(async (req, res) => {
-  const { userId } = req.user;
+  const { userId } = req.user || {};
+  if (!userId) {
+    throw new Error("User ID is not available in the request.");
+  }
   const { groupId } = req.params;
   const result = await UserGroupService.addUserToGroup(groupId, userId);
   sendResponse(res, {

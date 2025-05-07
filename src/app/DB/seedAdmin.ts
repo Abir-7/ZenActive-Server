@@ -9,6 +9,7 @@ const superUser = {
   password: config.admin.password,
   isProfileUpdated: true,
   isVerified: true,
+  hasPremiumAccess: true,
   image:
     "https://img.freepik.com/free-vector/business-user-cog_78370-7040.jpg?semt=ais_hybrid",
   verified: true,
