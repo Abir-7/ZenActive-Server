@@ -3,6 +3,7 @@ import catchAsync from "../../utils/catchAsync";
 import { UserBadgeService } from "./userBadge.service";
 import httpStatus from "http-status";
 import sendResponse from "../../utils/sendResponse";
+import mongoose from "mongoose";
 
 const createOrUpdateUserBadge = catchAsync(
   async (req: Request, res: Response) => {

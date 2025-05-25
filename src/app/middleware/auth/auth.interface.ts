@@ -4,5 +4,4 @@ export interface IAuthData {
   userEmail: string;
   userId: string;
   userRole: TUserRole;
-  hasPremiumAccess: Boolean;
 }

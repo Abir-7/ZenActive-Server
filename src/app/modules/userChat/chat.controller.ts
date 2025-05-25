@@ -16,7 +16,7 @@ const createChat = catchAsync(async (req: Request, res: Response) => {
   const { message } = req.body;
 
   const result = await ChatService.createChat({
-    senderId,
+    senderId: new Types.ObjectId(senderId),
     receiverId,
     message,
     seenBy: [],

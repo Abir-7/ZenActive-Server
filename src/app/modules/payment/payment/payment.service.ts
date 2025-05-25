@@ -4,6 +4,7 @@ import AppError from "../../../errors/AppError";
 import { User } from "../../user/user.model";
 import { IPayment } from "./payment.interface";
 import Payment from "./payment.model";
+import SubscriptionPlan from "../subscription/subscription.model";
 
 const createUserPayment = async (
   subscriptionData: IPayment,
@@ -18,8 +19,32 @@ const createUserPayment = async (
       throw new AppError(404, "User not found.");
     }
 
+    const subscriptionPlanData = await SubscriptionPlan.findById(
+      subscriptionData.subscriptionPlanId
+    );
+
+    if (!subscriptionPlanData) {
+      throw new AppError(404, "Subscription plan not found.");
+    }
+
+    const expiryDate = new Date(); // current date
+
+    switch (subscriptionPlanData.id) {
+      case "free-trial":
+        expiryDate.setDate(expiryDate.getDate() + 7); // 7-day trial
+        break;
+      case "monthly-subscription":
+        expiryDate.setMonth(expiryDate.getMonth() + 1); // 1 month from now
+        break;
+      case "yearly-subscription":
+        expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 year from now
+        break;
+      default:
+        throw new AppError(400, "Invalid subscription plan ID.");
+    }
+
     const subscriptions = await Payment.create(
-      [{ ...subscriptionData, userId }],
+      [{ ...subscriptionData, userId, expiryDate }],
       { session }
     );
 

@@ -5,11 +5,16 @@ import catchAsync from "../../../utils/catchAsync";
 
 import sendResponse from "../../../utils/sendResponse";
 import { CommentService } from "./comment.service";
+import mongoose from "mongoose";
 
 const createComment = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { postId, comment } = req.body;
-  const result = await CommentService.addComment({ userId, postId, comment });
+  const result = await CommentService.addComment({
+    userId: new mongoose.Types.ObjectId(userId),
+    postId,
+    comment,
+  });
   sendResponse(res, {
     data: result,
     success: true,
@@ -22,7 +27,7 @@ const createVideoComment = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const { videoId, comment } = req.body;
   const result = await CommentService.addVideoComment({
-    userId,
+    userId: new mongoose.Types.ObjectId(userId),
     videoId,
     comment,
   });

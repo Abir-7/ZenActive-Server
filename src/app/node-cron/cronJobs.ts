@@ -8,7 +8,8 @@ import UserWorkoutPlan from "../modules/userWorkoutPlan/userWorkoutPlan.model";
 import admin from "../firebase/firebase";
 import AppError from "../errors/AppError";
 import { User } from "../modules/user/user.model";
-import Subscription from "../modules/payment/payment/payment.model";
+
+import Payment from "../modules/payment/payment/payment.model";
 
 export const setupCronJobs = () => {
   // delete user meal plan at 12Am everyday
@@ -167,29 +168,87 @@ export const setupCronJobs = () => {
     }
   });
 
+  // cron.schedule("0 0 * * *", async () => {
+  //   try {
+  //     console.log("Running subscription expiry check at 12:00 AM...");
+
+  //     const now = new Date();
+
+  //     // Find all users with premium access
+  //     const premiumUsers = await User.find({ hasPremiumAccess: true });
+
+  //     // For each user, check if they have an active (non-expired) subscription.
+  //     for (const user of premiumUsers) {
+  //       const activeSubscription = await Payment.findOne({
+  //         userId: user._id,
+  //         expiryDate: { $gte: now }, // Subscription expiry date is in the future
+  //       });
+
+  //       // If no active subscription exists, update the user's premium access
+  //       if (!activeSubscription) {
+  //         await User.findByIdAndUpdate(user._id, { hasPremiumAccess: false });
+  //         console.log(
+  //           `User ${user._id} subscription expired. Premium access revoked.`
+  //         );
+  //       }
+  //     }
+
+  //     console.log("Subscription expiry check complete.");
+  //   } catch (error) {
+  //     console.error("Error during subscription expiry check:", error);
+  //   }
+  // });
+
   cron.schedule("0 0 * * *", async () => {
+    console.log("Running subscription expiry check at 12:00 AM...");
+    const now = new Date();
+
     try {
-      console.log("Running subscription expiry check at 12:00 AM...");
+      // Step 1: Get users with premium access whose subscription may have expired
+      const expiredUsers = await User.aggregate([
+        {
+          $match: {
+            hasPremiumAccess: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "payments",
+            localField: "_id",
+            foreignField: "userId",
+            as: "payments",
+          },
+        },
+        {
+          $addFields: {
+            activeSubscription: {
+              $filter: {
+                input: "$payments",
+                as: "payment",
+                cond: { $gte: ["$$payment.expiryDate", now] },
+              },
+            },
+          },
+        },
+        {
+          $match: {
+            activeSubscription: { $size: 0 },
+          },
+        },
+      ]);
 
-      const now = new Date();
-
-      // Find all users with premium access
-      const premiumUsers = await User.find({ hasPremiumAccess: true });
-
-      // For each user, check if they have an active (non-expired) subscription.
-      for (const user of premiumUsers) {
-        const activeSubscription = await Subscription.findOne({
-          userId: user._id,
-          expiryDate: { $gte: now }, // Subscription expiry date is in the future
-        });
-
-        // If no active subscription exists, update the user's premium access
-        if (!activeSubscription) {
-          await User.findByIdAndUpdate(user._id, { hasPremiumAccess: false });
-          console.log(
-            `User ${user._id} subscription expired. Premium access revoked.`
-          );
-        }
+      // Step 2: Update all expired users in bulk
+      const expiredUserIds = expiredUsers.map((user) => user._id);
+      if (expiredUserIds.length) {
+        await User.updateMany(
+          { _id: { $in: expiredUserIds } },
+          { $set: { hasPremiumAccess: false } }
+        );
+        console.log(
+          `${expiredUserIds.length} user(s) had their premium access revoked.`
+        );
+      } else {
+        console.log("No expired subscriptions found.");
       }
 
       console.log("Subscription expiry check complete.");

@@ -10,8 +10,15 @@ const PaymentSchema: Schema = new Schema<IPayment>({
   purchaseToken: { type: String, required: true },
   packagePrice: { type: Number, required: true },
   userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+  subscriptionPlanId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    ref: "User",
+  },
 });
 
-const Payment = model<IPayment>("UserSubscription", PaymentSchema);
+PaymentSchema.index({ userId: 1, expiryDate: 1 });
+
+const Payment = model<IPayment>("Payment", PaymentSchema);
 
 export default Payment;

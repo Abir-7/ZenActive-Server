@@ -10,10 +10,7 @@ import { Notification } from "../../notification/notification.model";
 import { NotificationType } from "../../notification/notification.interface";
 import { handleNotification } from "../../../socket/notification/handleNotification";
 import { Chat } from "../../userChat/chat.model";
-const sendRequest = async (
-  userId: Types.ObjectId,
-  friendId: Types.ObjectId
-) => {
+const sendRequest = async (userId: string, friendId: Types.ObjectId) => {
   const senderData = await User.findById(userId).select("name");
 
   const session = await mongoose.startSession();
@@ -66,10 +63,7 @@ const sendRequest = async (
   }
 };
 
-const acceteptRequest = async (
-  userId: Types.ObjectId,
-  friendId: Types.ObjectId
-) => {
+const acceteptRequest = async (userId: string, friendId: Types.ObjectId) => {
   const friendList = await UserConnection.findOne({
     senderId: friendId,
     receiverId: userId,
@@ -257,10 +251,7 @@ const suggestedFriend = async (
   };
 };
 
-const removeFriend = async (
-  userId: Types.ObjectId,
-  friendId: Types.ObjectId
-) => {
+const removeFriend = async (userId: string, friendId: Types.ObjectId) => {
   const friendList = await UserConnection.findOne({
     $or: [
       { senderId: userId, receiverId: friendId },
@@ -283,7 +274,7 @@ const removeFriend = async (
   return { message: "User Unfriend." };
 };
 
-const addToBlock = async (friendId: Types.ObjectId, userId: Types.ObjectId) => {
+const addToBlock = async (friendId: Types.ObjectId, userId: string) => {
   const friendList = await UserConnection.findOne({
     $or: [
       { senderId: userId, receiverId: friendId },
@@ -306,10 +297,7 @@ const addToBlock = async (friendId: Types.ObjectId, userId: Types.ObjectId) => {
   return { message: "User Blocked" };
 };
 
-const removeRequest = async (
-  userId: Types.ObjectId,
-  friendId: Types.ObjectId
-) => {
+const removeRequest = async (userId: string, friendId: Types.ObjectId) => {
   const friendList = await UserConnection.findOne({
     $or: [
       { senderId: userId, receiverId: friendId },
@@ -331,7 +319,7 @@ const removeRequest = async (
 };
 
 const getFriendListWithLastMessage = async (
-  userId: Types.ObjectId,
+  userId: string,
   page = 1,
   limit = 20
 ) => {

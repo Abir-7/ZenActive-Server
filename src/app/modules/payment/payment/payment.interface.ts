@@ -9,4 +9,5 @@ export interface IPayment {
   purchaseToken: string;
   packagePrice: number;
   userId: Types.ObjectId;
+  subscriptionPlanId: Types.ObjectId;
 }

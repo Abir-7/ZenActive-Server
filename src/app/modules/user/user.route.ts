@@ -28,5 +28,6 @@ router.patch(
 );
 router.patch("/block/:id", auth("ADMIN"), UserController.blockUser);
 router.delete("/delete/:id", auth("ADMIN"), UserController.deleteUser);
+router.delete("/delete-me", auth("USER"), UserController.deleteMe);
 
 export const UserRoute = router;

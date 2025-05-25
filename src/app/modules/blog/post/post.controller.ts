@@ -3,6 +3,7 @@ import catchAsync from "../../../utils/catchAsync";
 import sendResponse from "../../../utils/sendResponse";
 import { PostService } from "./post.service";
 import httpStatus from "http-status";
+import mongoose from "mongoose";
 // Create Post
 const createPost = catchAsync(async (req, res) => {
   const { userId } = req.user;
@@ -14,7 +15,12 @@ const createPost = catchAsync(async (req, res) => {
     image = `/images/${req.files.image[0].filename}`;
   }
 
-  const result = await PostService.createPost({ userId, text, groupId, image });
+  const result = await PostService.createPost({
+    userId: new mongoose.Types.ObjectId(userId),
+    text,
+    groupId,
+    image,
+  });
   sendResponse(res, {
     data: result,
     success: true,

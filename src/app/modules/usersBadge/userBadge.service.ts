@@ -5,7 +5,7 @@ import AppError from "../../errors/AppError";
 import { UserAppData } from "../userAppData/appdata.model";
 
 const createOrUpdateUserBadge = async (
-  userId: Types.ObjectId,
+  userId: string,
   badgeId: Types.ObjectId
 ): Promise<any> => {
   const appdata = await UserAppData.findOne({ userId });

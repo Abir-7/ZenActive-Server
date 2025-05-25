@@ -41,7 +41,6 @@ const apiRoutes = [
   { path: "/meal", route: MealRoute },
   { path: "/workout-plan", route: WorkoutPlanRoute },
   { path: "/workout-plan", route: UserWorkoutPlanRoute },
-
   { path: "/badge", route: BadgeRoute },
   // { path: "/package", route: PackageRoute },
   // { path: "/block-list", route: BlockRoute },
@@ -65,7 +64,6 @@ const apiRoutes = [
   { path: "/payment", route: PaymentRoute },
   { path: "/subscription-plan", route: SubscriptionPlanRoute },
 ];
-
 apiRoutes.forEach((route) => router.use(route.path, route.route));
 
 export default router;
