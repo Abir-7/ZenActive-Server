@@ -1,5 +1,5 @@
-import { ISubscriptionPlan } from "../modules/payment/subscription/subscription.interface";
-import SubscriptionPlan from "../modules/payment/subscription/subscription.model";
+import { ISubscriptionPlan } from "../modules/payment/subscriptionPlan/subscriptionPlan.interface";
+import SubscriptionPlan from "../modules/payment/subscriptionPlan/subscriptionPlan.model";
 
 const subscriptionPlans: ISubscriptionPlan[] = [
   {
@@ -15,7 +15,7 @@ const subscriptionPlans: ISubscriptionPlan[] = [
   {
     id: "monthly-subscription",
     name: "Monthly Subscription",
-    price: 24,
+    price: 20,
     features: [
       "Personalized meal plans",
       "Premium challenges/exercise",
@@ -26,7 +26,7 @@ const subscriptionPlans: ISubscriptionPlan[] = [
   {
     id: "yearly-subscription",
     name: "Yearly Subscription",
-    price: 240,
+    price: 200,
     features: [
       "All Features of Monthly Subscription",
       "Save extra 4$ per month",

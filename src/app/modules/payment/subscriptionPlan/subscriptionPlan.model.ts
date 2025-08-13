@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { ISubscriptionPlan } from "./subscription.interface";
+import { ISubscriptionPlan } from "./subscriptionPlan.interface";
 
 const subscriptionPlanSchema = new Schema<ISubscriptionPlan>({
   id: { type: String, required: false }, // Optional field, since it’s not mandatory

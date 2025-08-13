@@ -5,24 +5,16 @@ import sendResponse from "../../../utils/sendResponse";
 import httpStatus from "http-status";
 import { PaymentService } from "./payment.service";
 
-const createUserPayment = catchAsync(async (req, res) => {
+const getMySubscription = catchAsync(async (req, res) => {
   const { userId } = req.user;
-  const subscriptionData = req.body;
 
-  const result = await PaymentService.createUserPayment(
-    subscriptionData,
-    userId
-  );
-
-  handleNewSubscription(
-    `  You have received ${subscriptionData.packagePrice}  from user:${subscriptionData.userId}`
-  );
+  const result = await PaymentService.getUserSubscription(userId);
 
   sendResponse(res, {
     data: result,
     success: true,
     statusCode: httpStatus.CREATED,
-    message: "Subscription created successfully.",
+    message: "Subscription data fetched successfully.",
   });
 });
 
@@ -58,10 +50,22 @@ const getTotalEarnings = catchAsync(async (req, res) => {
     message: "TotalEarning  data are fetched successfully.",
   });
 });
+const webHookHandler = catchAsync(async (req, res) => {
+  console.log(req.body);
+  const result = await PaymentService.webHookHandler(req.body.event);
+
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "TotalEarning  data are fetched successfully.",
+  });
+});
 
 export const PaymentController = {
-  createUserPayment,
+  getMySubscription,
   getUserPaymentData,
   getAllTransection,
   getTotalEarnings,
+  webHookHandler,
 };

@@ -4,21 +4,9 @@ import { PaymentController } from "./payment.controller";
 
 const router = Router();
 
-router.post(
-  "/",
-  //validateRequest(zodSubscriptionSchema),
-  auth("USER"),
-  PaymentController.createUserPayment
-);
-router.get(
-  "/earn",
-  //validateRequest(zodSubscriptionSchema),
-  auth("ADMIN"),
-  PaymentController.createUserPayment
-);
 router.get(
   "/",
-  //validateRequest(zodSubscriptionSchema),
+
   auth("ADMIN"),
   PaymentController.getAllTransection
 );
@@ -28,6 +16,15 @@ router.get(
 
   auth("ADMIN"),
   PaymentController.getTotalEarnings
+);
+
+router.post("/webhook/revenuecat", PaymentController.webHookHandler);
+
+router.post(
+  "/my-subsription",
+
+  auth("USER"),
+  PaymentController.getMySubscription
 );
 
 export const PaymentRoute = router;

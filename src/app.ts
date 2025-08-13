@@ -23,12 +23,13 @@ const corsOption = {
 };
 
 const app = express();
-app.use(express.json());
+
 app.use(cors(corsOption));
 app.use(cookePerser());
 app.use(express.static("uploads"));
 app.use(express.urlencoded({ extended: true }));
 
+app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });

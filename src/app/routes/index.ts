@@ -31,7 +31,6 @@ import { GroupRoute } from "../modules/socialGroup/Group/group.route";
 import { UserGroupRoute } from "../modules/socialGroup/UsersGroup/userGroup.route";
 import { NotificationRoute } from "../modules/notification/notification.route";
 import { PaymentRoute } from "../modules/payment/payment/payment.route";
-import { SubscriptionPlanRoute } from "../modules/payment/subscription/subscription.route";
 
 const router = Router();
 
@@ -62,7 +61,6 @@ const apiRoutes = [
   { path: "/daily-exercise", route: DailyExerciseRoutes },
   { path: "/notification", route: NotificationRoute },
   { path: "/payment", route: PaymentRoute },
-  { path: "/subscription-plan", route: SubscriptionPlanRoute },
 ];
 apiRoutes.forEach((route) => router.use(route.path, route.route));
 

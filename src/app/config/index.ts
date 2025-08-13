@@ -54,4 +54,10 @@ export const config = {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   },
+  payment: {
+    stripe: {
+      secret_key: process.env.SECRET_KEY,
+      webhook: process.env.STRIPE_WEBHOOK_SECRET,
+    },
+  },
 };

@@ -2,70 +2,10 @@ import mongoose from "mongoose";
 import QueryBuilder from "../../../builder/QueryBuilder";
 import AppError from "../../../errors/AppError";
 import { User } from "../../user/user.model";
-import { IPayment } from "./payment.interface";
-import Payment from "./payment.model";
-import SubscriptionPlan from "../subscription/subscription.model";
+import { SubscriptionStatus } from "./payment.interface";
+import { Subscription } from "./payment.model";
 
-const createUserPayment = async (
-  subscriptionData: IPayment,
-  userId: string
-) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const user = await User.findById(userId).session(session);
-    if (!user) {
-      throw new AppError(404, "User not found.");
-    }
-
-    const subscriptionPlanData = await SubscriptionPlan.findById(
-      subscriptionData.subscriptionPlanId
-    );
-
-    if (!subscriptionPlanData) {
-      throw new AppError(404, "Subscription plan not found.");
-    }
-
-    const expiryDate = new Date(); // current date
-
-    switch (subscriptionPlanData.id) {
-      case "free-trial":
-        expiryDate.setDate(expiryDate.getDate() + 7); // 7-day trial
-        break;
-      case "monthly-subscription":
-        expiryDate.setMonth(expiryDate.getMonth() + 1); // 1 month from now
-        break;
-      case "yearly-subscription":
-        expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 year from now
-        break;
-      default:
-        throw new AppError(400, "Invalid subscription plan ID.");
-    }
-
-    const subscriptions = await Payment.create(
-      [{ ...subscriptionData, userId, expiryDate }],
-      { session }
-    );
-
-    await User.findByIdAndUpdate(
-      userId,
-      { hasPremiumAccess: true },
-      { new: true, session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return subscriptions[0];
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
-};
-
-const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
+export const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
   const endDate = new Date(); // Today's date
   const startDate = new Date();
 
@@ -80,52 +20,49 @@ const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
 
   try {
     // Step 1: Use MongoDB Aggregation Pipeline
-    const result = await Payment.aggregate([
-      // Match documents within the date range
+    const result = await Subscription.aggregate([
       {
         $match: {
-          purchaseDate: {
+          startDate: {
             $gte: startDate,
             $lte: endDate,
           },
         },
       },
-      // Group by day and calculate total earnings
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$purchaseDate" }, // Format date as YYYY-MM-DD
+            $dateToString: { format: "%Y-%m-%d", date: "$startDate" }, // Group by day
           },
-          totalEarnings: { $sum: "$packagePrice" }, // Sum earnings for each day
+          totalEarnings: { $sum: "$price" }, // Sum price for each day
         },
       },
-      // Project the result into the desired format
       {
         $project: {
-          _id: 0, // Exclude the default _id field
-          date: "$_id", // Rename _id to date
-          earnings: "$totalEarnings", // Rename totalEarnings to earnings
+          _id: 0,
+          date: "$_id",
+          earnings: "$totalEarnings",
         },
       },
-    ]).exec();
+    ]);
 
-    // Step 2: Create a map of earnings by day for quick lookup
+    // Step 2: Map earnings by day
     const earningsByDay: { [key: string]: number } = {};
     result.forEach((entry) => {
       earningsByDay[entry.date] = entry.earnings;
     });
 
-    // Step 3: Fill in missing days with 0 earnings
+    // Step 3: Fill missing days with 0
     const finalResult: { date: string; earnings: number }[] = [];
     const currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
-      const dateString = currentDate.toISOString().split("T")[0]; // Get YYYY-MM-DD
+      const dateString = currentDate.toISOString().split("T")[0]; // YYYY-MM-DD
       finalResult.push({
         date: dateString,
-        earnings: earningsByDay[dateString] || 0, // Default to 0 if no earnings for the day
+        earnings: earningsByDay[dateString] || 0,
       });
-      currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
     }
 
     return finalResult;
@@ -136,8 +73,10 @@ const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
 };
 
 const getAllTransection = async (query: Record<string, unknown>) => {
-  const allData = new QueryBuilder(Payment.find().populate("userId"), query)
-    .search(["packageName", "purchaseId"])
+  const allData = new QueryBuilder(
+    Subscription.find().populate("userId"),
+    query
+  )
     .filter()
     .paginate()
     .sort();
@@ -149,22 +88,117 @@ const getAllTransection = async (query: Record<string, unknown>) => {
   return { data, meta };
 };
 
-const getTotalEarnings = async () => {
-  const result = await Payment.aggregate([
+export const getTotalEarnings = async () => {
+  const result = await Subscription.aggregate([
     {
       $group: {
         _id: null,
-        totalEarnings: { $sum: "$packagePrice" },
+        totalEarnings: { $sum: "$price" },
       },
     },
   ]);
 
-  return { totalEarn: result.length > 0 ? result[0].totalEarnings : 0 };
+  const totalEarn = result?.[0]?.totalEarnings ?? 0;
+
+  return { totalEarn };
 };
 
+export const webHookHandler = async (event: any) => {
+  if (!event) throw new Error("No event found.");
+
+  const {
+    type,
+    app_user_id,
+    product_id,
+    expiration_at_ms,
+    original_transaction_id,
+    purchased_at_ms,
+    store,
+    price,
+    currency,
+  } = event;
+
+  if (!app_user_id || !original_transaction_id) {
+    throw new Error("Missing required fields in event.");
+  }
+
+  const expiryDate = expiration_at_ms
+    ? new Date(Number(expiration_at_ms))
+    : null;
+  const startDate = purchased_at_ms
+    ? new Date(Number(purchased_at_ms))
+    : new Date();
+
+  // Map RevenueCat store to your platform enum
+  const platform =
+    store === "APP_STORE"
+      ? "ios"
+      : store === "PLAY_STORE"
+      ? "android"
+      : "unknown";
+
+  try {
+    switch (type) {
+      case "INITIAL_PURCHASE":
+      case "RENEWAL":
+      case "UPGRADE":
+      case "DOWNGRADE":
+        await Subscription.findOneAndUpdate(
+          { purchaseToken: original_transaction_id },
+          {
+            userId: app_user_id,
+            productId: product_id || "unknown",
+            purchaseToken: original_transaction_id,
+            platform,
+            status: SubscriptionStatus.ACTIVE,
+            startDate,
+            expiryDate,
+            originalTransactionId: original_transaction_id,
+            price: price || 0,
+            currency: currency || "USD",
+          },
+          { upsert: true, new: true }
+        );
+
+        await User.findOneAndUpdate(
+          { _id: app_user_id },
+          { hasPremiumAccess: true }
+        );
+        break;
+
+      case "CANCELLATION":
+      case "EXPIRED":
+      case "BILLING_ISSUE":
+        await Subscription.findOneAndUpdate(
+          { purchaseToken: original_transaction_id },
+          { status: SubscriptionStatus.CANCELLED, expiryDate }
+        );
+
+        await User.findOneAndUpdate(
+          { _id: app_user_id },
+          { hasPremiumAccess: false }
+        );
+        break;
+
+      default:
+        console.log("Unhandled RevenueCat event type:", type);
+    }
+
+    return { message: "success" };
+  } catch (error: any) {
+    console.error("Webhook processing error:", error);
+    throw new Error("Webhook processing failed.");
+  }
+};
+
+const getUserSubscription = async (userId: string) => {
+  const data = await Subscription.findOne({ userId });
+  return data;
+};
 export const PaymentService = {
-  createUserPayment,
+  getUserSubscription,
   getUserPaymentData,
   getAllTransection,
   getTotalEarnings,
+  webHookHandler,
 };
