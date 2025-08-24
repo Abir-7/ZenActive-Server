@@ -9,8 +9,6 @@ import admin from "../firebase/firebase";
 import AppError from "../errors/AppError";
 import { User } from "../modules/user/user.model";
 
-import Payment from "../modules/payment/payment/payment.model";
-
 export const setupCronJobs = () => {
   // delete user meal plan at 12Am everyday
   cron.schedule("0 0 * * *", async () => {

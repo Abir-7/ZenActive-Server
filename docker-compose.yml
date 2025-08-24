@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  zen-active-express:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "4006:4000" # Changed left port to avoid conflict with old project
+    volumes:
+      - .:/app
+    command: npm run dev
+
+
+

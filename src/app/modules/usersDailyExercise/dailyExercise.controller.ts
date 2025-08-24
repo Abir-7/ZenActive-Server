@@ -36,7 +36,7 @@ const getDailyExerciseById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getDailyChallenge = catchAsync(async (req: Request, res: Response) => {
-  const result = await DailyExerciseService.getDailyChallenge();
+  const result = await DailyExerciseService.getDailyChallenge(req.user.userId);
   sendResponse(res, {
     data: result,
     success: true,

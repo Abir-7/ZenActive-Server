@@ -20,7 +20,7 @@ router.get(
 
 router.post("/webhook/revenuecat", PaymentController.webHookHandler);
 
-router.post(
+router.get(
   "/my-subsription",
 
   auth("USER"),

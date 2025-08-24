@@ -144,9 +144,8 @@ export const webHookHandler = async (event: any) => {
       case "UPGRADE":
       case "DOWNGRADE":
         await Subscription.findOneAndUpdate(
-          { purchaseToken: original_transaction_id },
+          { purchaseToken: original_transaction_id, userId: app_user_id },
           {
-            userId: app_user_id,
             productId: product_id || "unknown",
             purchaseToken: original_transaction_id,
             platform,

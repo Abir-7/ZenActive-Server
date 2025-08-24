@@ -5,6 +5,7 @@ import DailyExercise from "./dailyExercise.model";
 import AppError from "../../errors/AppError";
 import { UserAppData } from "../userAppData/appdata.model";
 import DailyChallenge from "../usersDailyChallage/usersDailyExercise.model";
+import { User } from "../user/user.model";
 
 const createDailyExercise = async (dailyExerciseData: IDailyExercise) => {
   const exerciseData = await Exercise.findOne({
@@ -48,7 +49,11 @@ const getDailyExerciseById = async (dailyExerciseId: string) => {
   });
 };
 
-const getDailyChallenge = async () => {
+const getDailyChallenge = async (userId: string) => {
+  const userData = await User.findOne({ _id: userId });
+
+  const hasPrimium = userData?.hasPremiumAccess || false;
+
   const result = await DailyChallenge.find().populate("exerciseId");
   return result.map((exercise) => {
     return exercise.exerciseId;
