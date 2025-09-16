@@ -6,10 +6,8 @@ services:
     env_file:
       - .env
     ports:
-      - "4006:4000" # Changed left port to avoid conflict with old project
+      - "4006:4000" # map host 4006 → container 4000
     volumes:
       - .:/app
+      - /app/node_modules # keep node_modules inside container
     command: npm run dev
-
-
-
