@@ -12,6 +12,13 @@ router.get(
 );
 
 router.get(
+  "/earn",
+
+  auth("ADMIN"),
+  PaymentController.getUserPaymentData
+);
+
+router.get(
   "/total-earn",
 
   auth("ADMIN"),

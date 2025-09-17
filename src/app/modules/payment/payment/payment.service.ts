@@ -6,35 +6,50 @@ import { SubscriptionStatus } from "./payment.interface";
 import { Subscription } from "./payment.model";
 
 export const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
-  const endDate = new Date(); // Today's date
-  const startDate = new Date();
+  const today = new Date();
+  let startDate = new Date();
+  let endDate = new Date();
 
-  // Calculate the start date based on the time period
   if (timePeriod === "weekly") {
-    startDate.setDate(endDate.getDate() - 7); // Last 7 days
+    // Monday as start of week
+    const day = today.getDay(); // 0 = Sunday, 1 = Monday
+    const diff = day === 0 ? 6 : day - 1; // shift so Monday = start
+    startDate = new Date(today);
+    startDate.setDate(today.getDate() - diff);
+    startDate.setHours(0, 0, 0, 0);
+
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6); // full week (Mon-Sun)
+    endDate.setHours(23, 59, 59, 999);
   } else if (timePeriod === "monthly") {
-    startDate.setMonth(endDate.getMonth() - 1); // Last 30 days (approx)
+    // Full current month
+    startDate = new Date(today.getFullYear(), today.getMonth(), 1); // 1st day
+    startDate.setHours(0, 0, 0, 0);
+
+    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); // last day of month
+    endDate.setHours(23, 59, 59, 999);
   } else {
     throw new Error('Invalid time period. Use "weekly" or "monthly".');
   }
 
   try {
-    // Step 1: Use MongoDB Aggregation Pipeline
+    // Aggregate subscription payments by day
     const result = await Subscription.aggregate([
       {
         $match: {
-          startDate: {
-            $gte: startDate,
-            $lte: endDate,
-          },
+          createdAt: { $gte: startDate, $lte: endDate },
         },
       },
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$startDate" }, // Group by day
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt",
+              timezone: "Asia/Dhaka",
+            },
           },
-          totalEarnings: { $sum: "$price" }, // Sum price for each day
+          totalEarnings: { $sum: "$price" },
         },
       },
       {
@@ -44,15 +59,16 @@ export const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
           earnings: "$totalEarnings",
         },
       },
+      { $sort: { date: 1 } },
     ]);
 
-    // Step 2: Map earnings by day
-    const earningsByDay: { [key: string]: number } = {};
+    // Map results for lookup
+    const earningsByDay: Record<string, number> = {};
     result.forEach((entry) => {
       earningsByDay[entry.date] = entry.earnings;
     });
 
-    // Step 3: Fill missing days with 0
+    // Build final array for all days
     const finalResult: { date: string; earnings: number }[] = [];
     const currentDate = new Date(startDate);
 
@@ -67,11 +83,10 @@ export const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
 
     return finalResult;
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error fetching payment data:", error);
     throw error;
   }
 };
-
 const getAllTransection = async (query: Record<string, unknown>) => {
   const allData = new QueryBuilder(
     Subscription.find().populate("userId"),

@@ -58,7 +58,7 @@ const webHookHandler = catchAsync(async (req, res) => {
     data: result,
     success: true,
     statusCode: httpStatus.CREATED,
-    message: "TotalEarning  data are fetched successfully.",
+    message: "Webhook hit successfully.",
   });
 });
 
