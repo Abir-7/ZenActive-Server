@@ -66,7 +66,7 @@ const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
   }
 
   const data = { ...json, ...workoutData };
-
+  console.log(data);
   const workout = await WorkoutPlan.create(data);
 
   if (!workout) {

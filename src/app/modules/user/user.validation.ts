@@ -11,21 +11,23 @@ import {
 
 export const zodCreateUserSchema = z
   .object({
-    body: z.object({
-      email: z
-        .string({ required_error: "Email is required." })
-        .email("Please provide a valid email address."),
-      password: z
-        .string({ required_error: "Password is required." })
-        .min(6, "Password must be at least 6 characters long."),
-      confirm_password: z
-        .string({ required_error: "Confirm Password is required." })
-        .min(6, "Confirm Password must be at least 6 characters long."),
+    body: z
+      .object({
+        email: z
+          .string({ required_error: "Email is required." })
+          .email("Please provide a valid email address."),
+        password: z
+          .string({ required_error: "Password is required." })
+          .min(6, "Password must be at least 6 characters long."),
+        confirm_password: z
+          .string({ required_error: "Confirm Password is required." })
+          .min(6, "Confirm Password must be at least 6 characters long."),
 
-      fcmToken: z
-        .string({ required_error: "fcmToeken is required." })
-        .min(6, "fcmToeken must be at least 6 characters long."),
-    }),
+        fcmToken: z
+          .string({ required_error: "fcmToeken is required." })
+          .min(6, "fcmToeken must be at least 6 characters long."),
+      })
+      .optional(),
   })
   .strict();
 
