@@ -1,4 +1,3 @@
-import { FilterQuery, Query } from "mongoose";
 import AppError from "../../errors/AppError";
 import unlinkFile from "../../utils/unlinkFiles";
 import { User } from "../user/user.model";

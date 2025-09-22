@@ -19,11 +19,26 @@ const createUserMealPlan = async (userId: string, mealId: string) => {
   return await UserMealPlan.create({ mealId, userId });
 };
 
-const getUserMealPlans = async (userId: string) => {
+const getUserMealPlans = async (userId: string, status: "true") => {
+  console.log(status);
+
   const data = await UserMealPlan.find({ userId }).populate("mealId").lean();
 
-  const mainData = data
-    .map((meal) => {
+  if (status == "true") {
+    const mainData = data
+      .map((meal) => {
+        if (!meal.mealId) return null;
+        const mealData = meal.mealId;
+
+        return {
+          ...mealData,
+          isComplete: meal.isCompleted,
+        };
+      })
+      .filter((meal) => meal && meal.isComplete === true);
+    return mainData;
+  } else {
+    const mainData = data.map((meal) => {
       if (!meal.mealId) return null;
       const mealData = meal.mealId;
 
@@ -31,10 +46,41 @@ const getUserMealPlans = async (userId: string) => {
         ...mealData,
         isComplete: meal.isCompleted,
       };
-    })
-    .filter(Boolean);
+    });
 
-  return mainData;
+    return mainData;
+  }
+};
+
+const getUserMealPlansByMealTime = async (userId: string, mealTime: string) => {
+  const data = await UserMealPlan.find({ userId }).populate("mealId").lean();
+
+  if (mealTime) {
+    const mainData = data
+      .map((meal) => {
+        if (!meal.mealId) return null;
+        const mealData = meal.mealId as any;
+
+        return {
+          ...mealData,
+          isComplete: meal.isCompleted,
+        };
+      })
+      .filter((meal) => meal && meal.mealTime === mealTime);
+    return mainData;
+  } else {
+    const mainData = data.map((meal) => {
+      if (!meal.mealId) return null;
+      const mealData = meal.mealId as any;
+
+      return {
+        ...mealData,
+        isComplete: meal.isCompleted,
+      };
+    });
+
+    return mainData;
+  }
 };
 
 // export const getUserMealPlanById = async (userid: string) => {
@@ -86,4 +132,5 @@ export const UserMealPlanService = {
   getUserMealPlans,
   updateUserMealPlan,
   deleteUserMealPlan,
+  getUserMealPlansByMealTime,
 };
