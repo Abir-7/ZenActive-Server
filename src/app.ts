@@ -17,7 +17,9 @@ const corsOption = {
     "http://82.25.85.126:4173",
     "http://192.168.10.18:4173",
     "http://10.10.12.62:4173",
-    "http://10.10.12.59:4173","http://192.168.50.85:4173"
+    "http://10.10.12.59:4173",
+    "http://192.168.50.85:4173",
+    "https://zen-active-dashboard-iota.vercel.app",
   ],
   credentials: true,
 

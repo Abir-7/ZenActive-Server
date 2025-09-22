@@ -19,8 +19,17 @@ const createUserMealPlan = async (userId: string, mealId: string) => {
   return await UserMealPlan.create({ mealId, userId });
 };
 
-const getUserMealPlans = async (userId: string) => {
-  const data = await UserMealPlan.find({ userId }).populate("mealId").lean();
+const getUserMealPlans = async (
+  userId: string,
+  mealStatus?: "" | "completed"
+) => {
+  // Build the query
+  const query: any = { userId };
+  if (mealStatus === "completed") {
+    query.isCompleted = true; // Only fetch completed meals
+  }
+
+  const data = await UserMealPlan.find(query).populate("mealId").lean();
 
   const mainData = data
     .map((meal) => {

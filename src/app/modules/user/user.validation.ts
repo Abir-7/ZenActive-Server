@@ -23,9 +23,7 @@ export const zodCreateUserSchema = z
           .string({ required_error: "Confirm Password is required." })
           .min(6, "Confirm Password must be at least 6 characters long."),
 
-        fcmToken: z
-          .string({ required_error: "fcmToeken is required." })
-          .min(6, "fcmToeken must be at least 6 characters long."),
+        fcmToken: z.string({ required_error: "fcmToeken is required." }),
       })
       .optional(),
   })

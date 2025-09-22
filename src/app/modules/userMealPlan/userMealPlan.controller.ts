@@ -19,7 +19,10 @@ const createUserMealPlan = catchAsync(async (req: Request, res: Response) => {
 
 const getUserMealPlans = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
-  const mealPlans = await UserMealPlanService.getUserMealPlans(userId);
+  const mealPlans = await UserMealPlanService.getUserMealPlans(
+    userId,
+    req.query.mealStatus as "" | "completed"
+  );
   sendResponse(res, {
     statusCode: 200,
     success: true,
