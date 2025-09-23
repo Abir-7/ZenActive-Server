@@ -21,7 +21,7 @@ const getUserMealPlans = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const mealPlans = await UserMealPlanService.getUserMealPlans(
     userId,
-    req.query.mealStatus as "" | "completed"
+    req.query.isComplete as "true"
   );
   sendResponse(res, {
     statusCode: 200,
@@ -30,6 +30,22 @@ const getUserMealPlans = catchAsync(async (req: Request, res: Response) => {
     data: mealPlans,
   });
 });
+
+const getUserMealPlansByMealTime = catchAsync(
+  async (req: Request, res: Response) => {
+    const { userId } = req.user;
+    const mealPlans = await UserMealPlanService.getUserMealPlansByMealTime(
+      userId,
+      req.query.mealTime as "true"
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "User meal plans fetched successfully",
+      data: mealPlans,
+    });
+  }
+);
 
 // export const getUserMealPlanById = catchAsync(
 //   async (req: Request, res: Response) => {
@@ -74,4 +90,5 @@ export const UserMealPlanController = {
   getUserMealPlans,
   updateUserMealPlan,
   deleteUserMealPlan,
+  getUserMealPlansByMealTime,
 };

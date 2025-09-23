@@ -6,6 +6,11 @@ const router = express.Router();
 
 router.post("/", auth("USER"), UserMealPlanController.createUserMealPlan);
 router.get("/", auth("USER"), UserMealPlanController.getUserMealPlans);
+router.get(
+  "/by-time",
+  auth("USER"),
+  UserMealPlanController.getUserMealPlansByMealTime
+);
 // router.get("/details/:id", UserMealPlanController.getUserMealPlanById);
 router.patch(
   "/:mealId",
