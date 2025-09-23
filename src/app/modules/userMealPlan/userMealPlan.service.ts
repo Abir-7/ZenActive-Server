@@ -27,37 +27,68 @@ const createUserMealPlan = async (userId: string, mealIds: string[]) => {
   return await UserMealPlan.insertMany(mealPlans);
 };
 
-const getUserMealPlans = async (userId: string, status: "true") => {
-  console.log(status);
+const getUserMealPlans = async (
+  userId: string,
+  options?: { status?: "true"; mealTime?: string }
+) => {
+  // console.log(status);
+
+  // const data = await UserMealPlan.find({ userId }).populate("mealId").lean();
+
+  // if (status == "true") {
+  //   const mainData = data
+  //     .map((meal) => {
+  //       if (!meal.mealId) return null;
+  //       const mealData = meal.mealId;
+
+  //       return {
+  //         ...mealData,
+  //         isComplete: meal.isCompleted,
+  //       };
+  //     })
+  //     .filter((meal) => meal && meal.isComplete === true);
+  //   return mainData;
+  // } else {
+  //   const mainData = data.map((meal) => {
+  //     if (!meal.mealId) return null;
+  //     const mealData = meal.mealId;
+
+  //     return {
+  //       ...mealData,
+  //       isComplete: meal.isCompleted,
+  //     };
+  //   });
+
+  //   return mainData;
+  // }
+
+  const { status, mealTime } = options || {};
 
   const data = await UserMealPlan.find({ userId }).populate("mealId").lean();
 
-  if (status == "true") {
-    const mainData = data
-      .map((meal) => {
-        if (!meal.mealId) return null;
-        const mealData = meal.mealId;
-
-        return {
-          ...mealData,
-          isComplete: meal.isCompleted,
-        };
-      })
-      .filter((meal) => meal && meal.isComplete === true);
-    return mainData;
-  } else {
-    const mainData = data.map((meal) => {
+  const mainData = data
+    .map((meal) => {
       if (!meal.mealId) return null;
-      const mealData = meal.mealId;
+      const mealData = meal.mealId as any;
 
       return {
         ...mealData,
         isComplete: meal.isCompleted,
       };
+    })
+    .filter((meal) => {
+      if (!meal) return false;
+
+      // Filter by status if provided
+      if (status === "true" && meal.isComplete !== true) return false;
+
+      // Filter by mealTime if provided
+      if (mealTime && meal.mealTime !== mealTime) return false;
+
+      return true;
     });
 
-    return mainData;
-  }
+  return mainData;
 };
 
 const getUserMealPlansByMealTime = async (userId: string, mealTime: string) => {
