@@ -7,7 +7,7 @@ const createUserMealPlan = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user;
   const mealPlan = await UserMealPlanService.createUserMealPlan(
     userId,
-    req.body.mealId
+    req.body.mealIds
   );
   sendResponse(res, {
     statusCode: 201,

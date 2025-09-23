@@ -5,18 +5,26 @@ import Meal from "../meal/meal.model";
 
 import { UserAppData } from "../userAppData/appdata.model";
 import { User } from "../user/user.model";
-const createUserMealPlan = async (userId: string, mealId: string) => {
+const createUserMealPlan = async (userId: string, mealIds: string[]) => {
+  // Check user
   const userData = await User.findById(userId);
-
-  if (userData && userData.hasPremiumAccess === false) {
-    throw new AppError(httpStatus.NOT_FOUND, "You have to buy subcription.");
+  if (!userData) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  const isExist = await Meal.findById(mealId);
-  if (!isExist) {
-    throw new AppError(httpStatus.NOT_FOUND, "Meal not found");
+  if (userData.hasPremiumAccess === false) {
+    throw new AppError(httpStatus.FORBIDDEN, "You have to buy subscription.");
   }
-  return await UserMealPlan.create({ mealId, userId });
+
+  // Check meals exist
+  const meals = await Meal.find({ _id: { $in: mealIds } });
+  if (meals.length !== mealIds.length) {
+    throw new AppError(httpStatus.NOT_FOUND, "Some meals not found");
+  }
+
+  // Create multiple UserMealPlan entries
+  const mealPlans = mealIds.map((mealId) => ({ mealId, userId }));
+  return await UserMealPlan.insertMany(mealPlans);
 };
 
 const getUserMealPlans = async (

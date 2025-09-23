@@ -7,6 +7,7 @@ import Meal from "./meal.model";
 import httpStatus from "http-status";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { sendPushNotification } from "../notification/notification.service";
+import UserMealPlan from "../userMealPlan/userMealPlan.model";
 const createMeal = async (mealData: IMeal) => {
   const newMeal = await Meal.create(mealData);
 
@@ -106,6 +107,13 @@ const getAlluserMeals = async (
   },
   userId: string
 ) => {
+  const userMeal = await UserMealPlan.find({ userId });
+
+  console.log(
+    userMeal.map((meal) => meal._id),
+    "ff"
+  );
+  const mealIds = userMeal.map((meal) => meal.mealId.toString());
   const userData = await User.findOne({ _id: userId });
 
   if (!userData) {
@@ -113,6 +121,7 @@ const getAlluserMeals = async (
   }
   const meals = await Meal.find({
     ...filter,
+    _id: { $nin: mealIds },
     isDeleted: { $ne: true },
     suitableFor: { $in: [userData?.diet] },
   });
