@@ -24,6 +24,7 @@ const getUserAllGroups = async (
       path: "groupId",
       select: "name type goal admin image createdAt updatedAt",
     })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();

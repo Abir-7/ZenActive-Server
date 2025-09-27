@@ -124,6 +124,7 @@ const getAllGroup = async (
         userJoined: 0, // Remove extra field
       },
     },
+    { $sort: { createdAt: -1 } },
     { $skip: skip }, // Apply pagination
     { $limit: limit }, // Limit the number of results
   ]);

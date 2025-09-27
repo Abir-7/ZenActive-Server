@@ -10,6 +10,7 @@ import { Notification } from "../../notification/notification.model";
 import { NotificationType } from "../../notification/notification.interface";
 import { handleNotification } from "../../../socket/notification/handleNotification";
 import { Chat } from "../../userChat/chat.model";
+import { users } from "../../../socket/socket";
 const sendRequest = async (userId: string, friendId: Types.ObjectId) => {
   const senderData = await User.findById(userId).select("name");
 
@@ -379,8 +380,15 @@ const getFriendListWithLastMessage = async (
       isAccepted: true,
     });
 
+    const updatedFriends = friendsWithLastMessage.map((friend) => {
+      return {
+        ...friend,
+        isOnline: users.has(friend.friendId.toString()), // true if id exists in map
+      };
+    });
+
     return {
-      data: friendsWithLastMessage,
+      data: updatedFriends,
       meta: {
         total: totalConnections,
         page,
