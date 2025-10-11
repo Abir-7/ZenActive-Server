@@ -23,11 +23,15 @@ async function startServer() {
     setupCronJobs();
     setupSocket(server);
 
-    server.listen(config.server.port, config.server.ip as string, () => {
-      console.log(
-        `Example app listening on port ${config.server.port} ip:${config.server.ip}`
-      );
-    });
+    server.listen(
+      config.server.port,
+      // config.server.ip as string,
+      () => {
+        console.log(
+          `Example app listening on port ${config.server.port} ip:${config.server.ip}`
+        );
+      }
+    );
   } catch (error) {
     console.error("Error starting the server:", error);
     process.exit(1); // Exit process with failure code
