@@ -17,13 +17,14 @@ const SubscriptionSchema = new Schema<ISubscription>(
     originalTransactionId: { type: String, required: true },
     price: { type: Number, required: true },
     currency: { type: String, required: true },
+    type: { type: String, required: true },
   },
   {
     timestamps: true, // adds createdAt and updatedAt
-  }
+  },
 );
 
 export const Subscription = model<ISubscription>(
   "Subscription",
-  SubscriptionSchema
+  SubscriptionSchema,
 );

@@ -90,7 +90,7 @@ export const getUserPaymentData = async (timePeriod: "weekly" | "monthly") => {
 const getAllTransection = async (query: Record<string, unknown>) => {
   const allData = new QueryBuilder(
     Subscription.find().populate("userId"),
-    query
+    query,
   )
     .filter()
     .paginate()
@@ -131,9 +131,10 @@ export const webHookHandler = async (event: any) => {
     store,
     price,
     currency,
+    id,
   } = event;
-
-  if (!app_user_id || !original_transaction_id) {
+  console.log(app_user_id, id, "event");
+  if (!app_user_id || !id) {
     throw new Error("Missing required fields in event.");
   }
 
@@ -149,8 +150,8 @@ export const webHookHandler = async (event: any) => {
     store === "APP_STORE"
       ? "ios"
       : store === "PLAY_STORE"
-      ? "android"
-      : "unknown";
+        ? "android"
+        : "unknown";
 
   try {
     switch (type) {
@@ -159,24 +160,25 @@ export const webHookHandler = async (event: any) => {
       case "UPGRADE":
       case "DOWNGRADE":
         await Subscription.findOneAndUpdate(
-          { purchaseToken: original_transaction_id, userId: app_user_id },
+          { purchaseToken: id, userId: app_user_id },
           {
             productId: product_id || "unknown",
-            purchaseToken: original_transaction_id,
+            purchaseToken: id,
             platform,
             status: SubscriptionStatus.ACTIVE,
             startDate,
             expiryDate,
-            originalTransactionId: original_transaction_id,
+            originalTransactionId: id,
             price: price || 0,
             currency: currency || "USD",
+            type: type || "unknown",
           },
-          { upsert: true, new: true }
+          { upsert: true, new: true },
         );
 
         await User.findOneAndUpdate(
           { _id: app_user_id },
-          { hasPremiumAccess: true }
+          { hasPremiumAccess: true },
         );
         break;
 
@@ -184,13 +186,13 @@ export const webHookHandler = async (event: any) => {
       case "EXPIRED":
       case "BILLING_ISSUE":
         await Subscription.findOneAndUpdate(
-          { purchaseToken: original_transaction_id },
-          { status: SubscriptionStatus.CANCELLED, expiryDate }
+          { purchaseToken: id },
+          { status: SubscriptionStatus.CANCELLED, expiryDate },
         );
 
         await User.findOneAndUpdate(
           { _id: app_user_id },
-          { hasPremiumAccess: false }
+          { hasPremiumAccess: false },
         );
         break;
 

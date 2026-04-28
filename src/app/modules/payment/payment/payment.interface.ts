@@ -13,6 +13,7 @@ export interface ISubscription {
   // Directly available from RevenueCat
   price: number; // RevenueCat: event.price
   currency: string; // RevenueCat: event.currency
+  type: string;
 }
 export enum SubscriptionStatus {
   ACTIVE = "active",
