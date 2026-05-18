@@ -13,28 +13,36 @@ process.on("uncaughtException", (error: Error) => {
   process.exit(1); // Exit process with failure code
 });
 
-async function startServer() {
-  try {
-    // Connect to MongoDB
-    await mongoose.connect(config.database.url as string);
-    console.log("MongoDB connected successfully");
-    await seedAdmin();
-    await seedSubscription();
-    setupCronJobs();
-    setupSocket(server);
+async function startServer(retries = 5) {
+  while (retries > 0) {
+    try {
+      // Connect to MongoDB
+      await mongoose.connect(config.database.url as string);
+      console.log("MongoDB connected successfully");
+      await seedAdmin();
+      await seedSubscription();
+      setupCronJobs();
+      setupSocket(server);
 
-    server.listen(
-      config.server.port,
-      // config.server.ip as string,
-      () => {
-        console.log(
-          `Example app listening on port ${config.server.port} ip:${config.server.ip}`
-        );
+      server.listen(
+        config.server.port,
+        // config.server.ip as string,
+        () => {
+          console.log(
+            `Example app listening on port ${config.server.port} ip:${config.server.ip}`,
+          );
+        },
+      );
+      break; // Exit loop on success
+    } catch (error) {
+      retries -= 1;
+      console.error(`Error starting the server (Retries left: ${retries}):`, error);
+      if (retries === 0) {
+        process.exit(1);
       }
-    );
-  } catch (error) {
-    console.error("Error starting the server:", error);
-    process.exit(1); // Exit process with failure code
+      // Wait for 5 seconds before retrying
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   }
 }
 
