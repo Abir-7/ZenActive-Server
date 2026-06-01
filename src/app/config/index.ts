@@ -40,7 +40,7 @@ export const config = {
     password: process.env.ADMIN_PASSWORD,
   },
   ai: {
-    gemini_api_key: process.env.GEMINI_API_LEY,
+    gemini_api_key: process.env.GEMINI_API_KEY,
   },
 
   aws: {

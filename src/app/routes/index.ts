@@ -32,6 +32,7 @@ import { UserGroupRoute } from "../modules/socialGroup/UsersGroup/userGroup.rout
 import { NotificationRoute } from "../modules/notification/notification.route";
 import { PaymentRoute } from "../modules/payment/payment/payment.route";
 import { SubscriptionPlanRoute } from "../modules/payment/subscriptionPlan/subscriptionPlan.route";
+import { AIAgentRoutes } from "../modules/aiAgent/agent.route";
 
 const router = Router();
 
@@ -63,6 +64,7 @@ const apiRoutes = [
   { path: "/notification", route: NotificationRoute },
   { path: "/payment", route: PaymentRoute },
   { path: "/subscription-plan", route: SubscriptionPlanRoute },
+  { path: "/ai-agent", route: AIAgentRoutes },
 ];
 apiRoutes.forEach((route) => router.use(route.path, route.route));
 
