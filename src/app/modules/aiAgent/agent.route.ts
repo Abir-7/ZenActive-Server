@@ -6,7 +6,7 @@ const router = Router();
 
 router.post(
   "/generate-workout-plan",
-  auth("USER"),
+  auth("USER", "ADMIN"),
   AIAgentController.generateWorkoutPlan
 );
 

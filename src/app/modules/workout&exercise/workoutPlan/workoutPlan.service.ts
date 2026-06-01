@@ -11,65 +11,60 @@ import Workout from "../workout/workout.model";
 import { getJson } from "../../../utils/getJson";
 
 const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
-  workoutData.duration = workoutData.duration * 7;
+  const durationInDays = workoutData.duration * 7;
+  workoutData.duration = durationInDays;
 
-  const allWorkouts = await Workout.find({ isDeleted: false });
+  const allWorkouts = await Workout.find({ isDeleted: false }).select("_id name");
 
-  // Extract only necessary fields to reduce token usage
+  if (!allWorkouts || allWorkouts.length === 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, "No workouts available to create a plan.");
+  }
+
   const availableWorkouts = allWorkouts.map((w) => ({
     id: w._id,
     name: w.name,
   }));
 
   const prompt = `
-    You are an AI that creates structured workout plans. Below is a list of available workouts:
-    ${JSON.stringify(availableWorkouts)}
+    Create a structured workout plan JSON.
+    Available Workouts: ${JSON.stringify(availableWorkouts)}
 
-**workouts array must have exactly ${String(
-    Number(workoutData.duration) + 15
-  )} workoutId**
+    Plan details:
+    - Name: "${workoutData.name}"
+    - Total Duration: ${durationInDays} days
+    - Constraint: Return exactly ${durationInDays} workout IDs in an array.
+    - Diversity: Use a variety of workouts from the list.
 
-    Create a workout plan with:
-    - Plan Name: "${workoutData.name}"
-    - Duration: ${workoutData.duration} days
-    - Workouts must be selected only from the provided list.
-    - **workouts array must have exactly ${String(
-      Number(workoutData.duration) + 15
-    )} workoutId**.
-    - Workouts can be repeated, but diversity is preferred.
-    - Return **only** a valid JSON object, without any extra text.
-
-    Example Response:
+    Return format:
     {
-      "workouts": ["id1", "id2", "id3", "id4", ..., "idN"]
+      "workouts": ["id1", "id2", ..., "id${durationInDays}"]
     }
   `;
 
-  const workoutsResponse = await getGeminiResponse(prompt);
+  // Use Native JSON Response mode
+  const json = await getGeminiResponse(prompt, "You are a professional fitness assistant.", true);
 
-  const json = await getJson(workoutsResponse);
-
-  if (json?.workouts?.length > workoutData.duration) {
-    json.workouts = json?.workouts.slice(0, workoutData.duration);
-  }
-  if (
-    !json ||
-    !Array.isArray(json.workouts) ||
-    json.workouts.length !== workoutData.duration
-  ) {
-    throw new AppError(
-      500,
-      `Invalid workout plan: Expected ${workoutData.duration} workouts, got ${
-        json?.workouts?.length || 0
-      }`
-    );
+  if (!json || !Array.isArray(json.workouts)) {
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "AI failed to generate a valid workout plan.");
   }
 
-  const data = { ...json, ...workoutData };
-  console.log(data);
+  // Healing Logic: Ensure exact duration match
+  let finalWorkouts = [...json.workouts];
+  
+  if (finalWorkouts.length > durationInDays) {
+    finalWorkouts = finalWorkouts.slice(0, durationInDays);
+  } else if (finalWorkouts.length < durationInDays) {
+    // Pad with the last workout or a random one if too short
+    const paddingCount = durationInDays - finalWorkouts.length;
+    for (let i = 0; i < paddingCount; i++) {
+      finalWorkouts.push(finalWorkouts[finalWorkouts.length - 1] || availableWorkouts[0].id);
+    }
+  }
+
+  const data = { ...workoutData, workouts: finalWorkouts };
   const workout = await WorkoutPlan.create(data);
 
-  if (!workout) {
+  if (!workout && data.image) {
     unlinkFile(data.image);
   }
 
