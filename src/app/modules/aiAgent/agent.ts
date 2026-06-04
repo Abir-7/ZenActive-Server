@@ -1,7 +1,7 @@
 import Workout from "../workout&exercise/workout/workout.model";
 import { WorkoutPlan } from "../workout&exercise/workoutPlan/workoutPlan.model";
 import { Types } from "mongoose";
-import { getGeminiResponse } from "../../utils/getGeminiResponse";
+import { getAIResponse } from "../../utils/getAIResponse";
 
 export const tools = {
   getAllWorkouts: async () => {
@@ -73,11 +73,10 @@ export async function processQuery(userInput: string): Promise<any> {
     iterations++;
     try {
       const prompt = JSON.stringify(history);
-      const parsedResponse = await getGeminiResponse(prompt, SYSTEM_PROMPT, true);
+      const parsedResponse = await getAIResponse(prompt, SYSTEM_PROMPT, true);
 
       if (!parsedResponse || !Array.isArray(parsedResponse)) {
-        console.error("❌ Invalid response from AI:", parsedResponse);
-        break;
+        throw new Error("Invalid response format from AI");
       }
 
       for (const action of parsedResponse) {
@@ -107,9 +106,9 @@ export async function processQuery(userInput: string): Promise<any> {
             break;
         }
       }
-    } catch (error) {
-      console.error("❌ Error in AI loop:", error);
-      finished = true;
+    } catch (error: any) {
+      console.error("❌ Error in AI loop:", error.message || error);
+      throw new Error(error.message || "AI loop failed");
     }
   }
 

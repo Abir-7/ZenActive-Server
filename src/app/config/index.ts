@@ -41,6 +41,8 @@ export const config = {
   },
   ai: {
     gemini_api_key: process.env.GEMINI_API_KEY,
+    openai_api_key: process.env.OPENAI_API_KEY,
+    provider: process.env.AI_PROVIDER || "gemini",
   },
 
   aws: {

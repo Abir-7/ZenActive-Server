@@ -9,6 +9,12 @@ import { zodExerciseSchema } from "./exercise.validation";
 
 const router = Router();
 
+router.get(
+  "/signature",
+  auth("ADMIN"),
+  WorkoutController.getCloudinarySignature
+);
+
 router.post(
   "/",
   auth("ADMIN"),

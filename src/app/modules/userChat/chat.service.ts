@@ -5,7 +5,7 @@ import Friend from "../userConnection/friendList/friendlist.model";
 import { IChat } from "./chat.interface";
 import { Chat } from "./chat.model";
 import UserConnection from "../userConnection/friendList/friendlist.model";
-import { getGeminiResponse } from "../../utils/getGeminiResponse";
+import { getAIResponse } from "../../utils/getAIResponse";
 
 const createChat = async (chatData: IChat) => {
   const [isSenderExist, isReceiverExist] = await Promise.all([
@@ -146,7 +146,7 @@ const getChatsBetweenUsers = async (
 
 const chatWithFitBot = async (prompt: string): Promise<string> => {
   try {
-    const workoutsResponse = await getGeminiResponse(prompt);
+    const workoutsResponse = await getAIResponse(prompt);
 
     // Extract text if the response is structured
     const responseText =
@@ -155,9 +155,9 @@ const chatWithFitBot = async (prompt: string): Promise<string> => {
         : JSON.stringify(workoutsResponse, null, 2); // Convert object to readable text if necessary
 
     return responseText;
-  } catch (error) {
-    console.error("Error fetching response from Gemini:", error);
-    return "Sorry, I couldn't process your request. Please try again.";
+  } catch (error: any) {
+    console.error("Error fetching response from AI:", error.message || error);
+    return `AI Error: ${error.message || "Sorry, I couldn't process your request. Please try again."}`;
   }
 };
 

@@ -9,54 +9,65 @@ import Exercise from "./exercise.model";
 import status from "http-status";
 import { Request } from "express";
 
-import { cloudinaryInstance } from "../../../utils/cloudinary/cloudinary";
-
-import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
+import { uploadToCloudinary } from "../../../utils/cloudinary/cloudinary";
 import { sendPushNotification } from "../../notification/notification.service";
+import { deleteCloudinaryVideo } from "../../../utils/cloudinary/deleteFile";
 import { User } from "../../user/user.model";
 
 // Create a new exercise
 const createExercise = async (req: Request) => {
-  let video = null;
-  let image = null;
+  let video = req.body.video || null;
+  let image = req.body.image || null;
+  let videoId = req.body.videoId || null;
 
-  let videoId = null;
+  const uploadTasks: Promise<void>[] = [];
+
+  // If files are provided, handle traditional upload (User -> Server -> Cloudinary)
+  // Prepare Video Upload Task
   if (req.files && "media" in req.files && req.files.media[0]) {
-    const pathLink = `/medias/${req.files.media[0].filename}`;
     const file = req.files.media[0];
+    const pathLink = `/medias/${file.filename}`;
     const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
 
-    try {
-      const uploadResult = await cloudinaryInstance.uploader.upload(filePath, {
-        public_id: file.filename.split(".")[0].trim(),
-        folder: "videos",
-        resource_type: "video",
-        eager: [
-          {
-            width: 1280,
-            height: 720,
-            crop: "scale",
-            quality: "auto",
-          },
-        ],
-        eager_async: true,
-      });
-      video = uploadResult.secure_url; // Cloudinary URL
-      if (uploadResult.eager[0].secure_url) {
-        video = uploadResult.eager[0].secure_url;
+    uploadTasks.push((async () => {
+      try {
+        const uploadResult = await uploadToCloudinary(filePath, "exercises/videos", "video");
+        video = uploadResult.secure_url;
+        if (uploadResult.eager && uploadResult.eager[0]?.secure_url) {
+          video = uploadResult.eager[0].secure_url;
+        }
+        videoId = uploadResult.public_id;
+        unlinkFile(pathLink);
+      } catch (error) {
+        unlinkFile(pathLink);
+        throw new AppError(500, "Video upload to Cloudinary failed");
       }
-      videoId = uploadResult.public_id;
-
-      unlinkFile(pathLink);
-    } catch (error) {
-      unlinkFile(pathLink);
-      throw new AppError(500, "Video upload to Cloudinary failed");
-    }
+    })());
   }
 
+  // Prepare Image Upload Task
   if (req.files && "image" in req.files && req.files.image[0]) {
-    image = `/images/${req.files.image[0].filename}`;
+    const file = req.files.image[0];
+    const pathLink = `/images/${file.filename}`;
+    const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
+
+    uploadTasks.push((async () => {
+      try {
+        const uploadResult = await uploadToCloudinary(filePath, "exercises/images", "image");
+        image = uploadResult.secure_url;
+        unlinkFile(pathLink);
+      } catch (error) {
+        unlinkFile(pathLink);
+        throw new AppError(500, "Image upload to Cloudinary failed");
+      }
+    })());
   }
+
+  // Execute all uploads in parallel
+  if (uploadTasks.length > 0) {
+    await Promise.all(uploadTasks);
+  }
+
   const value = {
     ...req.body,
     video,
@@ -68,15 +79,16 @@ const createExercise = async (req: Request) => {
     ...value,
     duration: Number(value.duration * 60),
   });
-  if (!exercise && value.image) {
-    unlinkFile(value.image);
+
+  if (!exercise) {
     if (videoId) await deleteCloudinaryVideo(videoId, "video");
   }
 
+  // Safely send push notification without blocking response
   sendPushNotification({
     title: "New Exercise",
-    body: `New exercise added name: ${value.name}`,
-  });
+    body: `New exercise added: ${value.name}`,
+  }).catch((err) => console.error("Notification trigger failed:", err));
 
   return exercise;
 };
@@ -202,7 +214,6 @@ const getExerciseById = async (exerciseId: string, userId: string) => {
 
   return { exercise, participant: participantCount };
 };
-
 // Update an exercise by ID
 const updateExercise = async (exerciseId: string, req: Request) => {
   const isExist = await Exercise.findById(exerciseId);
@@ -211,59 +222,68 @@ const updateExercise = async (exerciseId: string, req: Request) => {
     throw new AppError(404, "Workout not found.");
   }
 
-  let video = null;
-  let image = null;
-  let videoId = null;
+  let video = req.body.video || null;
+  let image = req.body.image || null;
+  let videoId = req.body.videoId || null;
 
+  const uploadTasks: Promise<void>[] = [];
+
+  // Prepare Video Update Task (Traditional)
   if (req.files && "media" in req.files && req.files.media[0]) {
-    const pathLink = `/medias/${req.files.media[0].filename}`;
     const file = req.files.media[0];
+    const pathLink = `/medias/${file.filename}`;
     const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
 
-    try {
-      const uploadResult = await cloudinaryInstance.uploader.upload(filePath, {
-        public_id: file.filename.split(".")[0].trim(),
-        folder: "videos",
-        resource_type: "video",
-        eager: [
-          {
-            width: 1280,
-            height: 720,
-            crop: "scale",
-            quality: "auto",
-          },
-        ],
-        eager_async: true,
-      });
-
-      video = uploadResult.secure_url; // Cloudinary URL
-
-      if (uploadResult.eager[0].secure_url) {
-        video = uploadResult.eager[0].secure_url;
+    uploadTasks.push((async () => {
+      try {
+        const uploadResult = await uploadToCloudinary(filePath, "exercises/videos", "video");
+        video = uploadResult.secure_url;
+        if (uploadResult.eager && uploadResult.eager[0]?.secure_url) {
+          video = uploadResult.eager[0].secure_url;
+        }
+        videoId = uploadResult.public_id;
+        unlinkFile(pathLink);
+        if (isExist.videoId) {
+          await deleteCloudinaryVideo(isExist.videoId, "video");
+        }
+      } catch (error) {
+        unlinkFile(pathLink);
+        throw new AppError(500, "Video upload to Cloudinary failed");
       }
-      videoId = uploadResult.public_id;
-
-      // Delete local file after upload
-      unlinkFile(pathLink);
-
-      await deleteCloudinaryVideo(isExist.videoId, "video");
-    } catch (error) {
-      // console.log(error);
-      unlinkFile(pathLink);
-      throw new AppError(500, "Video upload to Cloudinary failed");
-    }
+    })());
   }
 
+  // Prepare Image Update Task
   if (req.files && "image" in req.files && req.files.image[0]) {
-    image = `/images/${req.files.image[0].filename}`;
+    const file = req.files.image[0];
+    const pathLink = `/images/${file.filename}`;
+    const filePath = path.join(process.cwd(), `/uploads/${pathLink}`);
+
+    uploadTasks.push((async () => {
+      try {
+        const uploadResult = await uploadToCloudinary(filePath, "exercises/images", "image");
+        image = uploadResult.secure_url;
+        unlinkFile(pathLink);
+      } catch (error) {
+        unlinkFile(pathLink);
+        throw new AppError(500, "Image upload to Cloudinary failed");
+      }
+    })());
+  }
+
+  if (uploadTasks.length > 0) {
+    await Promise.all(uploadTasks);
   }
 
   let value = req.body as Partial<IExercise>;
 
   if (image) {
     value = { ...value, image };
-    unlinkFile(isExist.image);
+    if (isExist.image && !isExist.image.startsWith("http")) {
+      unlinkFile(isExist.image);
+    }
   }
+  
   if (video && videoId) {
     value = { ...value, video, videoId };
   }

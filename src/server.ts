@@ -36,7 +36,10 @@ async function startServer(retries = 5) {
       break; // Exit loop on success
     } catch (error) {
       retries -= 1;
-      console.error(`Error starting the server (Retries left: ${retries}):`, error);
+      console.error(
+        `Error starting the server (Retries left: ${retries}):`,
+        error,
+      );
       if (retries === 0) {
         process.exit(1);
       }

@@ -6,7 +6,7 @@ import { WorkoutPlan } from "./workoutPlan.model";
 import unlinkFile from "../../../utils/unlinkFiles";
 import UserWorkoutPlan from "../../userWorkoutPlan/userWorkoutPlan.model";
 
-import { getGeminiResponse } from "../../../utils/getGeminiResponse";
+import { getAIResponse } from "../../../utils/getAIResponse";
 import Workout from "../workout/workout.model";
 import { getJson } from "../../../utils/getJson";
 
@@ -42,7 +42,7 @@ const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
   `;
 
   // Use Native JSON Response mode
-  const json = await getGeminiResponse(prompt, "You are a professional fitness assistant.", true);
+  const json = await getAIResponse(prompt, "You are a professional fitness assistant.", true);
 
   if (!json || !Array.isArray(json.workouts)) {
     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "AI failed to generate a valid workout plan.");

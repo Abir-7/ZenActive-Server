@@ -4,6 +4,18 @@ import httpStatus from "http-status";
 import catchAsync from "../../../utils/catchAsync";
 import sendResponse from "../../../utils/sendResponse";
 import { ExerciseService } from "./exercise.service";
+import { generateCloudinarySignature } from "../../../utils/cloudinary/cloudinary";
+
+const getCloudinarySignature = catchAsync(async (req: Request, res: Response) => {
+  const { folder } = req.query;
+  const result = generateCloudinarySignature(folder as string || "exercises");
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Signature generated successfully.",
+  });
+});
 
 const createExercise = catchAsync(async (req: Request, res: Response) => {
   const result = await ExerciseService.createExercise(req);
@@ -75,6 +87,7 @@ const deleteExercise = catchAsync(async (req: Request, res: Response) => {
 
 // Group all controller functions into an object
 export const WorkoutController = {
+  getCloudinarySignature,
   createExercise,
   deleteExercise,
   getAllExercise,

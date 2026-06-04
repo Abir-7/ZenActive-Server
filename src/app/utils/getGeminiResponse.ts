@@ -25,21 +25,25 @@ export async function getGeminiResponse(
     generationConfig.responseMimeType = "application/json";
   }
 
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig,
-  });
+  try {
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig,
+    });
 
-  const responseText = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const responseText = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-  if (isJsonResponse && responseText) {
-    try {
-      return JSON.parse(responseText);
-    } catch (error) {
-      console.error("Failed to parse Gemini JSON response:", error);
-      return responseText;
+    if (isJsonResponse && responseText) {
+      try {
+        return JSON.parse(responseText);
+      } catch (error) {
+        throw new Error(`Failed to parse Gemini JSON response: ${responseText}`);
+      }
     }
-  }
 
-  return responseText ?? null;
+    return responseText ?? null;
+  } catch (error: any) {
+    console.error("❌ Gemini API Error:", error.message || error);
+    throw new Error(`Gemini Error: ${error.message || "Unknown error"}`);
+  }
 }
