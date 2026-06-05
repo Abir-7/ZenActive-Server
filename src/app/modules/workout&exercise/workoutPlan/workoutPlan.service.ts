@@ -56,7 +56,7 @@ const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
     const json = await getAIResponse(prompt, "You are a professional fitness assistant.", true);
 
     if (!json || !Array.isArray(json.workouts)) {
-      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "AI failed to generate a valid workout plan.");
+      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Our AI assistant is having trouble generating the workout plan right now. Please try again, or create the plan manually by selecting your workouts.");
     }
 
     // Healing Logic: Ensure exact duration match

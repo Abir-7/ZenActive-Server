@@ -44,6 +44,12 @@ export async function getGeminiResponse(
     return responseText ?? null;
   } catch (error: any) {
     console.error("❌ Gemini API Error:", error.message || error);
+    
+    // Check for rate limit error (429)
+    if (error.message && error.message.includes("429")) {
+      throw new Error("Our AI assistant is currently at maximum capacity. Please wait a moment and try again, or create your workout plan manually.");
+    }
+    
     throw new Error(`Gemini Error: ${error.message || "Unknown error"}`);
   }
 }
