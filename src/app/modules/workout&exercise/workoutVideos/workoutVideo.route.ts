@@ -34,5 +34,10 @@ router.patch(
   WorkoutVideoController.updateWorkoutVideo
 );
 router.delete("/:id", auth("ADMIN"), WorkoutVideoController.deleteWorkoutVideo);
+router.post(
+  "/get-signature",
+  auth("ADMIN"),
+  WorkoutVideoController.getCloudinarySignature
+);
 
 export const WorkoutVideoRoutes = router;

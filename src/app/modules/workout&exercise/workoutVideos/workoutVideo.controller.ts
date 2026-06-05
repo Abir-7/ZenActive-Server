@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { WorkoutVideoService } from "./workoutVideo.service";
+import { generateCloudinarySignature } from "../../../utils/cloudinary/cloudinary";
 
 import httpStatus from "http-status";
 import catchAsync from "../../../utils/catchAsync";
@@ -67,10 +68,23 @@ const deleteWorkoutVideo = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getCloudinarySignature = catchAsync(async (req: Request, res: Response) => {
+  const { folder } = req.body;
+  const result = generateCloudinarySignature(folder || "videos");
+
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Cloudinary signature generated successfully.",
+  });
+});
+
 export const WorkoutVideoController = {
   getAllWorkoutVideos,
   createWorkoutVideo,
   updateWorkoutVideo,
   deleteWorkoutVideo,
   getSingleWorkoutVideos,
+  getCloudinarySignature,
 };
