@@ -14,50 +14,62 @@ const createWorkoutPlan = async (workoutData: IWorkoutPlan) => {
   const durationInDays = workoutData.duration * 7;
   workoutData.duration = durationInDays;
 
-  const allWorkouts = await Workout.find({ isDeleted: false }).select("_id name");
+  let finalWorkouts: any[] = [];
 
-  if (!allWorkouts || allWorkouts.length === 0) {
-    throw new AppError(httpStatus.BAD_REQUEST, "No workouts available to create a plan.");
-  }
-
-  const availableWorkouts = allWorkouts.map((w) => ({
-    id: w._id,
-    name: w.name,
-  }));
-
-  const prompt = `
-    Create a structured workout plan JSON.
-    Available Workouts: ${JSON.stringify(availableWorkouts)}
-
-    Plan details:
-    - Name: "${workoutData.name}"
-    - Total Duration: ${durationInDays} days
-    - Constraint: Return exactly ${durationInDays} workout IDs in an array.
-    - Diversity: Use a variety of workouts from the list.
-
-    Return format:
-    {
-      "workouts": ["id1", "id2", ..., "id${durationInDays}"]
+  // Check if manual workouts are provided
+  if (workoutData.workouts && workoutData.workouts.length > 0) {
+    finalWorkouts = workoutData.workouts;
+    // Optional: Validate that the number of workouts matches the duration
+    if (finalWorkouts.length !== durationInDays) {
+       throw new AppError(httpStatus.BAD_REQUEST, `Selected ${finalWorkouts.length} workouts, but a ${workoutData.duration / 7}-week plan requires ${durationInDays} workout sessions. Please adjust your selection or the plan duration.`);
     }
-  `;
+  } else {
+    // AI-Assisted Generation
+    const allWorkouts = await Workout.find({ isDeleted: false }).select("_id name");
 
-  // Use Native JSON Response mode
-  const json = await getAIResponse(prompt, "You are a professional fitness assistant.", true);
+    if (!allWorkouts || allWorkouts.length === 0) {
+      throw new AppError(httpStatus.BAD_REQUEST, "No workouts available to create a plan.");
+    }
 
-  if (!json || !Array.isArray(json.workouts)) {
-    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "AI failed to generate a valid workout plan.");
-  }
+    const availableWorkouts = allWorkouts.map((w) => ({
+      id: w._id,
+      name: w.name,
+    }));
 
-  // Healing Logic: Ensure exact duration match
-  let finalWorkouts = [...json.workouts];
-  
-  if (finalWorkouts.length > durationInDays) {
-    finalWorkouts = finalWorkouts.slice(0, durationInDays);
-  } else if (finalWorkouts.length < durationInDays) {
-    // Pad with the last workout or a random one if too short
-    const paddingCount = durationInDays - finalWorkouts.length;
-    for (let i = 0; i < paddingCount; i++) {
-      finalWorkouts.push(finalWorkouts[finalWorkouts.length - 1] || availableWorkouts[0].id);
+    const prompt = `
+      Create a structured workout plan JSON.
+      Available Workouts: ${JSON.stringify(availableWorkouts)}
+
+      Plan details:
+      - Name: "${workoutData.name}"
+      - Total Duration: ${durationInDays} days
+      - Constraint: Return exactly ${durationInDays} workout IDs in an array.
+      - Diversity: Use a variety of workouts from the list.
+
+      Return format:
+      {
+        "workouts": ["id1", "id2", ..., "id${durationInDays}"]
+      }
+    `;
+
+    // Use Native JSON Response mode
+    const json = await getAIResponse(prompt, "You are a professional fitness assistant.", true);
+
+    if (!json || !Array.isArray(json.workouts)) {
+      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "AI failed to generate a valid workout plan.");
+    }
+
+    // Healing Logic: Ensure exact duration match
+    finalWorkouts = [...json.workouts];
+    
+    if (finalWorkouts.length > durationInDays) {
+      finalWorkouts = finalWorkouts.slice(0, durationInDays);
+    } else if (finalWorkouts.length < durationInDays) {
+      // Pad with the last workout or a random one if too short
+      const paddingCount = durationInDays - finalWorkouts.length;
+      for (let i = 0; i < paddingCount; i++) {
+        finalWorkouts.push(finalWorkouts[finalWorkouts.length - 1] || availableWorkouts[0].id);
+      }
     }
   }
 
